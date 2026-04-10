@@ -289,4 +289,105 @@
     }, { passive: true });
   }
 
+
+  /* ─────────────────────────────────────────────────────────
+     9. EASTER EGG — triple-clic (desktop) / triple-tap (mobile)
+     sur le fond (hors objets interactifs).
+     Effet : flash blanc → message "✦ // found." au centre.
+  ───────────────────────────────────────────────────────── */
+  var egCount = 0;
+  var egTimer = null;
+
+  /* Sélecteurs à ignorer : les objets et labels cliquables */
+  var EG_IGNORE = '.sphere,.turb-wrap,.cube-scene,.blend-wrap,.bars-wrap,.scene-label,.gyro-btn,#cursor';
+
+  function triggerEasterEgg() {
+    /* Flash blanc plein écran */
+    var flash = document.createElement('div');
+    flash.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9990',
+      'background:#fff', 'opacity:0', 'pointer-events:none',
+      'transition:opacity .18s ease',
+    ].join(';');
+    document.body.appendChild(flash);
+
+    requestAnimationFrame(function () {
+      flash.style.opacity = '1';
+      setTimeout(function () {
+        flash.style.opacity = '0';
+        setTimeout(function () { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 220);
+      }, 220);
+    });
+
+    /* Overlay message */
+    var ov = document.createElement('div');
+    ov.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9991',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'opacity:0', 'transition:opacity .5s ease',
+    ].join(';');
+
+    ov.innerHTML = [
+      '<div style="text-align:center;user-select:none">',
+        '<div style="',
+          'font-size:3rem;',
+          'margin-bottom:1.2rem;',
+          'background:linear-gradient(135deg,#8b5cf6,#06b6d4);',
+          '-webkit-background-clip:text;',
+          '-webkit-text-fill-color:transparent;',
+          'background-clip:text;',
+          'animation:egSpin 4s linear infinite',
+        '">✦</div>',
+        '<div style="',
+          'font-family:Courier New,monospace;',
+          'font-size:.85rem;',
+          'letter-spacing:.4em;',
+          'color:rgba(255,255,255,.4)',
+        '">// found.</div>',
+      '</div>',
+    ].join('');
+
+    /* Keyframe rotation de l'étoile — injecté une seule fois */
+    if (!document.getElementById('egStyle')) {
+      var es = document.createElement('style');
+      es.id = 'egStyle';
+      es.textContent = '@keyframes egSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+      document.head.appendChild(es);
+    }
+
+    document.body.appendChild(ov);
+
+    setTimeout(function () { ov.style.opacity = '1'; }, 350);
+
+    /* Disparaît après 2,5s ou au clic/tap */
+    var egClose = function () {
+      ov.style.opacity = '0';
+      setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 550);
+      ov.removeEventListener('click', egClose);
+    };
+    setTimeout(egClose, 2800);
+    ov.addEventListener('click', egClose);
+  }
+
+  /* Détection triple-clic desktop */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest(EG_IGNORE)) return;
+    egCount++;
+    if (egTimer) clearTimeout(egTimer);
+    if (egCount >= 3) { egCount = 0; triggerEasterEgg(); return; }
+    egTimer = setTimeout(function () { egCount = 0; }, 520);
+  });
+
+  /* Détection triple-tap mobile */
+  if (isMobile) {
+    var tCount = 0, tTimer = null;
+    document.addEventListener('touchstart', function (e) {
+      if (e.target.closest(EG_IGNORE)) return;
+      tCount++;
+      if (tTimer) clearTimeout(tTimer);
+      if (tCount >= 3) { tCount = 0; triggerEasterEgg(); return; }
+      tTimer = setTimeout(function () { tCount = 0; }, 600);
+    }, { passive: true });
+  }
+
 }());
