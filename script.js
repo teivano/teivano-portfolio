@@ -1,315 +1,292 @@
-/* ═══════════════════════════════════════════════════════════════════
-   MOOREA · script.js
-   Sections :
-     1. Micro-étoiles du Hero
-     2. Bulles du Lagon
-     3. Scroll Reveal (IntersectionObserver)
-     4. Canvas étoiles — Te Pō
-     5. Easter egg — le lézard caché
-═══════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   CSS SHOWCASE · script.js
+   1. Curseur custom (lerp)
+   2. Sphere halo dynamique
+   3. Scene reveal (IntersectionObserver)
+   4. Cube 3D — mouse parallax
+   5. Blend circles — mouse parallax
+   6. feTurbulence — animation baseFrequency
+   7. Gyroscope (mobile, iOS 13+ avec permission)
+   8. Touch ripple (mobile)
+═══════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
-  /* ───────────────────────────────────────────────────────────────
-     1. MICRO-ÉTOILES HERO
-     Crée 45 petits points flottants dans la section hero.
-     Chacun a une taille, position, couleur et durée aléatoires.
-  ─────────────────────────────────────────────────────────────── */
-  var heroStars = document.getElementById('heroStars');
-  if (heroStars) {
-    /* Keyframe injecté une seule fois dans le <head> */
-    var starStyle = document.createElement('style');
-    starStyle.textContent = [
-      '@keyframes starDrift{',
-      'from{opacity:.1;transform:translate(0,0)}',
-      'to{opacity:.6;transform:translate(var(--tx),var(--ty))}',
-      '}'
-    ].join('');
-    document.head.appendChild(starStyle);
+  /* Détecte touch vs pointer */
+  var isMobile = window.matchMedia('(pointer: coarse)').matches;
 
-    for (var si = 0; si < 45; si++) {
-      var s   = document.createElement('span');
-      var sz  = Math.random() * 2.5 + 0.5;
-      var tx  = (Math.random() - 0.5) * 60;
-      var ty  = (Math.random() - 0.5) * 40;
-      var col = Math.random() > 0.5 ? '0,180,216' : '144,224,239';
-      var al  = (Math.random() * 0.45 + 0.12).toFixed(2);
-      var dur = (6 + Math.random() * 10).toFixed(1);
-      var del = (Math.random() * 4).toFixed(1);
 
-      s.style.cssText = [
-        'position:absolute',
-        'border-radius:50%',
-        'pointer-events:none',
-        'left:'   + (Math.random() * 100).toFixed(1) + '%',
-        'top:'    + (Math.random() * 100).toFixed(1) + '%',
-        'width:'  + sz.toFixed(1) + 'px',
-        'height:' + sz.toFixed(1) + 'px',
-        'background:rgba(' + col + ',' + al + ')',
-        '--tx:'   + tx.toFixed(0) + 'px',
-        '--ty:'   + ty.toFixed(0) + 'px',
-        'animation:starDrift ' + dur + 's ease-in-out ' + del + 's infinite alternate',
-      ].join(';');
+  /* ─────────────────────────────────────────────────────────
+     1. CURSEUR CUSTOM
+     Le point suit exactement la souris.
+     L'anneau suit avec un lerp (interpolation) pour un effet
+     de "traînée" fluide.
+  ───────────────────────────────────────────────────────── */
+  if (!isMobile) {
+    var cursorEl = document.getElementById('cursor');
+    var dot      = cursorEl.querySelector('.cur-dot');
+    var ring     = cursorEl.querySelector('.cur-ring');
 
-      heroStars.appendChild(s);
+    var mx = window.innerWidth  / 2;
+    var my = window.innerHeight / 2;
+    var rx = mx, ry = my;
+
+    document.addEventListener('mousemove', function (e) {
+      mx = e.clientX;
+      my = e.clientY;
+    });
+
+    /* Boucle lerp */
+    function tickCursor() {
+      rx += (mx - rx) * 0.11;
+      ry += (my - ry) * 0.11;
+      dot.style.transform  = 'translate(' + mx + 'px,' + my + 'px) translate(-50%,-50%)';
+      ring.style.transform = 'translate(' + rx.toFixed(1) + 'px,' + ry.toFixed(1) + 'px) translate(-50%,-50%)';
+      requestAnimationFrame(tickCursor);
     }
+    tickCursor();
+
+    /* Hover sur objets : agrandit l'anneau */
+    var hoverTargets = document.querySelectorAll(
+      '.sphere, .turb-wrap, .cube-scene, .blend-wrap, .bars-wrap'
+    );
+    hoverTargets.forEach(function (el) {
+      el.addEventListener('mouseenter', function () { document.body.classList.add('hov'); });
+      el.addEventListener('mouseleave', function () { document.body.classList.remove('hov'); });
+    });
   }
 
 
-  /* ───────────────────────────────────────────────────────────────
-     2. BULLES DU LAGON
-     Génère des bulles qui montent depuis le bas de la section lagon.
-     Chaque bulle est supprimée du DOM après son animation.
-  ─────────────────────────────────────────────────────────────── */
-  var bubblesContainer = document.getElementById('bubbles');
-  if (bubblesContainer) {
-    var bubStyle = document.createElement('style');
-    bubStyle.textContent = [
-      '@keyframes rise{',
-      '0%  {transform:translateX(0) scale(1);opacity:0}',
-      '10% {opacity:.7}',
-      '85% {opacity:.25}',
-      '100%{transform:translateX(var(--bx)) translateY(-105vh) scale(.4);opacity:0}',
-      '}'
-    ].join('');
-    document.head.appendChild(bubStyle);
-
-    function spawnBubble() {
-      var b    = document.createElement('span');
-      var size = (Math.random() * 14 + 5).toFixed(1);
-      var bx   = ((Math.random() - 0.5) * 80).toFixed(0);
-      var dur  = (6 + Math.random() * 9).toFixed(1);
-      var al   = (Math.random() * 0.16 + 0.04).toFixed(2);
-
-      b.style.cssText = [
-        'position:absolute',
-        'border-radius:50%',
-        'pointer-events:none',
-        'bottom:-20px',
-        'left:'   + (Math.random() * 100).toFixed(1) + '%',
-        'width:'  + size + 'px',
-        'height:' + size + 'px',
-        'background:rgba(144,224,239,' + al + ')',
-        'border:1px solid rgba(144,224,239,.18)',
-        '--bx:' + bx + 'px',
-        'animation:rise ' + dur + 's ease-in forwards',
-      ].join(';');
-
-      bubblesContainer.appendChild(b);
-      /* Nettoyage DOM après la fin de l'animation */
-      setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 15000);
-    }
-
-    /* Salve initiale puis intervalles réguliers */
-    for (var bi = 0; bi < 8; bi++) {
-      (function (i) { setTimeout(spawnBubble, i * 280); })(bi);
-    }
-    setInterval(spawnBubble, 750);
+  /* ─────────────────────────────────────────────────────────
+     2. SPHERE — HALO DYNAMIQUE
+     La pseudo-sphère a un ::after avec un radial-gradient
+     centré sur --mx --my. On met à jour ces variables
+     selon la position de la souris dans la sphère.
+  ───────────────────────────────────────────────────────── */
+  var sphere = document.getElementById('sphere');
+  if (sphere && !isMobile) {
+    sphere.addEventListener('mousemove', function (e) {
+      var r  = sphere.getBoundingClientRect();
+      var px = ((e.clientX - r.left) / r.width  * 100).toFixed(1) + '%';
+      var py = ((e.clientY - r.top)  / r.height * 100).toFixed(1) + '%';
+      sphere.style.setProperty('--mx', px);
+      sphere.style.setProperty('--my', py);
+    });
+    sphere.addEventListener('mouseleave', function () {
+      sphere.style.setProperty('--mx', '50%');
+      sphere.style.setProperty('--my', '50%');
+    });
   }
 
 
-  /* ───────────────────────────────────────────────────────────────
-     3. SCROLL REVEAL
-     Observe chaque section .reveal avec IntersectionObserver.
-     Quand elle entre dans le viewport, ajoute la classe .in
-     qui déclenche les transitions CSS des .reveal-item.
-  ─────────────────────────────────────────────────────────────── */
-  var revealSections = document.querySelectorAll('.reveal');
+  /* ─────────────────────────────────────────────────────────
+     3. SCENE REVEAL
+     Ajoute .in quand la section est visible à > 50%,
+     retire .in quand elle sort (pour re-animer à chaque fois).
+  ───────────────────────────────────────────────────────── */
+  var scenes = document.querySelectorAll('.scene');
 
-  if (revealSections.length) {
-    if (!window.IntersectionObserver) {
-      /* Fallback : tout visible immédiatement */
-      for (var ri = 0; ri < revealSections.length; ri++) {
-        revealSections[ri].classList.add('in');
-      }
-    } else {
-      var revealObs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in');
-            revealObs.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12 });
-
-      for (var ri2 = 0; ri2 < revealSections.length; ri2++) {
-        revealObs.observe(revealSections[ri2]);
-      }
-    }
-  }
-
-
-  /* ───────────────────────────────────────────────────────────────
-     4. CANVAS ÉTOILES — TE PŌ
-     Dessine un ciel étoilé scintillant sur la section nuit.
-     N'anime que lorsque la section est visible (perf mobile).
-  ─────────────────────────────────────────────────────────────── */
-  var starsCanvas = document.getElementById('starsCanvas');
-  if (starsCanvas) {
-    var sCtx   = starsCanvas.getContext('2d');
-    var sStars = [];
-    var sRaf   = null;
-
-    function buildStarField() {
-      sStars = [];
-      /* Densité adaptée à la surface du canvas */
-      var count = Math.floor((starsCanvas.width * starsCanvas.height) / 3800);
-      for (var i = 0; i < count; i++) {
-        sStars.push({
-          x:     Math.random() * starsCanvas.width,
-          y:     Math.random() * starsCanvas.height,
-          r:     Math.random() * 1.4 + 0.2,
-          phase: Math.random() * Math.PI * 2,
-          speed: Math.random() * 0.007 + 0.002,
-        });
-      }
-    }
-
-    function resizeStars() {
-      starsCanvas.width  = starsCanvas.clientWidth  || starsCanvas.parentElement.clientWidth;
-      starsCanvas.height = starsCanvas.clientHeight || starsCanvas.parentElement.clientHeight;
-      buildStarField();
-    }
-
-    function drawStars(ts) {
-      var t = ts * 0.001;
-      sCtx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
-      for (var i = 0; i < sStars.length; i++) {
-        var st = sStars[i];
-        /* Scintillement via sinus déphasé par étoile */
-        var a  = 0.2 + 0.8 * (Math.sin(st.phase + t * st.speed * 60) * 0.5 + 0.5);
-        sCtx.beginPath();
-        sCtx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
-        sCtx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
-        sCtx.fill();
-      }
-      sRaf = requestAnimationFrame(drawStars);
-    }
-
-    /* Observer : anime seulement quand la section est visible */
-    if (window.IntersectionObserver) {
-      var starsObs = new IntersectionObserver(function (entries) {
-        if (entries[0].isIntersecting) {
-          resizeStars();
-          sRaf = requestAnimationFrame(drawStars);
+  if (!scenes.length) { /* rien */ }
+  else if (!window.IntersectionObserver) {
+    scenes.forEach(function (s) { s.classList.add('in'); });
+  } else {
+    var sceneObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
         } else {
-          if (sRaf) { cancelAnimationFrame(sRaf); sRaf = null; }
+          /* Retire .in pour que les animations se rejouent */
+          e.target.classList.remove('in');
         }
-      }, { threshold: 0.05 });
-      starsObs.observe(starsCanvas.parentElement);
-    } else {
-      resizeStars();
-      sRaf = requestAnimationFrame(drawStars);
-    }
-
-    window.addEventListener('resize', function () {
-      if (sRaf) resizeStars();
-    });
+      });
+    }, { threshold: 0.5 });
+    scenes.forEach(function (s) { sceneObs.observe(s); });
   }
 
 
-  /* ───────────────────────────────────────────────────────────────
-     5. EASTER EGG — LE LÉZARD CACHÉ
+  /* ─────────────────────────────────────────────────────────
+     4. CUBE 3D — MOUSE PARALLAX
+     Quand la section S3 est visible, le cube suit la souris.
+     Hors champ, l'animation idle CSS reprend.
+  ───────────────────────────────────────────────────────── */
+  var cube    = document.getElementById('cube');
+  var s3      = document.getElementById('s3');
+  var cubeActive = false;
 
-     Moorea = "Te Fenua Āihere" = "La terre du lézard jaune".
-     Un petit lézard 🦎 est caché dans le footer (opacity .04,
-     quasi invisible). Le cliquer déclenche un overlay avec
-     des particules bioluminescentes et un message en tahitien.
+  function onCubeMouse(e) {
+    var cx = window.innerWidth  / 2;
+    var cy = window.innerHeight / 2;
+    var ry = ((e.clientX - cx) / cx) * 42;
+    var rx = -((e.clientY - cy) / cy) * 32;
+    cube.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+  }
 
-     Pour fermer : bouton ✕, touche Échap, ou clic hors du cadre.
-  ─────────────────────────────────────────────────────────────── */
-  var lizardBtn = document.getElementById('lizardBtn');
-  var easterEl  = document.getElementById('easterEgg');
-  var closeBtn  = document.getElementById('easterClose');
-  var bioCanvas = document.getElementById('bioCanvas');
+  if (cube && s3 && !isMobile && window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        cube.classList.add('live');
+        document.addEventListener('mousemove', onCubeMouse);
+        cubeActive = true;
+      } else {
+        cube.classList.remove('live');
+        document.removeEventListener('mousemove', onCubeMouse);
+        cubeActive = false;
+      }
+    }, { threshold: 0.4 }).observe(s3);
+  }
 
-  if (lizardBtn && easterEl && closeBtn && bioCanvas) {
-    var bioCtx       = bioCanvas.getContext('2d');
-    var bioRaf       = null;
-    var bioParticles = [];
 
-    /* Couleurs bioluminescentes */
-    var BIO_COLORS = [
-      '0,180,216',
-      '144,224,239',
-      '255,107,107',
-      '0,119,182',
-      '255,200,80',
-    ];
+  /* ─────────────────────────────────────────────────────────
+     5. BLEND CIRCLES — MOUSE PARALLAX
+     Les 3 cercles bougent en parallax léger selon la souris.
+     Amplitudes différentes pour chaque cercle.
+  ───────────────────────────────────────────────────────── */
+  var blendWrap = document.getElementById('blendWrap');
+  var s4        = document.getElementById('s4');
+  var circles   = blendWrap ? blendWrap.querySelectorAll('.bc') : [];
 
-    function buildParticles() {
-      bioParticles = [];
-      for (var i = 0; i < 140; i++) {
-        bioParticles.push({
-          x:     Math.random() * bioCanvas.width,
-          y:     Math.random() * bioCanvas.height,
-          vx:    (Math.random() - 0.5) * 1.8,
-          vy:    (Math.random() - 0.5) * 1.8,
-          r:     Math.random() * 4 + 1,
-          c:     BIO_COLORS[Math.floor(Math.random() * BIO_COLORS.length)],
-          phase: Math.random() * Math.PI * 2,
-          speed: Math.random() * 0.03 + 0.008,
+  function onBlendMouse(e) {
+    var cx = window.innerWidth  / 2;
+    var cy = window.innerHeight / 2;
+    var dx = (e.clientX - cx) / cx;
+    var dy = (e.clientY - cy) / cy;
+    if (circles[0]) circles[0].style.transform = 'translate(' + (dx * 22).toFixed(1) + 'px,' + (dy * 16).toFixed(1) + 'px)';
+    if (circles[1]) circles[1].style.transform = 'translate(' + (-dx * 16).toFixed(1) + 'px,' + (dy * 22).toFixed(1) + 'px)';
+    if (circles[2]) circles[2].style.transform = 'translate(' + (dx * 12).toFixed(1) + 'px,' + (-dy * 20).toFixed(1) + 'px)';
+  }
+
+  if (blendWrap && s4 && !isMobile && window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        circles.forEach(function (c) { c.classList.add('live'); });
+        document.addEventListener('mousemove', onBlendMouse);
+      } else {
+        circles.forEach(function (c) { c.classList.remove('live'); });
+        document.removeEventListener('mousemove', onBlendMouse);
+      }
+    }, { threshold: 0.4 }).observe(s4);
+  }
+
+
+  /* ─────────────────────────────────────────────────────────
+     6. FETURBULENCE — ANIMATION DE baseFrequency
+     On fait onduler lentement la fréquence du filtre SVG
+     pour un effet de matière vivante, organique.
+  ───────────────────────────────────────────────────────── */
+  var feTurb   = document.getElementById('feTurb');
+  var s2       = document.getElementById('s2');
+  var turbRaf  = null;
+  var freq     = 0.012;
+  var freqDir  = 0.00025;
+
+  function animTurb() {
+    freq += freqDir;
+    if (freq > 0.022 || freq < 0.007) freqDir = -freqDir;
+    feTurb.setAttribute('baseFrequency',
+      freq.toFixed(4) + ' ' + (freq * 0.68).toFixed(4)
+    );
+    turbRaf = requestAnimationFrame(animTurb);
+  }
+
+  if (feTurb && s2 && window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        if (!turbRaf) turbRaf = requestAnimationFrame(animTurb);
+      } else {
+        if (turbRaf) { cancelAnimationFrame(turbRaf); turbRaf = null; }
+      }
+    }, { threshold: 0.2 }).observe(s2);
+  }
+
+
+  /* ─────────────────────────────────────────────────────────
+     7. GYROSCOPE (MOBILE)
+     Remplace le parallax souris par l'inclinaison du téléphone.
+     iOS 13+ : DeviceOrientationEvent.requestPermission() requis.
+     Android : aucune permission.
+  ───────────────────────────────────────────────────────── */
+  if (isMobile) {
+    var gyroBtn = document.getElementById('gyroBtn');
+
+    function onGyro(e) {
+      /* beta  = inclinaison avant/arrière  -90..90 */
+      /* gamma = inclinaison gauche/droite  -90..90 */
+      var beta  = Math.max(-40, Math.min(40, (e.beta  || 0) - 40)) / 40;
+      var gamma = Math.max(-40, Math.min(40,  e.gamma || 0))        / 40;
+
+      /* Cube */
+      if (cube) {
+        cube.classList.add('live');
+        cube.style.transform =
+          'rotateX(' + (-beta * 32).toFixed(1) + 'deg) rotateY(' + (gamma * 42).toFixed(1) + 'deg)';
+      }
+
+      /* Blend circles */
+      if (circles[0]) circles[0].style.transform = 'translate(' + (gamma * 22).toFixed(1) + 'px,' + (beta * 16).toFixed(1) + 'px)';
+      if (circles[1]) circles[1].style.transform = 'translate(' + (-gamma * 16).toFixed(1) + 'px,' + (beta * 22).toFixed(1) + 'px)';
+      if (circles[2]) circles[2].style.transform = 'translate(' + (gamma * 12).toFixed(1) + 'px,' + (-beta * 20).toFixed(1) + 'px)';
+
+      /* Sphere halo */
+      if (sphere) {
+        var px = (((gamma + 1) / 2) * 100).toFixed(1) + '%';
+        var py = (((beta  + 1) / 2) * 100).toFixed(1) + '%';
+        sphere.style.setProperty('--mx', px);
+        sphere.style.setProperty('--my', py);
+      }
+    }
+
+    if (typeof DeviceOrientationEvent !== 'undefined') {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        /* iOS 13+ : permission requise */
+        gyroBtn.style.display = 'block';
+        gyroBtn.addEventListener('click', function () {
+          DeviceOrientationEvent.requestPermission().then(function (state) {
+            if (state === 'granted') {
+              gyroBtn.style.display = 'none';
+              window.addEventListener('deviceorientation', onGyro);
+            }
+          }).catch(function () {
+            gyroBtn.style.display = 'none';
+          });
         });
+      } else {
+        /* Android & autres : pas de permission nécessaire */
+        window.addEventListener('deviceorientation', onGyro);
       }
     }
+  }
 
-    function drawBio(ts) {
-      var t = ts * 0.001;
-      bioCtx.clearRect(0, 0, bioCanvas.width, bioCanvas.height);
-      for (var i = 0; i < bioParticles.length; i++) {
-        var p = bioParticles[i];
-        /* Mouvement rebondissant */
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > bioCanvas.width)  p.vx = -p.vx;
-        if (p.y < 0 || p.y > bioCanvas.height)  p.vy = -p.vy;
-        /* Opacité pulsée */
-        var a = 0.15 + 0.65 * (Math.sin(p.phase + t * p.speed * 60) * 0.5 + 0.5);
-        /* Halo lumineux */
-        bioCtx.save();
-        bioCtx.shadowBlur  = 18;
-        bioCtx.shadowColor = 'rgba(' + p.c + ',' + a.toFixed(2) + ')';
-        bioCtx.beginPath();
-        bioCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        bioCtx.fillStyle = 'rgba(' + p.c + ',' + a.toFixed(2) + ')';
-        bioCtx.fill();
-        bioCtx.restore();
-      }
-      bioRaf = requestAnimationFrame(drawBio);
-    }
 
-    function openEaster() {
-      bioCanvas.width  = window.innerWidth;
-      bioCanvas.height = window.innerHeight;
-      buildParticles();
-      easterEl.classList.add('open');
-      easterEl.removeAttribute('aria-hidden');
-      document.body.style.overflow = 'hidden';
-      bioRaf = requestAnimationFrame(drawBio);
-    }
+  /* ─────────────────────────────────────────────────────────
+     8. TOUCH RIPPLE (MOBILE)
+     Chaque tap crée un cercle qui se dilate et disparaît,
+     en remplacement de l'effet curseur.
+  ───────────────────────────────────────────────────────── */
+  if (isMobile) {
+    /* Keyframe injecté une seule fois */
+    var rs = document.createElement('style');
+    rs.textContent = '@keyframes rippleOut{from{transform:translate(-50%,-50%) scale(0);opacity:.7}to{transform:translate(-50%,-50%) scale(2.8);opacity:0}}';
+    document.head.appendChild(rs);
 
-    function closeEaster() {
-      easterEl.classList.remove('open');
-      easterEl.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-      if (bioRaf) { cancelAnimationFrame(bioRaf); bioRaf = null; }
-    }
-
-    lizardBtn.addEventListener('click', openEaster);
-    closeBtn.addEventListener('click', closeEaster);
-
-    /* Clic sur le fond de l'overlay pour fermer */
-    easterEl.addEventListener('click', function (e) {
-      if (e.target === easterEl) closeEaster();
-    });
-
-    /* Touche Échap */
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && easterEl.classList.contains('open')) {
-        closeEaster();
-      }
-    });
+    document.addEventListener('touchstart', function (e) {
+      var t = e.touches[0];
+      var r = document.createElement('div');
+      r.style.cssText = [
+        'position:fixed',
+        'pointer-events:none',
+        'z-index:9998',
+        'width:70px',
+        'height:70px',
+        'border-radius:50%',
+        'border:1px solid rgba(255,255,255,.45)',
+        'left:' + t.clientX + 'px',
+        'top:'  + t.clientY + 'px',
+        'animation:rippleOut .55s ease-out forwards',
+      ].join(';');
+      document.body.appendChild(r);
+      setTimeout(function () { if (r.parentNode) r.parentNode.removeChild(r); }, 600);
+    }, { passive: true });
   }
 
 }());
