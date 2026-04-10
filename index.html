@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Moorea — Te Fenua Āihere, l'île aux lézards jaunes">
+  <title>Moorea</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════════ -->
+  <section id="hero" class="section section--hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-stars" id="heroStars" aria-hidden="true"></div>
+
+    <div class="hero-content">
+      <!-- Coordonnées géographiques de Moorea -->
+      <p class="hero-coords">17°32'S &nbsp;·&nbsp; 149°50'W</p>
+
+      <!-- Titre principal : chaque lettre animée séparément -->
+      <h1 class="hero-title" aria-label="Moorea">
+        <span class="letter" style="--i:0">M</span><span
+              class="letter" style="--i:1">o</span><span
+              class="letter" style="--i:2">o</span><span
+              class="letter" style="--i:3">r</span><span
+              class="letter" style="--i:4">e</span><span
+              class="letter" style="--i:5">a</span>
+      </h1>
+
+      <p class="hero-sub">Te Fenua Āihere &mdash; L&rsquo;Île aux Lézards Jaunes</p>
+    </div>
+
+    <!-- 3 couches de vagues animées (SVG 200% de large pour loop seamless) -->
+    <div class="hero-waves" aria-hidden="true">
+      <div class="wave-track wt1">
+        <svg viewBox="0 0 2880 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,80 C240,20 480,140 720,80 C960,20 1200,140 1440,80 C1680,20 1920,140 2160,80 C2400,20 2640,140 2880,80 L2880,120 L0,120 Z" fill="rgba(0,180,216,.12)"/>
+        </svg>
+      </div>
+      <div class="wave-track wt2">
+        <svg viewBox="0 0 2880 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,95 C360,30 720,130 1080,65 C1260,30 1400,90 1440,95 C1800,30 2160,130 2520,65 C2700,30 2840,90 2880,95 L2880,120 L0,120 Z" fill="rgba(0,119,182,.2)"/>
+        </svg>
+      </div>
+      <div class="wave-track wt3">
+        <svg viewBox="0 0 2880 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,85 C180,130 540,40 900,85 C1080,115 1350,60 1440,85 C1620,130 1980,40 2340,85 C2520,115 2790,60 2880,85 L2880,120 L0,120 Z" fill="#023e8a"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Indicateur de scroll -->
+    <div class="scroll-cue" aria-hidden="true">
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════
+       01 · LE LAGON
+  ══════════════════════════════════════════════ -->
+  <section id="lagon" class="section section--lagon reveal">
+    <div class="lagon-glow" aria-hidden="true"></div>
+    <!-- Bulles générées par JS -->
+    <div class="bubbles" id="bubbles" aria-hidden="true"></div>
+
+    <div class="section-content">
+      <header class="section-header">
+        <span class="section-num">01</span>
+        <h2 class="section-title">Le Lagon</h2>
+        <p class="section-sub">Te Miti Rahi</p>
+      </header>
+
+      <!-- Cartes glassmorphism -->
+      <div class="cards">
+        <article class="card reveal-item" style="--d:.1s">
+          <span class="card-glyph" aria-hidden="true">◈</span>
+          <h3>Clarté</h3>
+          <p>Une eau d'une transparence absolue, où chaque rayon de soleil dessine des arabesques sur les coraux.</p>
+        </article>
+        <article class="card card--featured reveal-item" style="--d:.25s">
+          <span class="card-glyph" aria-hidden="true">⬡</span>
+          <h3>Profondeur</h3>
+          <p>Du turquoise éblouissant aux bleus abyssaux — le lagon de Mooréa concentre toutes les nuances du Pacifique.</p>
+        </article>
+        <article class="card reveal-item" style="--d:.4s">
+          <span class="card-glyph" aria-hidden="true">◇</span>
+          <h3>Vie</h3>
+          <p>Raies manta, tortues vertes, requins à pointe noire — un écosystème d'une richesse exceptionnelle.</p>
+        </article>
+      </div>
+    </div>
+
+    <!-- Transition vers la section Crêtes -->
+    <div class="section-sep" aria-hidden="true">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#1B4332"/>
+      </svg>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════
+       02 · LES CRÊTES
+  ══════════════════════════════════════════════ -->
+  <section id="cretes" class="section section--cretes reveal">
+    <div class="cretes-glow" aria-hidden="true"></div>
+
+    <div class="section-content">
+      <header class="section-header">
+        <span class="section-num">02</span>
+        <h2 class="section-title">Les Crêtes</h2>
+        <p class="section-sub">Te Mou'a</p>
+      </header>
+
+      <!-- Stat + texte -->
+      <div class="cretes-body reveal-item" style="--d:.1s">
+        <div class="stat">
+          <!-- Hauteur du mont Tohiea, point culminant de Moorea -->
+          <span class="stat-n">1207</span>
+          <span class="stat-l">mètres · Mont Tohiea</span>
+        </div>
+        <div class="cretes-sep" aria-hidden="true"></div>
+        <p class="cretes-p">
+          Les pics volcaniques de Mooréa percent les nuages comme des lames de basalte.
+          Surgis de l'océan il y a 2,5 millions d'années, ils dictent le vent et la pluie
+          — gardiens silencieux d'une île hors du temps.
+        </p>
+      </div>
+    </div>
+
+    <!-- Silhouette des montagnes en SVG -->
+    <div class="mountain-wrap reveal-item" style="--d:.3s" aria-hidden="true">
+      <svg viewBox="0 0 1440 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Arrière-plan : crêtes lointaines -->
+        <path class="mt-far"  d="M0,260 L0,180 L120,130 L240,160 L380,80 L500,150 L600,90 L680,40 L760,110 L860,60 L980,140 L1100,90 L1220,160 L1360,110 L1440,150 L1440,260 Z"/>
+        <!-- Premier plan : montagnes proches -->
+        <path class="mt-near" d="M0,260 L0,210 L140,175 L280,200 L420,145 L540,185 L640,150 L730,105 L820,155 L940,120 L1060,175 L1180,140 L1310,195 L1440,160 L1440,260 Z"/>
+      </svg>
+    </div>
+
+    <!-- Transition vers Te Po -->
+    <div class="section-sep" aria-hidden="true">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,30 C480,80 960,0 1440,50 L1440,80 L0,80 Z" fill="#0a0a1a"/>
+      </svg>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════
+       03 · TE PŌ — LA NUIT
+  ══════════════════════════════════════════════ -->
+  <section id="te-po" class="section section--tepo reveal">
+    <!-- Étoiles animées sur canvas (JS) -->
+    <canvas id="starsCanvas" aria-hidden="true"></canvas>
+    <!-- Lueur aurora subtile -->
+    <div class="aurora" aria-hidden="true"></div>
+
+    <div class="section-content">
+      <header class="section-header">
+        <span class="section-num">03</span>
+        <h2 class="section-title">Te Pō</h2>
+        <p class="section-sub">La Nuit Polynésienne</p>
+      </header>
+
+      <!-- Citation en tahitien -->
+      <blockquote class="tepo-quote reveal-item" style="--d:.2s">
+        <p>« E mau roa atu te ia o te fenua »</p>
+        <cite>Que la terre vive à jamais</cite>
+      </blockquote>
+
+      <!-- Emojis symboles de l'île -->
+      <div class="tepo-glyphs reveal-item" style="--d:.5s" aria-label="Symboles de Moorea">
+        <span class="glyph" role="img" aria-label="La mer">🌊</span>
+        <span class="glyph" role="img" aria-label="La montagne">⛰️</span>
+        <span class="glyph" role="img" aria-label="Le soleil">☀️</span>
+        <span class="glyph" role="img" aria-label="La lune">🌙</span>
+        <span class="glyph" role="img" aria-label="Le poisson">🐠</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════ -->
+  <footer id="footer">
+    <div class="footer-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,25 C360,50 1080,0 1440,25 L1440,50 L0,50 Z" fill="#0a0a1a"/>
+      </svg>
+    </div>
+    <div class="footer-inner">
+      <span class="f-name">Moorea</span>
+      <span class="f-sep" aria-hidden="true">&middot;</span>
+      <span class="f-coords">17°32'S — 149°50'W</span>
+      <!--
+        Easter egg : le lézard jaune (Te Fenua Āihere = "la terre du lézard")
+        est caché ici. Quasi invisible (opacity 0.04).
+        Cliquez dessus pour découvrir le secret de l'île.
+      -->
+      <button class="lizard-btn" id="lizardBtn" aria-label="..." tabindex="-1">🦎</button>
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════════════════════════
+       EASTER EGG OVERLAY
+  ══════════════════════════════════════════════ -->
+  <div id="easterEgg" class="easter"
+       role="dialog" aria-modal="true" aria-hidden="true"
+       aria-label="Secret de Moorea">
+    <!-- Particules bioluminescentes (canvas JS) -->
+    <canvas id="bioCanvas" aria-hidden="true"></canvas>
+    <div class="easter-box">
+      <p class="e-emoji">🦎</p>
+      <h2 class="e-title">Ko Moorea te fenua!</h2>
+      <p class="e-text">Tu as trouvé le petit lézard jaune.<br>Māuruuru roa — Merci d'avoir exploré.</p>
+      <button class="e-close" id="easterClose">✕&thinsp; Repartir</button>
+    </div>
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
