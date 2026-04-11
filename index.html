@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TLB</title>
-  <!-- Favicon SVG custom : fond sombre, TLB en gradient violet→cyan, soulignement -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%238b5cf6'/><stop offset='1' stop-color='%2306b6d4'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='%230a0a12'/><circle cx='74' cy='26' r='30' fill='%238b5cf6' opacity='.11'/><circle cx='26' cy='74' r='24' fill='%2306b6d4' opacity='.09'/><text x='50' y='66' font-family='-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif' font-weight='900' font-size='37' fill='url(%23a)' text-anchor='middle' letter-spacing='-2'>TLB</text><rect x='26' y='74' width='48' height='3' rx='1.5' fill='url(%23a)'/></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,147 +18,129 @@
   <!-- Bouton permission gyroscope (iOS 13+) -->
   <button class="gyro-btn" id="gyroBtn">Activer le mouvement</button>
 
-  <!-- ══════════════════════════════════════════════
-       S1 · @property — Gradient Vivant
-       Démo : les couleurs d'un gradient s'animent
-       fluidement grâce à @property (impossible sans)
-  ══════════════════════════════════════════════ -->
-  <section class="scene" id="s1" data-label="@property" data-name="Gradient Vivant" data-index="01">
-    <div class="scene-bg bg1"></div>
-    <div class="stage">
-      <div class="sphere" id="sphere">
-        <div class="sphere-shine"></div>
-        <div class="sphere-depth"></div>
-      </div>
-    </div>
-    <div class="scene-label">
-      <span class="lbl-feat">@property</span>
-      <span class="lbl-name">Gradient Vivant</span>
-    </div>
-    <div class="scroll-cue" aria-hidden="true">
-      <div class="scroll-line"></div>
-    </div>
-  </section>
+  <!-- Conteneur de slides — navigation swipe -->
+  <div class="slides" id="slides">
 
-
-  <!-- ══════════════════════════════════════════════
-       S2 · SVG feTurbulence — Matière Liquide
-       Démo : filtre SVG feTurbulence + feDisplacementMap
-       animé en JS pour simuler une matière organique
-  ══════════════════════════════════════════════ -->
-  <section class="scene" id="s2" data-index="02">
-    <div class="scene-bg bg2"></div>
-    <div class="stage">
-      <div class="turb-wrap" id="turbWrap">
-        <svg class="turb-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <filter id="turbFilter" x="-20%" y="-20%" width="140%" height="140%">
-              <feTurbulence id="feTurb"
-                type="fractalNoise"
-                baseFrequency="0.012 0.008"
-                numOctaves="4"
-                seed="2"
-                result="noise"/>
-              <feDisplacementMap
-                in="SourceGraphic" in2="noise"
-                scale="55"
-                xChannelSelector="R" yChannelSelector="G"/>
-            </filter>
-            <radialGradient id="turbGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"   stop-color="rgba(16,185,129,.95)"/>
-              <stop offset="45%"  stop-color="rgba(6,182,212,.75)"/>
-              <stop offset="100%" stop-color="rgba(139,92,246,.3)"/>
-            </radialGradient>
-          </defs>
-          <circle cx="200" cy="200" r="165" fill="url(#turbGrad)" filter="url(#turbFilter)"/>
-        </svg>
-        <!-- Plaque glass par-dessus -->
-        <div class="turb-glass"></div>
-      </div>
-    </div>
-    <div class="scene-label">
-      <span class="lbl-feat">SVG feTurbulence</span>
-      <span class="lbl-name">Matière Liquide</span>
-    </div>
-  </section>
-
-
-  <!-- ══════════════════════════════════════════════
-       S3 · CSS perspective — Dimension
-       Démo : cube 3D pur CSS, 6 faces glassmorphism,
-       rotation pilotée par la souris ou le gyroscope
-  ══════════════════════════════════════════════ -->
-  <section class="scene" id="s3" data-index="03">
-    <div class="scene-bg bg3"></div>
-    <div class="stage">
-      <div class="cube-scene">
-        <div class="cube" id="cube">
-          <div class="face face-f"></div>
-          <div class="face face-b"></div>
-          <div class="face face-r"></div>
-          <div class="face face-l"></div>
-          <div class="face face-t"></div>
-          <div class="face face-bo"></div>
+    <!-- ══ S1 · @property — Sphère ══════════════════════════ -->
+    <section class="scene" id="s1" data-index="01">
+      <div class="scene-bg bg1"></div>
+      <div class="stage">
+        <div class="sphere" id="sphere">
+          <div class="sphere-shine"></div>
+          <div class="sphere-depth"></div>
         </div>
       </div>
-    </div>
-    <div class="scene-label">
-      <span class="lbl-feat">CSS perspective</span>
-      <span class="lbl-name">Dimension</span>
-    </div>
-  </section>
-
-
-  <!-- ══════════════════════════════════════════════
-       S4 · mix-blend-mode — Fusion
-       Démo : 3 cercles avec mix-blend-mode:screen,
-       isolation:isolate, parallax souris/gyro
-  ══════════════════════════════════════════════ -->
-  <section class="scene" id="s4" data-index="04">
-    <div class="scene-bg bg4"></div>
-    <div class="stage">
-      <div class="blend-wrap" id="blendWrap">
-        <div class="bc bc1"></div>
-        <div class="bc bc2"></div>
-        <div class="bc bc3"></div>
+      <div class="scene-label">
+        <span class="lbl-feat">@property</span>
+        <span class="lbl-name">Sphère</span>
       </div>
-    </div>
-    <div class="scene-label">
-      <span class="lbl-feat">mix-blend-mode</span>
-      <span class="lbl-name">Fusion</span>
-    </div>
-  </section>
+    </section>
 
-
-  <!-- ══════════════════════════════════════════════
-       S5 · scroll-timeline — Chorégraphie
-       Démo : barres animées via scroll-timeline CSS
-       natif + fallback IntersectionObserver
-  ══════════════════════════════════════════════ -->
-  <section class="scene" id="s5" data-index="05">
-    <div class="scene-bg bg5"></div>
-    <div class="stage">
-      <div class="bars-wrap" id="barsWrap">
-        <div class="bars-glass"></div>
-        <div class="bars-inner">
-          <!-- Hauteurs définies via --h en CSS -->
-          <div class="bar" style="--h:45%;--i:0"></div>
-          <div class="bar" style="--h:78%;--i:1"></div>
-          <div class="bar" style="--h:52%;--i:2"></div>
-          <div class="bar" style="--h:91%;--i:3"></div>
-          <div class="bar" style="--h:63%;--i:4"></div>
-          <div class="bar" style="--h:82%;--i:5"></div>
-          <div class="bar" style="--h:48%;--i:6"></div>
-          <div class="bar" style="--h:70%;--i:7"></div>
+    <!-- ══ S2 · Touch + feTurbulence — Onde ════════════════ -->
+    <section class="scene" id="s2" data-index="02">
+      <div class="scene-bg bg2"></div>
+      <div class="stage">
+        <div class="wave-wrap" id="waveWrap">
+          <svg class="wave-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <filter id="waveFilter" x="-25%" y="-25%" width="150%" height="150%">
+                <feTurbulence id="feTurb"
+                  type="fractalNoise"
+                  baseFrequency="0.014 0.009"
+                  numOctaves="5"
+                  seed="7"
+                  result="noise"/>
+                <feDisplacementMap id="feDisp"
+                  in="SourceGraphic" in2="noise"
+                  scale="38"
+                  xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <radialGradient id="waveGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="rgba(16,185,129,.96)"/>
+                <stop offset="50%"  stop-color="rgba(6,182,212,.80)"/>
+                <stop offset="100%" stop-color="rgba(99,102,241,.35)"/>
+              </radialGradient>
+            </defs>
+            <circle cx="200" cy="200" r="168" fill="url(#waveGrad)" filter="url(#waveFilter)"/>
+          </svg>
+          <div class="wave-glass"></div>
         </div>
       </div>
-    </div>
-    <div class="scene-label">
-      <span class="lbl-feat">scroll-timeline</span>
-      <span class="lbl-name">Chorégraphie</span>
-    </div>
-  </section>
+      <div class="scene-label">
+        <span class="lbl-feat">Touch + feTurbulence</span>
+        <span class="lbl-name">Onde</span>
+      </div>
+    </section>
 
+    <!-- ══ S3 · transform3d — Strata ═══════════════════════ -->
+    <section class="scene" id="s3" data-index="03">
+      <div class="scene-bg bg3"></div>
+      <div class="stage">
+        <div class="strata-scene">
+          <div class="strata" id="strata">
+            <div class="plate plate1">
+              <span class="plate-shine"></span>
+            </div>
+            <div class="plate plate2">
+              <span class="plate-shine"></span>
+            </div>
+            <div class="plate plate3">
+              <span class="plate-shine"></span>
+            </div>
+            <div class="plate plate4">
+              <span class="plate-shine"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-label">
+        <span class="lbl-feat">transform3d</span>
+        <span class="lbl-name">Strata</span>
+      </div>
+    </section>
+
+    <!-- ══ S4 · mix-blend-mode + clip-path — Prisme ════════ -->
+    <section class="scene" id="s4" data-index="04">
+      <div class="scene-bg bg4"></div>
+      <div class="stage">
+        <div class="prism-wrap" id="prismWrap">
+          <div class="prism-ray pr1"></div>
+          <div class="prism-ray pr2"></div>
+          <div class="prism-ray pr3"></div>
+          <div class="prism-core"></div>
+        </div>
+      </div>
+      <div class="scene-label">
+        <span class="lbl-feat">mix-blend-mode + clip-path</span>
+        <span class="lbl-name">Prisme</span>
+      </div>
+    </section>
+
+    <!-- ══ S5 · clip-path + @property — Morphe ═════════════ -->
+    <section class="scene" id="s5" data-index="05">
+      <div class="scene-bg bg5"></div>
+      <div class="stage">
+        <div class="morph-wrap" id="morphWrap">
+          <div class="morph" id="morph"></div>
+          <div class="morph-glow"></div>
+        </div>
+      </div>
+      <div class="scene-label">
+        <span class="lbl-feat">clip-path + @property</span>
+        <span class="lbl-name">Morphe</span>
+      </div>
+    </section>
+
+  </div><!-- /.slides -->
+
+  <!-- Navigation dots (côté droit) -->
+  <nav class="dots" id="dotsNav" aria-label="Navigation">
+    <button class="dot active" data-to="0" aria-label="Sphère"></button>
+    <button class="dot" data-to="1" aria-label="Onde"></button>
+    <button class="dot" data-to="2" aria-label="Strata"></button>
+    <button class="dot" data-to="3" aria-label="Prisme"></button>
+    <button class="dot" data-to="4" aria-label="Morphe"></button>
+  </nav>
 
   <script src="script.js"></script>
 </body>
