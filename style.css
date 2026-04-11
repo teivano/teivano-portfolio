@@ -1,43 +1,34 @@
 /* ═══════════════════════════════════════════════════════════
-   CSS SHOWCASE · style.css — Liquid Glass v2
-   5 sections : Sphère / Onde / Strata / Prisme / Morphe
-   Navigation swipe (mobile) + wheel (desktop)
+   CSS SHOWCASE · style.css — Liquid Glass v3
+   Sections : Verre / Liquide / Prisme / Bulle / Onde
+   Fond blanc (light) + fond noir (dark) selon section
 ═══════════════════════════════════════════════════════════ */
 
-/* ── @property : couleurs animables ────────────────────── */
+/* ── @property ──────────────────────────────────────────── */
 @property --ca { syntax: '<color>'; inherits: false; initial-value: #8b5cf6; }
 @property --cb { syntax: '<color>'; inherits: false; initial-value: #3b82f6; }
 @property --cc { syntax: '<color>'; inherits: false; initial-value: #06b6d4; }
-@property --ma { syntax: '<color>'; inherits: false; initial-value: #8b5cf6; }
-@property --mb { syntax: '<color>'; inherits: false; initial-value: #ec4899; }
-@property --mc { syntax: '<color>'; inherits: false; initial-value: #10b981; }
 
 /* ── Variables ─────────────────────────────────────────── */
 :root {
-  --bg:           #07070e;
-  --glass:        rgba(255,255,255,.045);
-  --glass-b:      rgba(255,255,255,.085);
-  --shine:        rgba(255,255,255,.22);
-  --text:         rgba(255,255,255,.92);
-  --dim:          rgba(255,255,255,.28);
-  --ease:         cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-back:    cubic-bezier(0.34, 1.56, 0.64, 1);
-  --obj:          min(340px, 76vw);
-  --strata-s:     min(260px, 68vw);
-  --nav-dur:      0.78s;
+  --ease:      cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-dur:   0.82s;
+  --obj:       min(300px, 74vw);
+  --liq-w:     min(260px, 62vw);
+  --liq-h:     min(360px, 78vw);
+  --liq-r:     min(36px, 8vw);
+  --prism-h:   min(220px, 52vw);
+  --prism-w:   min(180px, 42vw);
+  --bubble-s:  min(280px, 72vw);
+  --pond-s:    min(380px, 84vw);
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { height: 100%; }
-
+html, body { height: 100%; }
 body {
-  background:  var(--bg);
-  color:       var(--text);
-  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   overflow:    hidden;
-  height:      100%;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   cursor:      none;
 }
 @media (pointer: coarse) { body { cursor: auto; } }
@@ -46,17 +37,15 @@ button { font-family: inherit; }
 
 
 /* ═══════════════════════════════════════════════════════════
-   NAVIGATION SLIDES
+   SLIDES & SCENES
 ═══════════════════════════════════════════════════════════ */
 .slides {
-  position:   fixed;
-  top:        0;
-  left:       0;
-  width:      100%;
+  position:    fixed;
+  top: 0; left: 0;
+  width:       100%;
   will-change: transform;
-  transition: transform var(--nav-dur) var(--ease);
+  transition:  transform var(--nav-dur) var(--ease);
 }
-
 .scene {
   position:        relative;
   width:           100%;
@@ -67,403 +56,491 @@ button { font-family: inherit; }
   overflow:        hidden;
 }
 
+/* Fonds */
+.s-light { background: #f8f8fb; color: #1a1028; }
+.s-dark  { background: #060610; color: rgba(255,255,255,.9); }
+
+/* Stage */
+.stage {
+  position: relative;
+  z-index:  2;
+  display:  flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BLOBS (background, visibles à travers le verre)
+═══════════════════════════════════════════════════════════ */
+.blobs {
+  position:       absolute;
+  inset:          0;
+  z-index:        0;
+  pointer-events: none;
+  overflow:       hidden;
+}
+.blob {
+  position:  absolute;
+  border-radius: 50%;
+}
+@keyframes bm1 { from { transform: translate(0,0) scale(1); }    to { transform: translate(4%,5%) scale(1.06); } }
+@keyframes bm2 { from { transform: translate(0,0) scale(1.04); } to { transform: translate(-3%,4%) scale(.97); } }
+@keyframes bm3 { from { transform: translate(0,0) scale(1); }    to { transform: translate(5%,-4%) scale(1.08); } }
+
 
 /* ═══════════════════════════════════════════════════════════
    CURSEUR CUSTOM (desktop)
 ═══════════════════════════════════════════════════════════ */
-#cursor {
-  position:       fixed;
-  top: 0; left:  0;
-  z-index:        9999;
-  pointer-events: none;
-}
+#cursor { position:fixed;top:0;left:0;z-index:9999;pointer-events:none; }
 .cur-dot {
-  position:    absolute;
-  width:       5px; height: 5px;
-  background:  #fff;
-  border-radius: 50%;
-  transform:   translate(-50%, -50%);
-  transition:  width .15s, height .15s, background .25s;
+  position:absolute;width:5px;height:5px;background:#555;
+  border-radius:50%;transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,background .25s;
 }
 .cur-ring {
-  position:      absolute;
-  width:         34px; height: 34px;
-  border:        1px solid rgba(255,255,255,.4);
-  border-radius: 50%;
-  transform:     translate(-50%, -50%);
-  transition:    width .35s var(--ease), height .35s var(--ease),
-                 border-color .25s, background .25s;
+  position:absolute;width:30px;height:30px;
+  border:1px solid rgba(80,80,100,.4);border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:width .35s var(--ease),height .35s var(--ease),border-color .25s,background .25s;
 }
-body.hov .cur-dot  { width: 8px; height: 8px; background: var(--acc, #8b5cf6); }
-body.hov .cur-ring {
-  width: 56px; height: 56px;
-  border-color: var(--acc, #8b5cf6);
-  background:   rgba(139,92,246,.07);
-}
+.s-dark ~ * .cur-dot,
+body.dark-cur .cur-dot  { background:#fff; }
+body.dark-cur .cur-ring { border-color:rgba(255,255,255,.35); }
+body.hov .cur-ring { width:50px;height:50px;background:rgba(139,92,246,.08);border-color:#8b5cf6; }
+body.hov .cur-dot  { background:#8b5cf6;width:7px;height:7px; }
 
 
 /* ═══════════════════════════════════════════════════════════
    BOUTON GYROSCOPE
 ═══════════════════════════════════════════════════════════ */
 .gyro-btn {
-  display:         none;
-  position:        fixed;
-  bottom:          2rem; left: 50%;
-  transform:       translateX(-50%);
-  z-index:         200;
-  background:      rgba(255,255,255,.07);
-  border:          1px solid rgba(255,255,255,.14);
-  color:           rgba(255,255,255,.65);
-  padding:         .55rem 1.4rem;
-  border-radius:   50px;
-  font-size:       .78rem;
-  letter-spacing:  .08em;
-  backdrop-filter: blur(14px);
-  cursor:          pointer;
-  transition:      background .2s;
+  display:none;position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
+  z-index:200;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.12);
+  color:rgba(0,0,0,.55);padding:.55rem 1.4rem;border-radius:50px;
+  font-size:.78rem;letter-spacing:.08em;backdrop-filter:blur(14px);
+  cursor:pointer;transition:background .2s;
 }
-.gyro-btn:hover { background: rgba(255,255,255,.12); }
+.gyro-btn:hover { background:rgba(0,0,0,.1); }
 
 
 /* ═══════════════════════════════════════════════════════════
    DOTS NAVIGATION
 ═══════════════════════════════════════════════════════════ */
 .dots {
-  position:        fixed;
-  right:           clamp(1.4rem, 3.5vw, 2.5rem);
-  top:             50%;
-  transform:       translateY(-50%);
-  z-index:         100;
-  display:         flex;
-  flex-direction:  column;
-  gap:             12px;
+  position:fixed;right:clamp(1.2rem,3vw,2.2rem);top:50%;
+  transform:translateY(-50%);z-index:100;
+  display:flex;flex-direction:column;gap:12px;
 }
 .dot {
-  width:           7px;
-  height:          7px;
-  border-radius:   50%;
-  background:      rgba(255,255,255,.22);
-  border:          none;
-  cursor:          pointer;
-  transition:      background .35s, transform .35s var(--ease-back);
-  padding:         0;
+  width:6px;height:6px;border-radius:50%;border:none;cursor:pointer;padding:0;
+  background:rgba(0,0,0,.2);
+  transition:background .35s,transform .35s var(--ease);
 }
-.dot.active {
-  background: rgba(255,255,255,.88);
-  transform:  scale(1.6);
-}
+.dot.active { background:rgba(0,0,0,.75);transform:scale(1.65); }
+/* Dots blancs sur sections sombres */
+.slide-dark .dot    { background:rgba(255,255,255,.25); }
+.slide-dark .dot.active { background:rgba(255,255,255,.85); }
 
 
 /* ═══════════════════════════════════════════════════════════
-   FOND PAR SECTION
+   LABEL SECTION
 ═══════════════════════════════════════════════════════════ */
-.scene-bg {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-}
-.bg1 { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(139,92,246,.18)  0%, transparent 70%); }
-.bg2 { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(16,185,129,.15)  0%, transparent 70%); }
-.bg3 { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(59,130,246,.16)  0%, transparent 70%); }
-.bg4 { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(236,72,153,.14)  0%, transparent 70%); }
-.bg5 { background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(245,158,11,.13)  0%, transparent 70%); }
-
-
-/* ═══════════════════════════════════════════════════════════
-   LABEL DE SECTION
-═══════════════════════════════════════════════════════════ */
-.stage {
-  position: relative; z-index: 2;
-  display:  flex; align-items: center; justify-content: center;
-}
-
 .scene-label {
-  position:       absolute;
-  bottom:         clamp(2rem, 6vh, 4rem);
-  left:           clamp(2rem, 6vw, 5rem);
-  z-index:        3;
-  display:        flex;
-  flex-direction: column;
-  gap:            .28rem;
-  opacity:        0;
-  transform:      translateY(14px);
-  transition:     opacity .7s var(--ease) .1s, transform .7s var(--ease) .1s;
+  position:absolute;
+  bottom:clamp(2rem,6vh,4rem);left:clamp(2rem,6vw,5rem);
+  z-index:3;display:flex;flex-direction:column;gap:.28rem;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .7s var(--ease) .1s,transform .7s var(--ease) .1s;
 }
-.scene.active .scene-label { opacity: 1; transform: none; }
+.scene.active .scene-label { opacity:1;transform:none; }
 
 .lbl-feat {
-  font-size:      clamp(.58rem, 1.2vw, .7rem);
-  letter-spacing: .34em;
-  text-transform: uppercase;
-  color:          var(--dim);
-  font-weight:    400;
+  font-size:clamp(.56rem,1.2vw,.68rem);letter-spacing:.34em;
+  text-transform:uppercase;font-weight:400;
 }
+.s-light .lbl-feat { color:rgba(0,0,0,.35); }
+.s-dark  .lbl-feat { color:rgba(255,255,255,.28); }
+
 .lbl-name {
-  font-size:      clamp(1.4rem, 3.8vw, 2.2rem);
-  font-weight:    300;
-  letter-spacing: -.03em;
+  font-size:clamp(1.4rem,3.8vw,2.2rem);font-weight:300;letter-spacing:-.03em;
 }
+.s-light .lbl-name { color:rgba(0,0,0,.82); }
+.s-dark  .lbl-name { color:rgba(255,255,255,.9); }
 
 /* Compteur coin haut droit */
 .scene::before {
-  content:    attr(data-index);
-  position:   absolute;
-  top:        clamp(1.8rem, 5vh, 3rem);
-  right:      clamp(2rem, 5vw, 4rem);
-  z-index:    3;
-  font-size:  .66rem;
-  letter-spacing: .28em;
-  color:      var(--dim);
-  font-family: 'Courier New', monospace;
-  opacity:    0;
-  transition: opacity .5s ease .2s;
+  content:attr(data-index);position:absolute;
+  top:clamp(1.8rem,5vh,3rem);right:clamp(2rem,5vw,4rem);
+  z-index:3;font-size:.64rem;letter-spacing:.28em;
+  font-family:'Courier New',monospace;
+  opacity:0;transition:opacity .5s ease .2s;
 }
-.scene.active::before { opacity: 1; }
+.scene.active::before { opacity:1; }
+.s-light::before { color:rgba(0,0,0,.22); }
+.s-dark::before  { color:rgba(255,255,255,.22); }
 
 
 /* ═══════════════════════════════════════════════════════════
-   S1 · @property — SPHÈRE
+   S1 · VERRE — glass card sur fond blanc
 ═══════════════════════════════════════════════════════════ */
-.sphere {
-  width:         var(--obj);
-  height:        var(--obj);
-  border-radius: 50%;
-  position:      relative;
-  background:    radial-gradient(circle at 38% 36%, var(--ca), var(--cb) 50%, var(--cc) 100%);
-  animation:     sphereShift 8s ease-in-out infinite alternate;
+.glass-card {
+  width:    min(260px,64vw);
+  height:   min(380px,82vw);
+  border-radius: min(32px,7vw);
+  position: relative;
+  overflow: hidden;
+  cursor:   pointer;
+
+  /* Substance du verre */
+  background:      rgba(255,255,255,.42);
+  backdrop-filter: blur(36px) saturate(180%) brightness(1.04);
+  -webkit-backdrop-filter: blur(36px) saturate(180%) brightness(1.04);
+
+  /* Bords */
+  border: 1px solid rgba(255,255,255,.85);
+
+  /* Ombres portées + reflet bord sup interne */
   box-shadow:
-    0 0 90px  rgba(139,92,246,.30),
-    0 0 200px rgba(59,130,246,.12),
-    inset 0 1px 0 var(--shine);
-  transition:    transform .1s ease-out;
-  will-change:   transform;
+    inset 0 1.5px 0 rgba(255,255,255,.95),
+    inset 0 -0.5px 0 rgba(255,255,255,.35),
+    inset 1px 0 0 rgba(255,255,255,.5),
+    inset -1px 0 0 rgba(255,255,255,.4),
+    0 28px 80px rgba(0,0,0,.09),
+    0 6px 24px rgba(0,0,0,.06);
+
+  transition: transform .12s ease-out, box-shadow .3s ease;
+  will-change: transform;
 }
-@keyframes sphereShift {
-  from { --ca: #8b5cf6; --cb: #3b82f6; --cc: #06b6d4; }
-  to   { --ca: #ec4899; --cb: #8b5cf6; --cc: #3b82f6; }
-}
-.sphere-shine {
-  position: absolute; top: 10%; left: 13%;
-  width: 33%; height: 27%;
-  background: radial-gradient(ellipse, rgba(255,255,255,.48) 0%, transparent 70%);
-  border-radius: 50%;
-  filter: blur(7px);
-  pointer-events: none;
-  transition: top .12s ease-out, left .12s ease-out; /* suit légèrement le gyro */
-}
-.sphere-depth {
-  position: absolute; bottom: 9%; right: 11%;
-  width: 42%; height: 36%;
-  background: radial-gradient(ellipse, rgba(0,0,0,.28) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-/* Halo dynamique (--mx --my mis par JS) */
-.sphere::after {
-  content:        '';
-  position:       absolute;
-  inset:          0;
-  border-radius:  50%;
-  background:     radial-gradient(circle at var(--mx,50%) var(--my,50%),
-                    rgba(255,255,255,.16) 0%, transparent 55%);
-  pointer-events: none;
-  transition:     background .05s;
+.glass-card:hover {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.98),
+    inset 0 -0.5px 0 rgba(255,255,255,.4),
+    inset 1px 0 0 rgba(255,255,255,.55),
+    inset -1px 0 0 rgba(255,255,255,.45),
+    0 40px 100px rgba(0,0,0,.12),
+    0 10px 30px rgba(0,0,0,.08);
 }
 
-
-/* ═══════════════════════════════════════════════════════════
-   S2 · Touch + feTurbulence — ONDE
-═══════════════════════════════════════════════════════════ */
-.wave-wrap {
-  position: relative;
-  width:    var(--obj); height: var(--obj);
-  display:  flex; align-items: center; justify-content: center;
-}
-.wave-svg {
-  width: 100%; height: 100%;
-  filter:
-    drop-shadow(0 0 55px rgba(16,185,129,.38))
-    drop-shadow(0 0 22px rgba(6,182,212,.22));
-}
-.wave-glass {
-  position:        absolute;
-  inset:           17%;
-  border-radius:   26px;
-  background:      rgba(255,255,255,.03);
-  border:          1px solid rgba(255,255,255,.09);
-  backdrop-filter: blur(12px);
-  box-shadow:      inset 0 1px 0 rgba(255,255,255,.14);
-  pointer-events:  none;
-}
-
-/* Ripple au tap (injecté par JS) */
-@keyframes waveRipple {
-  from { transform: translate(-50%,-50%) scale(0); opacity: .7; }
-  to   { transform: translate(-50%,-50%) scale(3.5); opacity: 0; }
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   S3 · transform3d — STRATA
-═══════════════════════════════════════════════════════════ */
-.strata-scene {
-  width:              var(--strata-s);
-  height:             var(--strata-s);
-  perspective:        900px;
-  perspective-origin: 50% 50%;
-}
-.strata {
-  width:           100%; height: 100%;
-  position:        relative;
-  transform-style: preserve-3d;
-  transform:       rotateX(-16deg) rotateY(24deg);
-  animation:       strataIdle 18s ease-in-out infinite;
-  transition:      transform .09s ease-out;
-  will-change:     transform;
-}
-.strata.live { animation: none; }
-@keyframes strataIdle {
-  0%   { transform: rotateX(-16deg) rotateY(24deg); }
-  50%  { transform: rotateX(-24deg) rotateY(204deg); }
-  100% { transform: rotateX(-16deg) rotateY(384deg); }
-}
-.plate {
-  position:        absolute;
-  inset:           0;
-  border-radius:   22px;
-  border:          1px solid rgba(255,255,255,.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  overflow:        hidden;
-}
-/* Reflet interne */
-.plate-shine {
-  display:    block;
-  position:   absolute;
-  inset:      0;
-  background: linear-gradient(145deg, rgba(255,255,255,.09) 0%, transparent 55%);
-  border-radius: inherit;
-}
-.plate1 { background: rgba(99,102,241,.06); transform: translateZ(-72px); }
-.plate2 { background: rgba(139,92,246,.07); transform: translateZ(-24px); }
-.plate3 { background: rgba(168,85,247,.08); transform: translateZ(24px);  }
-.plate4 { background: rgba(217,70,239,.09); transform: translateZ(72px);
-          box-shadow: 0 0 60px rgba(168,85,247,.15), inset 0 1px 0 rgba(255,255,255,.14); }
-
-
-/* ═══════════════════════════════════════════════════════════
-   S4 · mix-blend-mode + clip-path — PRISME
-═══════════════════════════════════════════════════════════ */
-.prism-wrap {
-  position:  relative;
-  width:     var(--obj); height: var(--obj);
-  isolation: isolate;
-  display:   flex; align-items: center; justify-content: center;
-}
-/* Rayons lumineux (ellipses orientées) */
-.prism-ray {
-  position:       absolute;
-  mix-blend-mode: screen;
-  border-radius:  50%;
-  will-change:    transform;
-  transition:     transform .1s ease-out;
-}
-.pr1 {
-  width: 45%; height: 130%;
-  background: radial-gradient(ellipse, rgba(236,72,153,.75) 0%, transparent 68%);
-  transform: rotate(-35deg) translateY(-8%);
-  animation: r1idle 9s ease-in-out infinite alternate;
-}
-.pr2 {
-  width: 45%; height: 130%;
-  background: radial-gradient(ellipse, rgba(59,130,246,.75) 0%, transparent 68%);
-  transform: rotate(35deg) translateY(-8%);
-  animation: r2idle 11s ease-in-out infinite alternate;
-  animation-delay: -4s;
-}
-.pr3 {
-  width: 45%; height: 100%;
-  background: radial-gradient(ellipse, rgba(16,185,129,.65) 0%, transparent 68%);
-  transform: rotate(0deg) translateY(18%);
-  animation: r3idle 7s ease-in-out infinite alternate;
-  animation-delay: -2s;
-}
-@keyframes r1idle { from { transform: rotate(-35deg) translateY(-8%);  } to { transform: rotate(-28deg) translateY(-12%); } }
-@keyframes r2idle { from { transform: rotate(35deg)  translateY(-8%);  } to { transform: rotate(28deg)  translateY(-12%); } }
-@keyframes r3idle { from { transform: rotate(0deg)   translateY(18%);  } to { transform: rotate(5deg)   translateY(14%); } }
-.prism-ray.live { animation: none; }
-
-/* Noyau : prisme en verre */
-.prism-core {
-  position:        absolute;
-  width:           clamp(90px, 22vw, 130px);
-  height:          clamp(110px, 27vw, 160px);
-  background:      linear-gradient(160deg, rgba(255,255,255,.13) 0%, rgba(255,255,255,.04) 100%);
-  clip-path:       polygon(50% 0%, 100% 38%, 78% 100%, 22% 100%, 0% 38%);
-  border:          1px solid rgba(255,255,255,.18);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow:      inset 0 1px 0 rgba(255,255,255,.25), 0 0 40px rgba(255,255,255,.05);
-  z-index:         2;
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   S5 · clip-path + @property — MORPHE
-═══════════════════════════════════════════════════════════ */
-.morph-wrap {
-  position: relative;
-  width:    var(--obj); height: var(--obj);
-  display:  flex; align-items: center; justify-content: center;
-}
-.morph {
-  width:      90%; height: 90%;
-  background: linear-gradient(135deg, var(--ma), var(--mb) 50%, var(--mc));
-  animation:  blobShape 9s ease-in-out infinite alternate,
-              blobColor 8s ease-in-out infinite alternate;
-  filter:     blur(0px);
-  box-shadow: 0 0 80px rgba(139,92,246,.3), 0 0 180px rgba(236,72,153,.12);
-  will-change: border-radius;
-}
-@keyframes blobShape {
-  0%   { border-radius: 62% 38% 32% 68% / 60% 34% 66% 40%; }
-  20%  { border-radius: 40% 60% 58% 42% / 50% 64% 36% 50%; }
-  40%  { border-radius: 54% 46% 38% 62% / 68% 28% 72% 32%; }
-  60%  { border-radius: 36% 64% 62% 38% / 42% 74% 26% 58%; }
-  80%  { border-radius: 68% 32% 44% 56% / 36% 58% 42% 64%; }
-  100% { border-radius: 58% 42% 52% 48% / 62% 44% 56% 38%; }
-}
-@keyframes blobColor {
-  from { --ma: #8b5cf6; --mb: #ec4899; --mc: #10b981; }
-  to   { --ma: #06b6d4; --mb: #8b5cf6; --mc: #f59e0b; }
-}
-/* Halo derrière le blob */
-.morph-glow {
-  position:      absolute;
-  inset:         5%;
-  border-radius: 50%;
-  background:    radial-gradient(ellipse, rgba(139,92,246,.18) 0%, transparent 70%);
-  filter:        blur(30px);
+/* Reflet spéculaire (suit curseur/gyro) */
+.gc-spec {
+  position:absolute;
+  width:65%;height:40%;
+  top:-5%;left:10%;
+  background:radial-gradient(ellipse, rgba(255,255,255,.72) 0%, transparent 70%);
+  border-radius:50%;
+  filter:blur(14px);
   pointer-events:none;
-  animation:     blobColor 8s ease-in-out infinite alternate;
-  z-index:       -1;
+  transition:transform .14s ease-out;
+  will-change:transform;
+}
+/* Filet lumineux bord supérieur */
+.gc-top-edge {
+  position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.9) 30%,rgba(255,255,255,.9) 70%,transparent);
+  pointer-events:none;
+}
+/* Aberration chromatique aux bords (subtile) */
+.gc-chroma {
+  position:absolute;inset:0;border-radius:inherit;
+  background:
+    linear-gradient(to right, rgba(255,60,100,.04) 0%, transparent 20%),
+    linear-gradient(to left,  rgba(60,100,255,.04) 0%, transparent 20%);
+  pointer-events:none;
+  mix-blend-mode:color;
+}
+/* Encoche style visionOS */
+.gc-notch {
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  width:40px;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.55);
+  pointer-events:none;
+}
+
+/* Glitch chromatic (classe JS) */
+.glass-card.glitch {
+  animation:chromaGlitch .42s steps(3) forwards;
+}
+@keyframes chromaGlitch {
+  0%   { filter:none;transform:none; }
+  20%  { filter:hue-rotate(45deg) saturate(220%);transform:translate(4px,0); }
+  40%  { filter:hue-rotate(-40deg) saturate(200%);transform:translate(-3px,1px); }
+  65%  { filter:hue-rotate(20deg) saturate(160%);transform:translate(2px,-1px); }
+  85%  { filter:none;transform:translate(-1px,0); }
+  100% { filter:none;transform:none; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   S2 · LIQUIDE — physique SVG, fond noir
+═══════════════════════════════════════════════════════════ */
+.liquid-wrap { position:relative; }
+
+.liquid-container {
+  width:    var(--liq-w);
+  height:   var(--liq-h);
+  border-radius: var(--liq-r);
+  position: relative;
+  overflow: hidden;
+
+  /* Parois du container (verre épais) */
+  border: 1.5px solid rgba(255,255,255,.18);
+  box-shadow:
+    inset 2px 0 8px rgba(255,255,255,.04),
+    inset -2px 0 8px rgba(255,255,255,.03),
+    inset 0 2px 10px rgba(255,255,255,.08),
+    inset 0 -1px 4px rgba(0,0,0,.4),
+    0 40px 100px rgba(0,0,0,.55),
+    0 12px 36px rgba(0,0,0,.4);
+}
+
+.liquid-svg {
+  position:absolute;inset:0;width:100%;height:100%;
+}
+
+/* Surcouche verre sur le liquide */
+.liq-glass {
+  position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(to right,
+    rgba(255,255,255,.06) 0%, transparent 30%,
+    transparent 70%, rgba(255,255,255,.04) 100%);
+  backdrop-filter:blur(1px);
+}
+/* Reflet haut du container */
+.liq-glass::before {
+  content:'';position:absolute;top:0;left:10%;right:10%;height:1.5px;
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.5) 30%,rgba(255,255,255,.5) 70%,transparent);
+}
+/* Ombre portée */
+.liq-shadow {
+  position:absolute;bottom:-30px;left:10%;right:10%;height:30px;
+  background:radial-gradient(ellipse,rgba(100,200,255,.18) 0%,transparent 70%);
+  filter:blur(8px);pointer-events:none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   S3 · PRISME — mix-blend screen sur fond noir
+═══════════════════════════════════════════════════════════ */
+.prism-scene {
+  position:relative;
+  width:min(500px,92vw);
+  height:min(400px,80vw);
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Rayons de lumière */
+.p-ray {
+  position:absolute;
+  mix-blend-mode:screen;
+  border-radius:50%;
+  will-change:transform;
+  transition:transform .12s ease-out;
+}
+.pr-r {
+  width:min(200px,48vw);height:min(500px,110vw);
+  background:radial-gradient(ellipse,rgba(255,60,80,.90) 0%,transparent 65%);
+  top:50%;left:40%;transform-origin:top center;
+  transform:rotate(-22deg) translateY(-8%);
+  animation:pr-r-idle 12s ease-in-out infinite alternate;
+}
+.pr-g {
+  width:min(200px,48vw);height:min(500px,110vw);
+  background:radial-gradient(ellipse,rgba(60,255,160,.75) 0%,transparent 65%);
+  top:50%;left:40%;transform-origin:top center;
+  transform:rotate(-6deg) translateY(-8%);
+  animation:pr-g-idle 14s ease-in-out infinite alternate;
+  animation-delay:-5s;
+}
+.pr-b {
+  width:min(200px,48vw);height:min(500px,110vw);
+  background:radial-gradient(ellipse,rgba(60,120,255,.85) 0%,transparent 65%);
+  top:50%;left:40%;transform-origin:top center;
+  transform:rotate(10deg) translateY(-8%);
+  animation:pr-b-idle 10s ease-in-out infinite alternate;
+  animation-delay:-3s;
+}
+@keyframes pr-r-idle { from{transform:rotate(-22deg) translateY(-8%)} to{transform:rotate(-19deg) translateY(-11%)} }
+@keyframes pr-g-idle { from{transform:rotate(-6deg)  translateY(-8%)} to{transform:rotate(-3deg)  translateY(-11%)} }
+@keyframes pr-b-idle { from{transform:rotate(10deg)  translateY(-8%)} to{transform:rotate(13deg)  translateY(-11%)} }
+.p-ray.live { animation:none; }
+
+/* Corps du prisme (verre) */
+.prism-body {
+  position:relative;z-index:2;
+  width:    var(--prism-w);
+  height:   var(--prism-h);
+  clip-path: polygon(50% 0%,100% 100%,0% 100%);
+
+  background:linear-gradient(160deg,rgba(255,255,255,.14) 0%,rgba(255,255,255,.04) 100%);
+  backdrop-filter:blur(10px) saturate(150%);
+  -webkit-backdrop-filter:blur(10px) saturate(150%);
+  overflow:hidden;
+
+  filter:drop-shadow(0 0 30px rgba(100,180,255,.12));
+  transition:transform .12s ease-out;
+  will-change:transform;
+}
+/* Reflet spéculaire interne */
+.prism-spec {
+  position:absolute;top:15%;left:20%;width:35%;height:30%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.45) 0%,transparent 70%);
+  border-radius:50%;filter:blur(8px);pointer-events:none;
+}
+/* Filets de bords */
+.prism-edge-l {
+  position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;
+  background:linear-gradient(to right,rgba(255,255,255,.16) 0%,transparent 15%);
+}
+.prism-edge-r {
+  position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;
+  background:linear-gradient(to left,rgba(255,255,255,.12) 0%,transparent 15%);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   S4 · BULLE — sphère glass réflective
+═══════════════════════════════════════════════════════════ */
+.bubble {
+  width:     var(--bubble-s);
+  height:    var(--bubble-s);
+  border-radius:50%;
+  position:  relative;
+  overflow:  hidden;
+  cursor:    pointer;
+
+  background:      rgba(255,255,255,.22);
+  backdrop-filter: blur(30px) saturate(200%) brightness(1.06);
+  -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.06);
+
+  border: 1px solid rgba(255,255,255,.75);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(255,255,255,.3),
+    0 30px 90px rgba(0,0,0,.10),
+    0 8px 24px rgba(0,0,0,.06);
+
+  transition:transform .1s ease-out;
+  will-change:transform;
+}
+
+/* Reflet principal (suit souris/gyro) */
+.b-spec {
+  position:absolute;
+  width:55%;height:42%;
+  top:7%;left:8%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.88) 0%,transparent 68%);
+  border-radius:50%;filter:blur(12px);pointer-events:none;
+  transition:transform .15s ease-out;
+  will-change:transform;
+}
+/* Reflet secondaire (bas droite, fixe — lumière transmise) */
+.b-spec2 {
+  position:absolute;width:22%;height:18%;
+  bottom:16%;right:14%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.52) 0%,transparent 70%);
+  border-radius:50%;filter:blur(6px);pointer-events:none;
+}
+/* Micro-reflet (bord supérieur gauche) */
+.b-spec3 {
+  position:absolute;width:9%;height:7%;
+  top:18%;left:22%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.85) 0%,transparent 70%);
+  border-radius:50%;filter:blur(3px);pointer-events:none;
+}
+/* Caustic (lumière diffractée interne, colorée) */
+.b-caustic {
+  position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(
+    from 200deg at 65% 70%,
+    rgba(139,92,246,.08) 0deg,
+    rgba(6,182,212,.08) 60deg,
+    transparent 120deg,
+    rgba(236,72,153,.06) 240deg,
+    rgba(139,92,246,.08) 360deg
+  );
+  pointer-events:none;
+  animation:causticSpin 18s linear infinite;
+}
+@keyframes causticSpin { to { transform:rotate(360deg); } }
+/* Aberration chromatique (bord de la sphère) */
+.b-chroma {
+  position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 62%,rgba(255,60,80,.06) 75%,rgba(60,100,255,.08) 85%,transparent 95%);
+  pointer-events:none;
+  mix-blend-mode:color;
+}
+
+/* Glitch bulle au clic */
+.bubble.glitch { animation:chromaGlitch .38s steps(3) forwards; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   S5 · ONDE — grand disque verre, ripples au touch
+═══════════════════════════════════════════════════════════ */
+.pond {
+  width:     var(--pond-s);
+  height:    var(--pond-s);
+  border-radius:50%;
+  position:  relative;
+  overflow:  hidden;
+  cursor:    crosshair;
+}
+.pond-glass {
+  position:absolute;inset:0;border-radius:50%;
+
+  background:      rgba(255,255,255,.38);
+  backdrop-filter: blur(34px) saturate(170%) brightness(1.03);
+  -webkit-backdrop-filter: blur(34px) saturate(170%) brightness(1.03);
+
+  border:1.5px solid rgba(255,255,255,.82);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(255,255,255,.35),
+    0 30px 80px rgba(0,0,0,.08),
+    0 6px 20px rgba(0,0,0,.05);
+  pointer-events:none;
+}
+/* Reflet statique (ellipse en haut) */
+.pond-glass::before {
+  content:'';position:absolute;
+  top:6%;left:20%;width:60%;height:20%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.55) 0%,transparent 70%);
+  border-radius:50%;filter:blur(10px);
+}
+
+/* Ripples (injectées par JS) */
+@keyframes pondRipple {
+  from { transform:translate(-50%,-50%) scale(0);opacity:.85;border-color:rgba(255,255,255,.8); }
+  to   { transform:translate(-50%,-50%) scale(16);opacity:0;border-color:rgba(180,180,220,.1); }
+}
+.pond-ripple {
+  position:absolute;
+  width:26px;height:26px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.8);
+  transform:translate(-50%,-50%) scale(0);
+  pointer-events:none;
+  animation:pondRipple 1.8s ease-out forwards;
 }
 
 
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════ */
-@media (max-width: 600px) {
-  :root { --strata-s: min(210px, 62vw); }
-  .scene-label { bottom: 1.8rem; left: 1.8rem; }
-  .lbl-name    { font-size: 1.3rem; }
-  .dots        { right: 1rem; }
+@media (max-width:600px) {
+  .scene-label { bottom:1.8rem;left:1.8rem; }
+  .lbl-name    { font-size:1.3rem; }
+  .dots        { right:1rem; }
+  .gyro-btn    { font-size:.72rem;padding:.45rem 1.1rem; }
 }
 
-/* Accessibilité — réduction mouvement */
-@media (prefers-reduced-motion: reduce) {
-  .slides { transition-duration: .01ms !important; }
+/* Accessibilité */
+@media (prefers-reduced-motion:reduce) {
+  .slides { transition-duration:.01ms !important; }
   *, *::before, *::after {
-    animation-duration:        .01ms !important;
-    animation-iteration-count: 1    !important;
-    transition-duration:       .01ms !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
   }
 }

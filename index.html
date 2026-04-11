@@ -4,12 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TLB</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%238b5cf6'/><stop offset='1' stop-color='%2306b6d4'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='%230a0a12'/><circle cx='74' cy='26' r='30' fill='%238b5cf6' opacity='.11'/><circle cx='26' cy='74' r='24' fill='%2306b6d4' opacity='.09'/><text x='50' y='66' font-family='-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif' font-weight='900' font-size='37' fill='url(%23a)' text-anchor='middle' letter-spacing='-2'>TLB</text><rect x='26' y='74' width='48' height='3' rx='1.5' fill='url(%23a)'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%238b5cf6'/><stop offset='1' stop-color='%2306b6d4'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='%230a0a12'/><text x='50' y='66' font-family='-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif' font-weight='900' font-size='37' fill='url(%23a)' text-anchor='middle' letter-spacing='-2'>TLB</text><rect x='26' y='74' width='48' height='3' rx='1.5' fill='url(%23a)'/></svg>">
   <link rel="stylesheet" href="style.css">
+
+  <!-- Filtres SVG globaux -->
+  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <defs>
+      <!-- Chromatic aberration -->
+      <filter id="chroma" x="-15%" y="-15%" width="130%" height="130%">
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+        <feOffset in="r" dx="5"  dy="1" result="rr"/>
+        <feOffset in="b" dx="-5" dy="-1" result="bb"/>
+        <feMerge><feMergeNode in="rr"/><feMergeNode in="g"/><feMergeNode in="bb"/></feMerge>
+      </filter>
+      <!-- Distorsion légère (pond) -->
+      <filter id="pondDisp" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence id="pondTurb" type="fractalNoise" baseFrequency="0.018 0.012"
+          numOctaves="3" seed="9" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"
+          xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
 </head>
 <body>
 
-  <!-- Curseur custom (desktop uniquement) -->
+  <!-- Curseur custom (desktop) -->
   <div id="cursor" aria-hidden="true">
     <div class="cur-dot"></div>
     <div class="cur-ring"></div>
@@ -18,128 +43,159 @@
   <!-- Bouton permission gyroscope (iOS 13+) -->
   <button class="gyro-btn" id="gyroBtn">Activer le mouvement</button>
 
-  <!-- Conteneur de slides — navigation swipe -->
+  <!-- Slides -->
   <div class="slides" id="slides">
 
-    <!-- ══ S1 · @property — Sphère ══════════════════════════ -->
-    <section class="scene" id="s1" data-index="01">
-      <div class="scene-bg bg1"></div>
+    <!-- ══ S1 · Verre — fond blanc, glass card ══════════════ -->
+    <section class="scene s-light" id="s1" data-index="01">
+      <!-- Blobs colorés visibles à travers le verre -->
+      <div class="blobs" aria-hidden="true">
+        <div class="blob" style="width:340px;height:340px;top:-12%;left:-8%;background:radial-gradient(#a78bfa,#7c3aed);filter:blur(72px);opacity:.52;animation:bm1 12s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-8%;right:-4%;background:radial-gradient(#5eead4,#0891b2);filter:blur(65px);opacity:.48;animation:bm2 14s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:220px;height:220px;top:35%;left:58%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(55px);opacity:.42;animation:bm3 10s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:180px;height:180px;top:10%;right:30%;background:radial-gradient(#fde68a,#f59e0b);filter:blur(50px);opacity:.38;animation:bm1 9s ease-in-out infinite alternate-reverse"></div>
+      </div>
       <div class="stage">
-        <div class="sphere" id="sphere">
-          <div class="sphere-shine"></div>
-          <div class="sphere-depth"></div>
+        <div class="glass-card" id="glassCard">
+          <!-- Reflet spéculaire (suit la souris / gyro) -->
+          <div class="gc-spec" id="gcSpec"></div>
+          <!-- Bord supérieur brillant -->
+          <div class="gc-top-edge"></div>
+          <!-- Aberration chromatique bords -->
+          <div class="gc-chroma"></div>
+          <!-- Encoche style visionOS -->
+          <div class="gc-notch"></div>
         </div>
       </div>
       <div class="scene-label">
-        <span class="lbl-feat">@property</span>
-        <span class="lbl-name">Sphère</span>
+        <span class="lbl-feat">backdrop-filter · @property</span>
+        <span class="lbl-name">Verre</span>
       </div>
     </section>
 
-    <!-- ══ S2 · Touch + feTurbulence — Onde ════════════════ -->
-    <section class="scene" id="s2" data-index="02">
-      <div class="scene-bg bg2"></div>
+    <!-- ══ S2 · Liquide — gyroscope, fond noir ══════════════ -->
+    <section class="scene s-dark" id="s2" data-index="02">
       <div class="stage">
-        <div class="wave-wrap" id="waveWrap">
-          <svg class="wave-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <defs>
-              <filter id="waveFilter" x="-25%" y="-25%" width="150%" height="150%">
-                <feTurbulence id="feTurb"
-                  type="fractalNoise"
-                  baseFrequency="0.014 0.009"
-                  numOctaves="5"
-                  seed="7"
-                  result="noise"/>
-                <feDisplacementMap id="feDisp"
-                  in="SourceGraphic" in2="noise"
-                  scale="38"
-                  xChannelSelector="R" yChannelSelector="G"/>
-              </filter>
-              <radialGradient id="waveGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stop-color="rgba(16,185,129,.96)"/>
-                <stop offset="50%"  stop-color="rgba(6,182,212,.80)"/>
-                <stop offset="100%" stop-color="rgba(99,102,241,.35)"/>
-              </radialGradient>
-            </defs>
-            <circle cx="200" cy="200" r="168" fill="url(#waveGrad)" filter="url(#waveFilter)"/>
-          </svg>
-          <div class="wave-glass"></div>
+        <div class="liquid-wrap" id="liquidWrap">
+          <!-- Conteneur verre -->
+          <div class="liquid-container">
+            <!-- SVG : liquide physique -->
+            <svg class="liquid-svg" id="liquidSvg"
+              viewBox="0 0 260 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <clipPath id="liqClip">
+                  <path id="liqPath" d="M0,180 L260,180 L260,360 L0,360 Z"/>
+                </clipPath>
+                <linearGradient id="liqGrad" x1="0" y1="0" x2="0.3" y2="1">
+                  <stop offset="0%"   stop-color="#22d3ee" stop-opacity=".95"/>
+                  <stop offset="60%"  stop-color="#818cf8" stop-opacity=".90"/>
+                  <stop offset="100%" stop-color="#6d28d9" stop-opacity=".85"/>
+                </linearGradient>
+                <linearGradient id="surfGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
+                  <stop offset="35%"  stop-color="rgba(255,255,255,.35)"/>
+                  <stop offset="65%"  stop-color="rgba(255,255,255,.18)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                </linearGradient>
+              </defs>
+              <!-- Corps du liquide -->
+              <rect x="0" y="0" width="260" height="360"
+                fill="url(#liqGrad)" clip-path="url(#liqClip)"/>
+              <!-- Reflet de surface (bande lumineuse) -->
+              <path id="surfPath" d="" fill="url(#surfGrad)" clip-path="url(#liqClip)"/>
+              <!-- Lueur interne du liquide -->
+              <ellipse cx="130" cy="270" rx="90" ry="40"
+                fill="rgba(34,211,238,.18)" clip-path="url(#liqClip)"/>
+            </svg>
+            <!-- Surcouche verre (reflets du container) -->
+            <div class="liq-glass"></div>
+          </div>
+          <!-- Ombre portée sous le container -->
+          <div class="liq-shadow"></div>
         </div>
       </div>
       <div class="scene-label">
-        <span class="lbl-feat">Touch + feTurbulence</span>
-        <span class="lbl-name">Onde</span>
+        <span class="lbl-feat">DeviceOrientation · SVG physics</span>
+        <span class="lbl-name">Liquide</span>
       </div>
     </section>
 
-    <!-- ══ S3 · transform3d — Strata ═══════════════════════ -->
-    <section class="scene" id="s3" data-index="03">
-      <div class="scene-bg bg3"></div>
+    <!-- ══ S3 · Prisme — fond noir, mix-blend screen ════════ -->
+    <section class="scene s-dark" id="s3" data-index="03">
       <div class="stage">
-        <div class="strata-scene">
-          <div class="strata" id="strata">
-            <div class="plate plate1">
-              <span class="plate-shine"></span>
-            </div>
-            <div class="plate plate2">
-              <span class="plate-shine"></span>
-            </div>
-            <div class="plate plate3">
-              <span class="plate-shine"></span>
-            </div>
-            <div class="plate plate4">
-              <span class="plate-shine"></span>
-            </div>
+        <div class="prism-scene" id="prismScene">
+          <!-- Rayons lumineux (screen sur fond noir = addition) -->
+          <div class="p-ray pr-r" id="prR"></div>
+          <div class="p-ray pr-g" id="prG"></div>
+          <div class="p-ray pr-b" id="prB"></div>
+          <!-- Corps du prisme (verre) -->
+          <div class="prism-body" id="prismBody">
+            <div class="prism-spec"></div>
+            <div class="prism-edge-l"></div>
+            <div class="prism-edge-r"></div>
           </div>
         </div>
       </div>
       <div class="scene-label">
-        <span class="lbl-feat">transform3d</span>
-        <span class="lbl-name">Strata</span>
-      </div>
-    </section>
-
-    <!-- ══ S4 · mix-blend-mode + clip-path — Prisme ════════ -->
-    <section class="scene" id="s4" data-index="04">
-      <div class="scene-bg bg4"></div>
-      <div class="stage">
-        <div class="prism-wrap" id="prismWrap">
-          <div class="prism-ray pr1"></div>
-          <div class="prism-ray pr2"></div>
-          <div class="prism-ray pr3"></div>
-          <div class="prism-core"></div>
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">mix-blend-mode + clip-path</span>
+        <span class="lbl-feat">mix-blend-mode · clip-path</span>
         <span class="lbl-name">Prisme</span>
       </div>
     </section>
 
-    <!-- ══ S5 · clip-path + @property — Morphe ═════════════ -->
-    <section class="scene" id="s5" data-index="05">
-      <div class="scene-bg bg5"></div>
+    <!-- ══ S4 · Bulle — fond blanc, sphère réflective ═══════ -->
+    <section class="scene s-light" id="s4" data-index="04">
+      <div class="blobs" aria-hidden="true">
+        <div class="blob" style="width:300px;height:300px;top:-5%;left:5%;background:radial-gradient(#c4b5fd,#8b5cf6);filter:blur(70px);opacity:.45;animation:bm2 11s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-10%;right:0;background:radial-gradient(#67e8f9,#0891b2);filter:blur(65px);opacity:.42;animation:bm1 13s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:200px;height:200px;top:20%;right:15%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(55px);opacity:.35;animation:bm3 8s ease-in-out infinite alternate"></div>
+      </div>
       <div class="stage">
-        <div class="morph-wrap" id="morphWrap">
-          <div class="morph" id="morph"></div>
-          <div class="morph-glow"></div>
+        <div class="bubble" id="bubble">
+          <!-- Reflet principal (suit souris/gyro) -->
+          <div class="b-spec" id="bSpec"></div>
+          <!-- Reflets secondaires fixes -->
+          <div class="b-spec2"></div>
+          <div class="b-spec3"></div>
+          <!-- Caustic interne -->
+          <div class="b-caustic"></div>
+          <!-- Aberration chromatique bord -->
+          <div class="b-chroma"></div>
         </div>
       </div>
       <div class="scene-label">
-        <span class="lbl-feat">clip-path + @property</span>
-        <span class="lbl-name">Morphe</span>
+        <span class="lbl-feat">backdrop-filter · gyroscope</span>
+        <span class="lbl-name">Bulle</span>
+      </div>
+    </section>
+
+    <!-- ══ S5 · Onde — fond blanc, ripples sur verre ════════ -->
+    <section class="scene s-light" id="s5" data-index="05">
+      <div class="blobs" aria-hidden="true">
+        <div class="blob" style="width:350px;height:350px;top:-15%;left:-12%;background:radial-gradient(#a5f3fc,#06b6d4);filter:blur(75px);opacity:.40;animation:bm3 15s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:280px;height:280px;bottom:-12%;right:-8%;background:radial-gradient(#ddd6fe,#7c3aed);filter:blur(68px);opacity:.38;animation:bm1 11s ease-in-out infinite alternate"></div>
+        <div class="blob" style="width:200px;height:200px;top:30%;left:55%;background:radial-gradient(#bbf7d0,#10b981);filter:blur(55px);opacity:.35;animation:bm2 9s ease-in-out infinite alternate"></div>
+      </div>
+      <div class="stage">
+        <div class="pond" id="pond">
+          <div class="pond-glass"></div>
+          <!-- Ripples injectées par JS -->
+        </div>
+      </div>
+      <div class="scene-label">
+        <span class="lbl-feat">touch · feTurbulence · Vibration API</span>
+        <span class="lbl-name">Onde</span>
       </div>
     </section>
 
   </div><!-- /.slides -->
 
-  <!-- Navigation dots (côté droit) -->
+  <!-- Navigation dots -->
   <nav class="dots" id="dotsNav" aria-label="Navigation">
-    <button class="dot active" data-to="0" aria-label="Sphère"></button>
-    <button class="dot" data-to="1" aria-label="Onde"></button>
-    <button class="dot" data-to="2" aria-label="Strata"></button>
-    <button class="dot" data-to="3" aria-label="Prisme"></button>
-    <button class="dot" data-to="4" aria-label="Morphe"></button>
+    <button class="dot active" data-to="0" aria-label="Verre"></button>
+    <button class="dot" data-to="1" aria-label="Liquide"></button>
+    <button class="dot" data-to="2" aria-label="Prisme"></button>
+    <button class="dot" data-to="3" aria-label="Bulle"></button>
+    <button class="dot" data-to="4" aria-label="Onde"></button>
   </nav>
 
   <script src="script.js"></script>
