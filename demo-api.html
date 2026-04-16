@@ -126,8 +126,8 @@
     .prow { display: flex; align-items: center; gap: .65rem; padding: .5rem 0; border-bottom: 1px solid rgba(0,0,0,.05); }
     .prow:last-child { border-bottom: none; }
     .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 19px; border-radius: 4px; font-size: .6rem; font-weight: 700; text-transform: uppercase; background: rgba(0,0,0,.08); color: var(--text); padding: 0 4px; flex-shrink: 0; }
-    .badge-a { background: #e85d04; color: #fff; }
-    .badge-b { background: #2563eb; color: #fff; }
+    .badge-a { background: #E30613; color: #fff; }  /* STAR ligne A — rouge officiel */
+    .badge-b { background: #0071BB; color: #fff; }  /* STAR ligne B — bleu officiel */
     .pdest { flex: 1; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ptime { font-size: .76rem; font-weight: 500; font-family: 'Courier New',monospace; flex-shrink: 0; }
     .ptime.soon { color: var(--orange); }
@@ -245,6 +245,31 @@
     .palier.active .palier-n   { color: #059669; }
     .palier.active .palier-range { color: #065f46; }
 
+    /* ── Vehicle toggle ──────────────────────────────── */
+    .vt-toggle {
+      display: flex; gap: .35rem; margin-bottom: 1.2rem;
+      background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px;
+    }
+    .vt-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: .45rem;
+      padding: .52rem .8rem; border: none; border-radius: 10px;
+      font-size: .78rem; font-family: inherit; cursor: pointer;
+      background: transparent; color: var(--muted);
+      transition: all .2s var(--ease);
+    }
+    .vt-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .vt-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+
+    /* ── Year chips ───────────────────────────────────── */
+    .year-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
+    .year-chip {
+      font-size: .68rem; padding: 3px 11px; border-radius: 8px;
+      border: 1px solid rgba(0,0,0,.1); background: rgba(255,255,255,.6);
+      cursor: pointer; transition: all .15s;
+    }
+    .year-chip:hover:not(.active) { background: rgba(255,255,255,.92); }
+    .year-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
     /* ── Automobile ──────────────────────────────────── */
     .auto-form {
       display: flex; align-items: center; gap: .6rem;
@@ -289,6 +314,14 @@
     .spec-val { font-size: 1.15rem; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
     .spec-lbl { font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
     .spec-note { font-size: .68rem; color: var(--muted); margin-top: .9rem; font-style: italic; }
+
+    /* ── Fuel price bar ──────────────────────────────── */
+    .fuel-price-col { display: flex; flex-direction: column; align-items: flex-end; min-width: 72px; }
+    .fuel-bar-bg { width: 100%; height: 3px; background: rgba(0,0,0,.08); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+    .fuel-bar-fill { height: 100%; border-radius: 2px; transition: width .6s var(--ease); }
+    .bar-green  { background: var(--green); }
+    .bar-orange { background: var(--orange); }
+    .bar-red    { background: var(--red); }
 
     /* Prix carburants */
     .fuel-header {
@@ -529,41 +562,58 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 7 — Fiche Technique Auto ═════════════════ -->
+    <!-- ══ BLOC 7 — Fiche Technique Véhicule ═════════════ -->
     <section class="bloc">
-      <div class="bloc-hd">07 · Fiche Technique Automobile</div>
+      <div class="bloc-hd">07 · Fiche Technique Véhicule</div>
       <div class="gc">
         <div class="ch">
-          <div class="ch-l"><span class="ch-ico">🔧</span>
-            <div><div class="ch-ttl">Caractéristiques techniques</div><div class="ch-sub">Marque · Modèle · API-Ninjas Cars</div></div>
+          <div class="ch-l"><span class="ch-ico" id="vehicle-ico">🔧</span>
+            <div>
+              <div class="ch-ttl">Caractéristiques techniques</div>
+              <div class="ch-sub" id="vehicle-sub">Marque · Modèle · API-Ninjas Cars</div>
+            </div>
           </div>
         </div>
+        <!-- Toggle auto / moto -->
+        <div class="vt-toggle">
+          <button class="vt-btn active" id="vt-car" onclick="setVehicleMode('car')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M3 17h4m6 0h4m2 0h1v-4l-2-5H6L4 13v4h1M6 13h12"/></svg>
+            Automobile
+          </button>
+          <button class="vt-btn" id="vt-moto" onclick="setVehicleMode('moto')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/><path d="M7 17h8M7 17 5 13l3-5h4l3 4h4M10 8l2-3h3"/></svg>
+            Moto
+          </button>
+        </div>
+        <!-- Formulaire -->
         <div class="auto-form">
-          <input class="auto-in" id="car-make"  type="text" placeholder="Marque (ex: Toyota)">
-          <input class="auto-in" id="car-model" type="text" placeholder="Modèle (ex: Corolla)">
-          <input class="auto-in sm" id="car-year" type="number" placeholder="Année" min="1980" max="2025">
-          <button class="auto-btn" id="car-btn">Rechercher</button>
+          <input class="auto-in" id="v-make"  type="text" list="car-makes-list" placeholder="Marque (ex: Toyota)" autocomplete="off">
+          <input class="auto-in" id="v-model" type="text" placeholder="Modèle (ex: Corolla)" autocomplete="off">
+          <input class="auto-in sm" id="v-year" type="number" placeholder="Année" min="1980" max="2025">
+          <button class="auto-btn" id="v-btn">Rechercher</button>
         </div>
-        <div id="car-results"></div>
-      </div>
-    </section>
-
-    <!-- ══ BLOC 9 — Fiche Technique Moto ═════════════════ -->
-    <section class="bloc">
-      <div class="bloc-hd">09 · Fiche Technique Moto</div>
-      <div class="gc">
-        <div class="ch">
-          <div class="ch-l"><span class="ch-ico">🏍️</span>
-            <div><div class="ch-ttl">Caractéristiques techniques</div><div class="ch-sub">Marque · Modèle · API-Ninjas Motorcycles</div></div>
-          </div>
-        </div>
-        <div class="auto-form">
-          <input class="auto-in" id="moto-make"  type="text" placeholder="Marque (ex: Kawasaki)">
-          <input class="auto-in" id="moto-model" type="text" placeholder="Modèle (ex: Ninja)">
-          <input class="auto-in sm" id="moto-year" type="number" placeholder="Année" min="1950" max="2025">
-          <button class="auto-btn" id="moto-btn">Rechercher</button>
-        </div>
-        <div id="moto-results"></div>
+        <!-- Datalists -->
+        <datalist id="car-makes-list">
+          <option>Alfa Romeo</option><option>Audi</option><option>BMW</option>
+          <option>Chevrolet</option><option>Citroën</option><option>Dacia</option>
+          <option>Dodge</option><option>Ferrari</option><option>Fiat</option>
+          <option>Ford</option><option>Honda</option><option>Hyundai</option>
+          <option>Jaguar</option><option>Jeep</option><option>Kia</option>
+          <option>Land Rover</option><option>Lexus</option><option>Mazda</option>
+          <option>Mercedes-Benz</option><option>Mini</option><option>Mitsubishi</option>
+          <option>Nissan</option><option>Opel</option><option>Peugeot</option>
+          <option>Porsche</option><option>Renault</option><option>Seat</option>
+          <option>Skoda</option><option>Subaru</option><option>Suzuki</option>
+          <option>Tesla</option><option>Toyota</option><option>Volkswagen</option><option>Volvo</option>
+        </datalist>
+        <datalist id="moto-makes-list">
+          <option>Aprilia</option><option>BMW</option><option>Ducati</option>
+          <option>Harley-Davidson</option><option>Honda</option><option>Husqvarna</option>
+          <option>Indian</option><option>Kawasaki</option><option>KTM</option>
+          <option>MV Agusta</option><option>Royal Enfield</option><option>Suzuki</option>
+          <option>Triumph</option><option>Yamaha</option>
+        </datalist>
+        <div id="vehicle-results"></div>
       </div>
     </section>
 
@@ -594,7 +644,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.04</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.05</div>
     </footer>
 
   </div>
@@ -1038,10 +1088,16 @@
         var palier   = distKm <= 20 ? 1 : distKm <= 50 ? 2 : distKm <= 150 ? 3 : 4;
         var montants = [0, 40, 80, 150, 250];
 
+        function fmtDuration(min) {
+          if (min < 60) return min + ' <span style="font-size:.85rem">min</span>';
+          var h = Math.floor(min / 60), m = min % 60;
+          return h + 'h' + String(m).padStart(2,'0');
+        }
+
         res.innerHTML = [
           '<div class="kilo-stats">',
             '<div class="kilo-stat"><div class="ks-val">' + distKm.toFixed(1) + ' <span style="font-size:.85rem">km</span></div><div class="ks-lbl">Distance</div></div>',
-            '<div class="kilo-stat"><div class="ks-val">' + tempsMin + ' <span style="font-size:.85rem">min</span></div><div class="ks-lbl">Durée estimée</div></div>',
+            '<div class="kilo-stat"><div class="ks-val">' + fmtDuration(tempsMin) + '</div><div class="ks-lbl">Durée estimée</div></div>',
             '<div class="kilo-stat"><div class="ks-val" style="color:#047857">' + montants[palier] + ' <span style="font-size:.85rem">€</span></div><div class="ks-lbl">Remboursement</div></div>',
           '</div>',
           '<div class="bareme-hd">Barème de remboursement</div>',
@@ -1059,159 +1115,125 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 07 — Fiche Technique (API-Ninjas via proxy)
+       BLOC 07 — Fiche Technique Véhicule (unifié)
     ═══════════════════════════════════════════════════ */
-    function mpgToL100(mpg) {
-      return mpg > 0 ? (235.21 / mpg).toFixed(1) : '—';
-    }
-    function driveLabel(d) {
-      return { fwd:'Traction', rwd:'Propulsion', awd:'Intégrale', '4wd':'4x4' }[d] || d || '—';
-    }
-    function fuelLabel(f) {
-      return { gasoline:'Essence', diesel:'Diesel', electric:'Électrique', hybrid:'Hybride' }[f] || f || '—';
-    }
-    function transLabel(t) {
-      return { manual:'Manuelle', automatic:'Automatique' }[t] || t || '—';
-    }
+    var vehicleMode = 'car';
+    var vehicleData = [];
 
-    async function loadCars() {
-      var make  = document.getElementById('car-make').value.trim();
-      var model = document.getElementById('car-model').value.trim();
-      var year  = document.getElementById('car-year').value.trim();
-      var res   = document.getElementById('car-results');
-      var btn   = document.getElementById('car-btn');
-
-      if (!make || !model) {
-        res.innerHTML = '<div class="err">⚠ Saisissez une marque et un modèle.</div>';
-        return;
-      }
-
-      btn.disabled = true;
-      res.innerHTML = '<div class="spin">Recherche en cours…</div>';
-
-      try {
-        var qs = '?make=' + encodeURIComponent(make) + '&model=' + encodeURIComponent(model) + '&limit=10';
-        if (year) qs += '&year=' + encodeURIComponent(year);
-        var r = await fetch('/api/cars' + qs);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        var data = await r.json();
-        if (!Array.isArray(data) || !data.length) {
-          res.innerHTML = '<div class="err">Aucun résultat. Vérifiez la marque et le modèle (en anglais).</div>';
-          btn.disabled = false; return;
-        }
-
-        var c = data[0];
-        var html = [
-          '<div class="spec-grid">',
-            specCard('⛽', fuelLabel(c.fuel_type),        'Carburant'),
-            specCard('⚙️', transLabel(c.transmission),   'Transmission'),
-            specCard('🔄', driveLabel(c.drive),          'Traction'),
-            specCard('🏎️', (c.horsepower || '—') + ' ch','Puissance'),
-            specCard('📐', (c.displacement ? c.displacement.toFixed(1) + ' L' : '—'), 'Cylindrée'),
-            specCard('💧', mpgToL100(c.combination_mpg) + ' L/100', 'Consommation'),
-          '</div>',
-        ];
-
-        if (data.length > 1) {
-          var years = [...new Set(data.map(function(x){ return x.year; }))].sort();
-          html.push('<div class="spec-note">' + data.length + ' variantes trouvées · années : ' + years.join(', ') + ' · données affichées pour ' + (c.year || '?') + '</div>');
-        }
-
-        res.innerHTML = html.join('');
-      } catch(e) {
-        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
-      }
-      btn.disabled = false;
-    }
+    function mpgToL100(mpg) { return mpg > 0 ? (235.21 / mpg).toFixed(1) : '—'; }
+    function driveLabel(d)  { return { fwd:'Traction', rwd:'Propulsion', awd:'Intégrale', '4wd':'4x4' }[d] || d || '—'; }
+    function fuelLabel(f)   { return { gasoline:'Essence', diesel:'Diesel', electric:'Électrique', hybrid:'Hybride' }[f] || f || '—'; }
+    function transLabel(t)  { return { manual:'Manuelle', automatic:'Automatique' }[t] || t || '—'; }
 
     function specCard(ico, val, lbl) {
       return '<div class="spec-card"><div class="spec-ico">' + ico + '</div><div class="spec-val">' + val + '</div><div class="spec-lbl">' + lbl + '</div></div>';
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 09 — Fiche Technique Moto (API-Ninjas)
-    ═══════════════════════════════════════════════════ */
-    async function loadMoto() {
-      var make  = document.getElementById('moto-make').value.trim();
-      var model = document.getElementById('moto-model').value.trim();
-      var year  = document.getElementById('moto-year').value.trim();
-      var res   = document.getElementById('moto-results');
-      var btn   = document.getElementById('moto-btn');
+    function setVehicleMode(mode) {
+      vehicleMode = mode;
+      vehicleData = [];
+      document.getElementById('vt-car').classList.toggle('active',  mode === 'car');
+      document.getElementById('vt-moto').classList.toggle('active', mode === 'moto');
+      document.getElementById('vehicle-ico').textContent  = mode === 'car' ? '🔧' : '🏍️';
+      document.getElementById('vehicle-sub').textContent  = mode === 'car'
+        ? 'Marque · Modèle · API-Ninjas Cars'
+        : 'Marque · Modèle · API-Ninjas Motorcycles';
+      var makeIn = document.getElementById('v-make');
+      makeIn.setAttribute('list', mode === 'car' ? 'car-makes-list' : 'moto-makes-list');
+      makeIn.placeholder = mode === 'car' ? 'Marque (ex: Toyota)' : 'Marque (ex: Kawasaki)';
+      document.getElementById('v-model').placeholder = mode === 'car' ? 'Modèle (ex: Corolla)' : 'Modèle (ex: Ninja)';
+      document.getElementById('v-year').min = mode === 'car' ? '1980' : '1950';
+      document.getElementById('vehicle-results').innerHTML = '';
+    }
 
-      if (!make && !model) {
-        res.innerHTML = '<div class="err">⚠ Saisissez au moins une marque ou un modèle.</div>';
-        return;
-      }
+    async function loadVehicle() {
+      var make  = document.getElementById('v-make').value.trim();
+      var model = document.getElementById('v-model').value.trim();
+      var year  = document.getElementById('v-year').value.trim();
+      var res   = document.getElementById('vehicle-results');
+      var btn   = document.getElementById('v-btn');
+
+      if (vehicleMode === 'car'  && (!make || !model)) { res.innerHTML = '<div class="err">⚠ Saisissez une marque et un modèle.</div>'; return; }
+      if (vehicleMode === 'moto' && !make && !model)   { res.innerHTML = '<div class="err">⚠ Saisissez au moins une marque ou un modèle.</div>'; return; }
 
       btn.disabled = true;
       res.innerHTML = '<div class="spin">Recherche en cours…</div>';
 
       try {
+        var endpoint = vehicleMode === 'car' ? '/api/cars' : '/api/motorcycles';
         var qs = '?limit=10';
         if (make)  qs += '&make='  + encodeURIComponent(make);
         if (model) qs += '&model=' + encodeURIComponent(model);
         if (year)  qs += '&year='  + encodeURIComponent(year);
 
-        var r = await fetch('/api/motorcycles' + qs);
+        var r = await fetch(endpoint + qs);
         if (!r.ok) throw new Error('HTTP ' + r.status);
-        var data = await r.json();
+        vehicleData = await r.json();
 
-        if (!Array.isArray(data) || !data.length) {
-          res.innerHTML = '<div class="err">Aucun résultat. Essayez en anglais (ex: Kawasaki / Ninja).</div>';
+        if (!Array.isArray(vehicleData) || !vehicleData.length) {
+          res.innerHTML = '<div class="err">Aucun résultat. Vérifiez la marque et le modèle (en anglais).</div>';
           btn.disabled = false; return;
         }
-
-        var m = data[0];
-
-        /* 6 specs primaires */
-        var html = [
-          '<div class="spec-grid">',
-            specCard('⚡', m.power        || '—', 'Puissance'),
-            specCard('🔩', m.engine       || '—', 'Moteur'),
-            specCard('📐', m.displacement || '—', 'Cylindrée'),
-            specCard('⚙️', m.gearbox      || '—', 'Boîte'),
-            specCard('⚖️', m.total_weight || '—', 'Poids total'),
-            specCard('🛢️', m.fuel_capacity|| '—', 'Réservoir'),
-          '</div>',
-        ];
-
-        /* Détails secondaires */
-        var details = [
-          ['Type',          m.type],
-          ['Refroidissement', m.cooling],
-          ['Transmission',  m.transmission],
-          ['Freins avant',  m.front_brakes],
-          ['Freins arrière',m.rear_brakes],
-          ['Hauteur selle', m.seat_height],
-          ['Empattement',   m.wheelbase],
-          ['Pneu avant',    m.front_tire],
-          ['Pneu arrière',  m.rear_tire],
-          ['Démarrage',     m.starter],
-        ].filter(function(row){ return row[1]; });
-
-        if (details.length) {
-          html.push('<div style="margin-top:1rem;display:grid;grid-template-columns:repeat(2,1fr);gap:.35rem .8rem;">');
-          details.forEach(function(row) {
-            html.push(
-              '<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(0,0,0,.06);padding:.28rem 0;">',
-                '<span style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">' + row[0] + '</span>',
-                '<span style="font-size:.72rem;font-weight:500;text-align:right;max-width:55%">' + row[1] + '</span>',
-              '</div>'
-            );
-          });
-          html.push('</div>');
-        }
-
-        if (data.length > 1) {
-          var years = [...new Set(data.map(function(x){ return x.year; }))].sort();
-          html.push('<div class="spec-note">' + data.length + ' variantes · années : ' + years.join(', ') + ' · affiché : ' + (m.make || '') + ' ' + (m.model || '') + ' ' + (m.year || '') + '</div>');
-        }
-
-        res.innerHTML = html.join('');
+        renderVehicle(0);
       } catch(e) {
         res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
       btn.disabled = false;
+    }
+
+    function renderVehicle(idx) {
+      var v    = vehicleData[idx];
+      var html = [];
+
+      if (vehicleMode === 'car') {
+        html = [
+          '<div class="spec-grid">',
+            specCard('⛽', fuelLabel(v.fuel_type),       'Carburant'),
+            specCard('⚙️', transLabel(v.transmission),  'Transmission'),
+            specCard('🔄', driveLabel(v.drive),         'Traction'),
+            specCard('🏎️', (v.horsepower || '—') + ' ch','Puissance'),
+            specCard('📐', (v.displacement ? v.displacement.toFixed(1) + ' L' : '—'), 'Cylindrée'),
+            specCard('💧', mpgToL100(v.combination_mpg) + ' L/100', 'Consommation'),
+          '</div>',
+        ];
+      } else {
+        html = [
+          '<div class="spec-grid">',
+            specCard('⚡', v.power         || '—', 'Puissance'),
+            specCard('🔩', v.engine        || '—', 'Moteur'),
+            specCard('📐', v.displacement  || '—', 'Cylindrée'),
+            specCard('⚙️', v.gearbox       || '—', 'Boîte'),
+            specCard('⚖️', v.total_weight  || '—', 'Poids total'),
+            specCard('🛢️', v.fuel_capacity || '—', 'Réservoir'),
+          '</div>',
+        ];
+        var details = [
+          ['Type', v.type], ['Refroidissement', v.cooling], ['Transmission', v.transmission],
+          ['Freins avant', v.front_brakes], ['Freins arrière', v.rear_brakes],
+          ['Hauteur selle', v.seat_height], ['Empattement', v.wheelbase],
+          ['Pneu avant', v.front_tire], ['Pneu arrière', v.rear_tire], ['Démarrage', v.starter],
+        ].filter(function(row){ return row[1]; });
+        if (details.length) {
+          html.push('<div style="margin-top:1rem;display:grid;grid-template-columns:repeat(2,1fr);gap:.35rem .8rem;">');
+          details.forEach(function(row) {
+            html.push('<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(0,0,0,.06);padding:.28rem 0;"><span style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">' + row[0] + '</span><span style="font-size:.72rem;font-weight:500;text-align:right;max-width:55%">' + row[1] + '</span></div>');
+          });
+          html.push('</div>');
+        }
+      }
+
+      /* Chips années */
+      if (vehicleData.length > 1) {
+        html.push('<div class="year-chips">');
+        vehicleData.forEach(function(item, i) {
+          var label = item.year || '?';
+          if (vehicleMode === 'moto' && item.model !== v.model) label += ' · ' + item.model;
+          html.push('<span class="year-chip' + (i === idx ? ' active' : '') + '" onclick="renderVehicle(' + i + ')">' + label + '</span>');
+        });
+        html.push('</div>');
+      }
+
+      document.getElementById('vehicle-results').innerHTML = html.join('');
     }
 
     /* ═══════════════════════════════════════════════════
@@ -1247,14 +1269,18 @@
         var minP   = Math.min.apply(null, prices);
         var maxP   = Math.max.apply(null, prices);
 
+        var range = maxP - minP > 0 ? maxP - minP : 0.01;
         var html = ['<div class="fuel-list">'];
         d.results.forEach(function(s, i) {
-          var price = parseFloat(s[field]);
-          var dot   = price <= minP + 0.02 ? 'dot-green' : price <= minP + 0.05 ? 'dot-orange' : 'dot-red';
-          var brand = s.nom || s.enseignes_enseigne || s.enseignes || 'Station';
-          var addr  = (s.adresse || '') + (s.cp ? ' · ' + s.cp : '');
-          var svcs  = parseSvcs(s.services_service);
-          var tags  = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
+          var price  = parseFloat(s[field]);
+          var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
+          var dot    = isCheap ? 'dot-green'  : isMid ? 'dot-orange'  : 'dot-red';
+          var bar    = isCheap ? 'bar-green'  : isMid ? 'bar-orange'  : 'bar-red';
+          var pct    = Math.round((price - minP) / range * 100);
+          var brand  = s.nom || s.enseignes_enseigne || s.enseignes || 'Station';
+          var addr   = (s.adresse || '') + (s.cp ? ' · ' + s.cp : '');
+          var svcs   = parseSvcs(s.services_service);
+          var tags   = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
 
           html.push(
             '<div class="fuel-item">',
@@ -1265,7 +1291,10 @@
                 '<div class="fuel-addr">' + addr + '</div>',
                 svcs.length ? '<div class="fuel-tags">' + tags + '</div>' : '',
               '</div>',
-              '<div class="fuel-price">' + price.toFixed(3) + '<small> €/L</small></div>',
+              '<div class="fuel-price-col">',
+                '<div class="fuel-price">' + price.toFixed(3) + '<small> €/L</small></div>',
+                '<div class="fuel-bar-bg"><div class="fuel-bar-fill ' + bar + '" style="width:' + pct + '%"></div></div>',
+              '</div>',
             '</div>'
           );
         });
@@ -1322,11 +1351,9 @@
     document.getElementById('kilo-end').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
     document.getElementById('kilo-start').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
 
-    document.getElementById('car-btn').addEventListener('click', loadCars);
-    document.getElementById('car-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCars(); });
-
-    document.getElementById('moto-btn').addEventListener('click', loadMoto);
-    document.getElementById('moto-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadMoto(); });
+    document.getElementById('v-btn').addEventListener('click', loadVehicle);
+    document.getElementById('v-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadVehicle(); });
+    document.getElementById('v-make').addEventListener('keydown',  function(e){ if(e.key==='Enter') loadVehicle(); });
 
     document.getElementById('fuel-btn').addEventListener('click', loadCarburants);
     document.getElementById('fuel-city').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCarburants(); });
