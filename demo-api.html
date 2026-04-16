@@ -1293,19 +1293,13 @@
               + '/prix-des-carburants-en-france-flux-instantane-v2/records';
     var fuelMap = null;
 
-    function palmEl(color) {
-      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 36" width="22" height="36">'
-        + '<path d="M10.5 35 Q10 26 11 18 Q12 26 12.5 35Z" fill="#b5813e"/>'
-        + '<circle cx="11" cy="18" r="2" fill="#c8860a"/>'
-        + '<path d="M11 17 Q3 12 0 14 Q4 9 11 17" fill="CLR" opacity=".95"/>'
-        + '<path d="M11 17 Q19 12 22 14 Q18 9 11 17" fill="CLR" opacity=".95"/>'
-        + '<path d="M11 17 Q8 8 10 4 Q10 9 11 17" fill="CLR" opacity=".9"/>'
-        + '<path d="M11 17 Q14 8 12 4 Q12 9 11 17" fill="CLR" opacity=".9"/>'
-        + '<path d="M11 17 Q2 15 1 19 Q4 13 11 17" fill="CLR" opacity=".85"/>'
-        + '<path d="M11 17 Q20 15 21 19 Q18 13 11 17" fill="CLR" opacity=".85"/>'
+    function pinEl(color) {
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">'
+        + '<path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="' + color + '"/>'
+        + '<circle cx="12" cy="12" r="5" fill="rgba(0,0,0,.2)"/>'
         + '</svg>';
       var el = document.createElement('div');
-      el.innerHTML = svg.replace(/CLR/g, color);
+      el.innerHTML = svg;
       el.style.cursor = 'pointer';
       return el;
     }
@@ -1418,7 +1412,7 @@
             + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
             + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
           );
-          new maplibregl.Marker({ element: palmEl(color), anchor: 'bottom' })
+          new maplibregl.Marker({ element: pinEl(color), anchor: 'bottom' })
             .setLngLat([lon, lat])
             .setPopup(popup)
             .addTo(fuelMap);
