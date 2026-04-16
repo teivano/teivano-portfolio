@@ -685,7 +685,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.09</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.10</div>
     </footer>
 
   </div>
@@ -1367,54 +1367,47 @@
         listHtml.push('<div class="spec-note">Min ' + minP.toFixed(3) + ' € · Max ' + maxP.toFixed(3) + ' € · ' + d.results.length + ' stations</div>');
         document.getElementById('fuel-list-wrap').innerHTML = listHtml.join('');
 
-        /* ── Afficher le container D'ABORD ── */
+        /* ── Géocode la ville EN PREMIER (await) — centre garanti ── */
+        var cityCenter = [48.117, -1.677]; /* fallback Rennes */
+        try {
+          var geo = await geocodeAddr(city);
+          cityCenter = [geo[1], geo[0]];
+        } catch(_) {}
+
+        /* ── Container visible, PUIS init Leaflet ── */
         status.innerHTML = '';
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
 
-        /* ── Carte Leaflet — créée APRÈS que le container est visible ── */
         if (!fuelMap) {
-          fuelMap = L.map('fuel-map', { zoomControl: true, attributionControl: true });
+          fuelMap = L.map('fuel-map').setView(cityCenter, 13);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap', maxZoom: 18
           }).addTo(fuelMap);
         } else {
           fuelMap.eachLayer(function(l){ if (l instanceof L.Marker) fuelMap.removeLayer(l); });
+          fuelMap.setView(cityCenter, 13);
         }
+        fuelMap.invalidateSize();
 
-        /* Extraire coords — tente latitude/longitude puis geom.coordinates */
+        /* ── Marqueurs — bonus si l'API fournit des coords ── */
         var bounds = [];
         d.results.forEach(function(s) {
           var lat, lon;
-          if (s.latitude && s.longitude) {
-            lat = parseFloat(s.latitude); lon = parseFloat(s.longitude);
-          } else if (s.geom && s.geom.coordinates) {
-            lon = parseFloat(s.geom.coordinates[0]); lat = parseFloat(s.geom.coordinates[1]);
-          }
+          if (s.latitude)                          { lat = parseFloat(s.latitude);            lon = parseFloat(s.longitude); }
+          else if (s.geom && s.geom.coordinates)   { lon = parseFloat(s.geom.coordinates[0]); lat = parseFloat(s.geom.coordinates[1]); }
           if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
           var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
           var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
-          var marker  = L.marker([lat, lon], { icon: palmIcon(color) }).addTo(fuelMap);
-          marker.bindPopup(
+          L.marker([lat, lon], { icon: palmIcon(color) }).addTo(fuelMap).bindPopup(
             '<div class="fp-addr">' + (s.adresse || 'Station') + '</div>'
             + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
             + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
           );
           bounds.push([lat, lon]);
         });
-
-        /* fitBounds si coords valides, sinon géocode la ville */
-        fuelMap.invalidateSize();
-        if (bounds.length) {
-          fuelMap.fitBounds(bounds, { padding: [32, 32] });
-        } else {
-          geocodeAddr(city).then(function(coords) {
-            fuelMap.setView([coords[1], coords[0]], 13);
-          }).catch(function() {
-            fuelMap.setView([48.117, -1.677], 13); /* fallback Rennes */
-          });
-        }
+        if (bounds.length > 1) fuelMap.fitBounds(bounds, { padding: [32, 32] });
       } catch(e) {
         status.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
