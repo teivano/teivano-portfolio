@@ -1005,14 +1005,16 @@
     ═══════════════════════════════════════════════════ */
     updateRefreshClock();
 
+    /* Appels STAR espacés de 400ms pour éviter le rate-limit (429) */
     loadMetro();
-    loadBus();
-    loadVelos();
-    loadEtat();
-    loadParkings();
+    setTimeout(loadBus,      400);
+    setTimeout(loadVelos,    800);
+    setTimeout(loadEtat,    1200);
+    setTimeout(loadParkings,1600);
+    setTimeout(loadEvents,  2000);
+    /* APIs tierces indépendantes — pas de contrainte STAR */
     loadTrains();
     loadSatellite();
-    loadEvents();
 
     /* Auto-refresh toutes les 60s */
     setInterval(function() {
