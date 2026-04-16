@@ -245,6 +245,80 @@
     .palier.active .palier-n   { color: #059669; }
     .palier.active .palier-range { color: #065f46; }
 
+    /* ── Automobile ──────────────────────────────────── */
+    .auto-form {
+      display: flex; align-items: center; gap: .6rem;
+      flex-wrap: wrap; margin-bottom: 1.2rem;
+    }
+    .auto-in, .auto-select {
+      flex: 1; min-width: 120px;
+      background: rgba(255,255,255,.62);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.82); border-radius: 12px;
+      padding: .7rem 1rem; font-size: .8rem; font-family: inherit;
+      color: var(--text); outline: none; appearance: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .auto-in::placeholder { color: var(--muted); }
+    .auto-in:focus, .auto-select:focus {
+      border-color: rgba(124,58,237,.4); box-shadow: 0 0 0 3px rgba(124,58,237,.08);
+    }
+    .auto-in.sm { max-width: 90px; }
+    .auto-btn {
+      background: linear-gradient(135deg,var(--accent),#0891b2);
+      color: #fff; border: none; border-radius: 12px;
+      padding: .7rem 1.4rem; font-size: .8rem; font-weight: 500;
+      font-family: inherit; cursor: pointer; flex-shrink: 0;
+      transition: opacity .2s, transform .1s;
+    }
+    .auto-btn:hover  { opacity: .88; }
+    .auto-btn:active { transform: scale(.97); }
+    .auto-btn:disabled { opacity: .45; cursor: default; }
+
+    /* Fiche technique */
+    .spec-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem;
+    }
+    @media(max-width:480px) { .spec-grid { grid-template-columns: repeat(2,1fr); } }
+    .spec-card {
+      background: rgba(255,255,255,.45);
+      border: 1px solid rgba(255,255,255,.75); border-radius: 14px;
+      padding: .85rem .7rem; text-align: center;
+    }
+    .spec-ico { font-size: 1.2rem; margin-bottom: .35rem; }
+    .spec-val { font-size: 1.15rem; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
+    .spec-lbl { font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+    .spec-note { font-size: .68rem; color: var(--muted); margin-top: .9rem; font-style: italic; }
+
+    /* Prix carburants */
+    .fuel-header {
+      display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.2rem;
+    }
+    .fuel-list { display: flex; flex-direction: column; gap: .5rem; }
+    .fuel-item {
+      display: flex; align-items: center; gap: .85rem;
+      background: rgba(255,255,255,.45);
+      border: 1px solid rgba(255,255,255,.75); border-radius: 14px;
+      padding: .75rem 1rem;
+    }
+    .fuel-rank { font-size: .7rem; font-weight: 600; color: var(--muted); min-width: 18px; text-align: center; }
+    .fuel-info { flex: 1; min-width: 0; }
+    .fuel-brand { font-size: .78rem; font-weight: 500; }
+    .fuel-addr  { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fuel-tags  { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+    .fuel-tag   { font-size: .52rem; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(0,0,0,.07); color: var(--muted); }
+    .fuel-price {
+      font-size: 1.3rem; font-weight: 200; letter-spacing: -.03em;
+      white-space: nowrap; min-width: 70px; text-align: right;
+    }
+    .fuel-price small { font-size: .65rem; font-weight: 400; opacity: .65; }
+    .fuel-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-green  { background: var(--green); }
+    .dot-orange { background: var(--orange); }
+    .dot-red    { background: var(--red); }
+
     /* ── Modale "il est bo" ───────────────────────────── */
     #beau-overlay {
       display: none; position: fixed; inset: 0;
@@ -455,9 +529,53 @@
       </div>
     </section>
 
+    <!-- ══ BLOC 7 — Fiche Technique Auto ═════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">07 · Fiche Technique Automobile</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l"><span class="ch-ico">🔧</span>
+            <div><div class="ch-ttl">Caractéristiques techniques</div><div class="ch-sub">Marque · Modèle · API-Ninjas Cars</div></div>
+          </div>
+        </div>
+        <div class="auto-form">
+          <input class="auto-in" id="car-make"  type="text" placeholder="Marque (ex: Toyota)">
+          <input class="auto-in" id="car-model" type="text" placeholder="Modèle (ex: Corolla)">
+          <input class="auto-in sm" id="car-year" type="number" placeholder="Année" min="1980" max="2025">
+          <button class="auto-btn" id="car-btn">Rechercher</button>
+        </div>
+        <div id="car-results"></div>
+      </div>
+    </section>
+
+    <!-- ══ BLOC 8 — Prix Carburants ═══════════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">08 · Prix des Carburants</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l"><span class="ch-ico">⛽</span>
+            <div><div class="ch-ttl">Stations · Prix en temps réel</div><div class="ch-sub">Open data économie.gouv.fr</div></div>
+          </div>
+        </div>
+        <div class="fuel-header">
+          <input class="auto-in" id="fuel-city" type="text" placeholder="Ville (ex: Rennes)" style="max-width:200px">
+          <select class="auto-select" id="fuel-type" style="max-width:130px">
+            <option value="gazole">Gazole</option>
+            <option value="sp95">SP95</option>
+            <option value="e10">E10</option>
+            <option value="e85">E85</option>
+            <option value="sp98">SP98</option>
+            <option value="gplc">GPL</option>
+          </select>
+          <button class="auto-btn" id="fuel-btn">Rechercher</button>
+        </div>
+        <div id="fuel-results"></div>
+      </div>
+    </section>
+
     <footer>
-      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.02</div>
+      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.03</div>
     </footer>
 
   </div>
@@ -922,6 +1040,147 @@
     }
 
     /* ═══════════════════════════════════════════════════
+       BLOC 07 — Fiche Technique (API-Ninjas via proxy)
+    ═══════════════════════════════════════════════════ */
+    function mpgToL100(mpg) {
+      return mpg > 0 ? (235.21 / mpg).toFixed(1) : '—';
+    }
+    function driveLabel(d) {
+      return { fwd:'Traction', rwd:'Propulsion', awd:'Intégrale', '4wd':'4x4' }[d] || d || '—';
+    }
+    function fuelLabel(f) {
+      return { gasoline:'Essence', diesel:'Diesel', electric:'Électrique', hybrid:'Hybride' }[f] || f || '—';
+    }
+    function transLabel(t) {
+      return { manual:'Manuelle', automatic:'Automatique' }[t] || t || '—';
+    }
+
+    async function loadCars() {
+      var make  = document.getElementById('car-make').value.trim();
+      var model = document.getElementById('car-model').value.trim();
+      var year  = document.getElementById('car-year').value.trim();
+      var res   = document.getElementById('car-results');
+      var btn   = document.getElementById('car-btn');
+
+      if (!make || !model) {
+        res.innerHTML = '<div class="err">⚠ Saisissez une marque et un modèle.</div>';
+        return;
+      }
+
+      btn.disabled = true;
+      res.innerHTML = '<div class="spin">Recherche en cours…</div>';
+
+      try {
+        var qs = '?make=' + encodeURIComponent(make) + '&model=' + encodeURIComponent(model) + '&limit=10';
+        if (year) qs += '&year=' + encodeURIComponent(year);
+        var r = await fetch('/api/cars' + qs);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var data = await r.json();
+        if (!Array.isArray(data) || !data.length) {
+          res.innerHTML = '<div class="err">Aucun résultat. Vérifiez la marque et le modèle (en anglais).</div>';
+          btn.disabled = false; return;
+        }
+
+        var c = data[0];
+        var html = [
+          '<div class="spec-grid">',
+            specCard('⛽', fuelLabel(c.fuel_type),        'Carburant'),
+            specCard('⚙️', transLabel(c.transmission),   'Transmission'),
+            specCard('🔄', driveLabel(c.drive),          'Traction'),
+            specCard('🏎️', (c.horsepower || '—') + ' ch','Puissance'),
+            specCard('📐', (c.displacement ? c.displacement.toFixed(1) + ' L' : '—'), 'Cylindrée'),
+            specCard('💧', mpgToL100(c.combination_mpg) + ' L/100', 'Consommation'),
+          '</div>',
+        ];
+
+        if (data.length > 1) {
+          var years = [...new Set(data.map(function(x){ return x.year; }))].sort();
+          html.push('<div class="spec-note">' + data.length + ' variantes trouvées · années : ' + years.join(', ') + ' · données affichées pour ' + (c.year || '?') + '</div>');
+        }
+
+        res.innerHTML = html.join('');
+      } catch(e) {
+        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
+      }
+      btn.disabled = false;
+    }
+
+    function specCard(ico, val, lbl) {
+      return '<div class="spec-card"><div class="spec-ico">' + ico + '</div><div class="spec-val">' + val + '</div><div class="spec-lbl">' + lbl + '</div></div>';
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 08 — Prix Carburants (data.economie.gouv.fr)
+    ═══════════════════════════════════════════════════ */
+    var CARBU = 'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets'
+              + '/prix-des-carburants-en-france-flux-instantane-v2/records';
+
+    async function loadCarburants() {
+      var city  = document.getElementById('fuel-city').value.trim() || 'Rennes';
+      var type  = document.getElementById('fuel-type').value;
+      var res   = document.getElementById('fuel-results');
+      var btn   = document.getElementById('fuel-btn');
+
+      btn.disabled = true;
+      res.innerHTML = '<div class="spin">Recherche en cours…</div>';
+
+      try {
+        var field = 'prix_' + type;
+        var where = encodeURIComponent('ville like "%' + city.toUpperCase() + '%" and ' + field + ' is not null');
+        var url   = CARBU + '?where=' + where + '&order_by=' + field + '%20asc&limit=20';
+
+        var r = await fetch(url);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var d = await r.json();
+
+        if (!d.results || !d.results.length) {
+          res.innerHTML = '<div class="err">Aucune station trouvée pour "' + city + '" avec ce carburant.</div>';
+          btn.disabled = false; return;
+        }
+
+        var prices = d.results.map(function(s){ return parseFloat(s[field]); }).filter(Boolean);
+        var minP   = Math.min.apply(null, prices);
+        var maxP   = Math.max.apply(null, prices);
+
+        var html = ['<div class="fuel-list">'];
+        d.results.forEach(function(s, i) {
+          var price = parseFloat(s[field]);
+          var dot   = price <= minP + 0.02 ? 'dot-green' : price <= minP + 0.05 ? 'dot-orange' : 'dot-red';
+          var brand = s.nom || s.enseignes_enseigne || s.enseignes || 'Station';
+          var addr  = (s.adresse || '') + (s.cp ? ' · ' + s.cp : '');
+          var svcs  = parseSvcs(s.services_service);
+          var tags  = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
+
+          html.push(
+            '<div class="fuel-item">',
+              '<div class="fuel-rank">' + (i+1) + '</div>',
+              '<div class="fuel-dot ' + dot + '"></div>',
+              '<div class="fuel-info">',
+                '<div class="fuel-brand">' + brand + '</div>',
+                '<div class="fuel-addr">' + addr + '</div>',
+                svcs.length ? '<div class="fuel-tags">' + tags + '</div>' : '',
+              '</div>',
+              '<div class="fuel-price">' + price.toFixed(3) + '<small> €/L</small></div>',
+            '</div>'
+          );
+        });
+        html.push('</div>');
+        html.push('<div class="spec-note">Min ' + minP.toFixed(3) + ' € · Max ' + maxP.toFixed(3) + ' € · ' + d.results.length + ' stations · ' + city.charAt(0).toUpperCase() + city.slice(1).toLowerCase() + '</div>');
+        res.innerHTML = html.join('');
+      } catch(e) {
+        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
+      }
+      btn.disabled = false;
+    }
+
+    function parseSvcs(raw) {
+      if (!raw) return [];
+      if (Array.isArray(raw)) return raw;
+      try { var p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch(_) {}
+      return raw.split(/[,;|]/).map(function(s){ return s.trim(); }).filter(Boolean);
+    }
+
+    /* ═══════════════════════════════════════════════════
        LANCEMENT
     ═══════════════════════════════════════════════════ */
     updateRefreshClock();
@@ -957,6 +1216,12 @@
     });
     document.getElementById('kilo-end').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
     document.getElementById('kilo-start').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
+
+    document.getElementById('car-btn').addEventListener('click', loadCars);
+    document.getElementById('car-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCars(); });
+
+    document.getElementById('fuel-btn').addEventListener('click', loadCarburants);
+    document.getElementById('fuel-city').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCarburants(); });
   </script>
 </body>
 </html>
