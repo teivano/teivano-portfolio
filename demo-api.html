@@ -748,6 +748,13 @@
       } catch(_) {}
       return fetch(url)
         .then(function(r) {
+          if (r.status === 429) {
+            try {
+              var fallback = JSON.parse(localStorage.getItem('star_' + key));
+              if (fallback) return fallback.data;
+            } catch(_) {}
+            throw new Error('Rate limit (429)');
+          }
           if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
         })
