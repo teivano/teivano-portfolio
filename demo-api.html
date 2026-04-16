@@ -32,11 +32,8 @@
     a { color: inherit; text-decoration: none; }
 
     /* ── Background blobs (fixes) ────────────────────── */
-    .blobs {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 0; overflow: hidden;
-    }
-    .blob { position: absolute; border-radius: 50%; }
+    .blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .blob  { position: absolute; border-radius: 50%; }
     @keyframes bm1{from{transform:translate(0,0)}to{transform:translate(4%,7%)}}
     @keyframes bm2{from{transform:translate(0,0)}to{transform:translate(-5%,-4%)}}
     @keyframes bm3{from{transform:translate(0,0)}to{transform:translate(6%,-5%)}}
@@ -44,8 +41,7 @@
     /* ── Wrapper ─────────────────────────────────────── */
     .wrap {
       position: relative; z-index: 1;
-      max-width: 920px;
-      margin: 0 auto;
+      max-width: 920px; margin: 0 auto;
       padding: 0 clamp(1.2rem,5vw,3rem) 4rem;
     }
 
@@ -62,10 +58,36 @@
     .page-hd h1 {
       font-size: clamp(2rem,5.5vw,3.2rem);
       font-weight: 280; letter-spacing: -.04em; line-height: 1.1;
-      margin: .8rem 0 .5rem;
+      margin: .8rem 0 1rem;
     }
-    .page-hd p {
-      font-size: .78rem; color: var(--muted); letter-spacing: .04em;
+
+    /* ── Refresh time display ─────────────────────────── */
+    .refresh-block {
+      display: inline-flex; align-items: center; gap: 1.1rem;
+      background: var(--glass);
+      backdrop-filter: var(--gblur);
+      -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid var(--gb);
+      border-radius: 16px;
+      box-shadow: var(--gshadow);
+      padding: .55rem 1.1rem .55rem .9rem;
+    }
+    .rt-label {
+      font-size: .6rem; letter-spacing: .24em; text-transform: uppercase;
+      color: var(--muted); white-space: nowrap; line-height: 1;
+    }
+    .rt-clock {
+      font-size: 2rem; font-weight: 200; letter-spacing: -.05em; line-height: 1;
+      font-family: 'Courier New', monospace; color: var(--text);
+      display: flex; align-items: baseline; gap: 0;
+    }
+    .rt-colon {
+      animation: colonBlink 1s step-start infinite;
+      margin: 0 1px;
+    }
+    @keyframes colonBlink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .15; }
     }
 
     /* ── Section bloc ─────────────────────────────────── */
@@ -75,9 +97,7 @@
       color: var(--muted); margin-bottom: .85rem;
       display: flex; align-items: center; gap: .8rem;
     }
-    .bloc-hd::after {
-      content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.07);
-    }
+    .bloc-hd::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.07); }
 
     /* ── Glass card ──────────────────────────────────── */
     .gc {
@@ -126,6 +146,34 @@
     /* ── Erreur ──────────────────────────────────────── */
     .err { font-size: .74rem; color: rgba(220,40,40,.75); padding: .3rem 0; }
 
+    /* ── Metro SVG train ─────────────────────────────── */
+    .metro-train-wrap {
+      margin: -.2rem -.2rem .9rem;
+      border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg, rgba(109,40,217,.06) 0%, rgba(8,145,178,.06) 100%);
+      padding: .6rem .4rem .2rem;
+    }
+    .metro-svg {
+      width: 100%; height: auto; display: block;
+      animation: trainIdle 5s ease-in-out infinite;
+    }
+    @keyframes trainIdle {
+      0%,100% { transform: translateX(0); }
+      40%,60% { transform: translateX(-3px); }
+    }
+
+    /* ── Metro split by direction ─────────────────────── */
+    .metro-split {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .8rem;
+    }
+    @media(max-width:420px) { .metro-split { grid-template-columns: 1fr; } }
+    .mdir-hd {
+      font-size: .6rem; font-weight: 600; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--muted);
+      padding-bottom: .4rem; margin-bottom: .3rem;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+
     /* ── Passage row (métro + bus) ───────────────────── */
     .prow {
       display: flex; align-items: center; gap: .65rem;
@@ -141,16 +189,14 @@
     }
     .badge-a { background: #e85d04; color: #fff; }
     .badge-b { background: #2563eb; color: #fff; }
-    .pdest { flex: 1; font-size: .8rem; }
-    .ptime { font-size: .76rem; font-weight: 500; font-family: 'Courier New',monospace; }
+    .pdest { flex: 1; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ptime { font-size: .76rem; font-weight: 500; font-family: 'Courier New',monospace; flex-shrink: 0; }
     .ptime.soon { color: var(--orange); }
     .ptime.now  { color: var(--green); }
     .pdim { opacity: .5; }
 
     /* ── Vélos ───────────────────────────────────────── */
-    .velo-stat {
-      display: flex; align-items: center; gap: 1rem; margin-bottom: .9rem;
-    }
+    .velo-stat { display: flex; align-items: center; gap: 1rem; margin-bottom: .9rem; }
     .vn { font-size: 2.2rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
     .vl { font-size: .68rem; color: var(--muted); margin-top: 2px; }
     .vdiv { width: 1px; height: 38px; background: rgba(0,0,0,.08); }
@@ -199,10 +245,7 @@
       padding: .6rem 0; border-bottom: 1px solid rgba(0,0,0,.05);
     }
     .trow:last-child { border-bottom: none; }
-    .th {
-      font-size: 1.05rem; font-weight: 200;
-      font-family: 'Courier New',monospace; min-width: 54px;
-    }
+    .th { font-size: 1.05rem; font-weight: 200; font-family: 'Courier New',monospace; min-width: 54px; }
     .ti { flex: 1; }
     .td { font-size: .84rem; font-weight: 500; }
     .tt { font-size: .67rem; color: var(--muted); margin-top: 2px; }
@@ -235,6 +278,41 @@
     .sml { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
     .smv { font-size: .8rem; font-weight: 500; }
 
+    /* ── Événements ──────────────────────────────────── */
+    .ev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%,260px),1fr));
+      gap: 1rem;
+    }
+    .ev-card {
+      background: rgba(255,255,255,.5);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.06);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .ev-img {
+      width: 100%; aspect-ratio: 16/9;
+      background: linear-gradient(135deg, rgba(109,40,217,.12), rgba(8,145,178,.12));
+      overflow: hidden; flex-shrink: 0;
+    }
+    .ev-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ev-body { padding: .85rem 1rem 1rem; flex: 1; display: flex; flex-direction: column; gap: .35rem; }
+    .ev-tag {
+      display: inline-block; font-size: .58rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px; align-self: flex-start;
+    }
+    .ev-ttl {
+      font-size: .82rem; font-weight: 500; line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .ev-date { font-size: .68rem; color: var(--muted); }
+    .ev-lieu { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
     /* ── Note info ───────────────────────────────────── */
     .note {
       font-size: .68rem; color: var(--muted); margin-top: .6rem;
@@ -265,7 +343,12 @@
     <header class="page-hd">
       <a href="/" class="back">← TLB</a>
       <h1>Démo API<br>Rennes</h1>
-      <p id="globalTs">Données en temps réel · chargement…</p>
+      <div class="refresh-block">
+        <div class="rt-label">Actualisé à</div>
+        <div class="rt-clock">
+          <span id="rt-h">--</span><span class="rt-colon">:</span><span id="rt-m">--</span>
+        </div>
+      </div>
     </header>
 
     <!-- ══ BLOC 1 — Transports STAR ══════════════════════ -->
@@ -273,7 +356,7 @@
       <div class="bloc-hd">01 · Transports STAR</div>
       <div class="g2">
 
-        <!-- Métro Clémenceau -->
+        <!-- Métro Clémenceau — SVG + 2 directions -->
         <div class="gc">
           <div class="ch">
             <div class="ch-l">
@@ -285,7 +368,57 @@
             </div>
             <span class="ch-ts" id="ts-metro">—</span>
           </div>
-          <div id="metro"><div class="spin">Chargement</div></div>
+
+          <!-- Train SVG -->
+          <div class="metro-train-wrap" aria-hidden="true">
+            <svg class="metro-svg" viewBox="0 0 290 70" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="mg" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#6d28d9"/>
+                  <stop offset="100%" stop-color="#0891b2"/>
+                </linearGradient>
+                <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(220,245,255,.92)"/>
+                  <stop offset="100%" stop-color="rgba(165,215,240,.72)"/>
+                </linearGradient>
+              </defs>
+              <!-- Rail -->
+              <rect x="0" y="67" width="290" height="2" rx="1" fill="rgba(0,0,0,.1)"/>
+              <!-- Body -->
+              <path d="M38,7 L264,7 Q278,7 278,20 L278,53 Q278,65 264,65 L38,65 Q22,65 14,56 L6,36 L14,17 Q22,7 38,7 Z" fill="url(#mg)"/>
+              <!-- Top shine -->
+              <path d="M38,7 L264,7 Q278,7 278,20 L278,26 L14,20 L16,13 Q24,7 38,7 Z" fill="rgba(255,255,255,.18)"/>
+              <!-- Windows -->
+              <rect x="46" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
+              <rect x="94" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
+              <rect x="142" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
+              <rect x="190" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
+              <rect x="238" y="12" width="32" height="20" rx="4" fill="url(#wg)"/>
+              <!-- Door lines -->
+              <line x1="91"  y1="36" x2="91"  y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
+              <line x1="139" y1="36" x2="139" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
+              <line x1="187" y1="36" x2="187" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
+              <line x1="235" y1="36" x2="235" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
+              <!-- Headlight -->
+              <ellipse cx="9" cy="36" rx="4" ry="6" fill="rgba(255,235,130,.9)"/>
+              <!-- Wheels -->
+              <ellipse cx="75"  cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
+              <ellipse cx="163" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
+              <ellipse cx="251" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
+            </svg>
+          </div>
+
+          <!-- Split by direction -->
+          <div class="metro-split">
+            <div>
+              <div class="mdir-hd">→ La Poterie</div>
+              <div id="metro-poterie"><div class="spin">…</div></div>
+            </div>
+            <div>
+              <div class="mdir-hd">→ JF Kennedy</div>
+              <div id="metro-kennedy"><div class="spin">…</div></div>
+            </div>
+          </div>
         </div>
 
         <!-- Bus Binquenais -->
@@ -354,9 +487,9 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 3 — Trains Navitia ═════════════════════════ -->
+    <!-- ══ BLOC 3 — Trains SNCF ════════════════════════════ -->
     <section class="bloc">
-      <div class="bloc-hd">03 · Trains depuis Rennes · Navitia</div>
+      <div class="bloc-hd">03 · Trains depuis Rennes · SNCF</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l">
@@ -374,14 +507,14 @@
 
     <!-- ══ BLOC 4 — Image satellite ═══════════════════════ -->
     <section class="bloc">
-      <div class="bloc-hd">04 · Image satellite · NASA + BAN</div>
+      <div class="bloc-hd">04 · Image satellite · Esri + BAN</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l">
             <span class="ch-ico">🛰️</span>
             <div>
               <div class="ch-ttl">16 Bd Oscar Leroux, Rennes</div>
-              <div class="ch-sub">Géocodage BAN → imagerie Landsat 8</div>
+              <div class="ch-sub">Géocodage BAN → imagerie Esri World Imagery</div>
             </div>
           </div>
           <span class="ch-ts" id="ts-sat">—</span>
@@ -390,8 +523,27 @@
       </div>
     </section>
 
+    <!-- ══ BLOC 5 — Événements à Rennes ══════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">05 · Événements à Rennes</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l">
+            <span class="ch-ico">🎭</span>
+            <div>
+              <div class="ch-ttl">Agenda · Prochains événements</div>
+              <div class="ch-sub">Culture, musique, sport · open data Rennes</div>
+            </div>
+          </div>
+          <span class="ch-ts" id="ts-ev">—</span>
+        </div>
+        <div id="events"><div class="spin">Chargement</div></div>
+      </div>
+    </section>
+
     <footer>
-      Sources · STAR open data · Navitia.io · base-adresse.data.gouv.fr · NASA Earth · TLB
+      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · TLB
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.01</div>
     </footer>
 
   </div><!-- /.wrap -->
@@ -400,26 +552,35 @@
     /* ═══════════════════════════════════════════════════
        CONFIG
     ═══════════════════════════════════════════════════ */
-    var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
+    /* STAR datasets sont proxiés via /api/* (Vercel cache s-maxage=30) */
 
     /* ═══════════════════════════════════════════════════
        UTILITAIRES
     ═══════════════════════════════════════════════════ */
-    function now() {
-      return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    function nowHM() {
+      var d = new Date();
+      return {
+        h: String(d.getHours()).padStart(2,'0'),
+        m: String(d.getMinutes()).padStart(2,'0')
+      };
+    }
+
+    function updateRefreshClock() {
+      var t = nowHM();
+      var hEl = document.getElementById('rt-h');
+      var mEl = document.getElementById('rt-m');
+      if (hEl) hEl.textContent = t.h;
+      if (mEl) mEl.textContent = t.m;
     }
 
     function fmtISO(s) {
-      /* "2026-04-16T17:22:38+00:00" → "17:22" en heure locale */
       if (!s) return '—';
-      var d = new Date(s);
-      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return new Date(s).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
 
     function fmtNav(s) {
-      /* "20260416T192500" → "19:25" */
       if (!s || s.length < 13) return '—';
-      return s.substr(9, 2) + ':' + s.substr(11, 2);
+      return s.substr(9,2) + ':' + s.substr(11,2);
     }
 
     function minsUntil(s) {
@@ -434,7 +595,7 @@
 
     function stamp(id) {
       var el = document.getElementById('ts-' + id);
-      if (el) el.textContent = now();
+      if (el) el.textContent = nowHM().h + ':' + nowHM().m;
     }
 
     function err(id, msg) {
@@ -448,57 +609,62 @@
     }
 
     function normLigne(val) {
-      /* Normalise les codes ligne STAR : "1001"/"a" → A, "1002"/"b" → B */
       var s = String(val || '').trim().toLowerCase();
       if (s === 'a' || s === '1001' || s === '0001') return { label: 'A', cls: 'badge-a' };
       if (s === 'b' || s === '1002' || s === '0002') return { label: 'B', cls: 'badge-b' };
       return { label: s.toUpperCase() || '?', cls: '' };
     }
 
+    function row(ligne, bc, dest, time, timeCls, dim) {
+      return '<div class="prow' + (dim ? ' pdim' : '') + '">'
+        + '<span class="badge ' + bc + '">' + ligne + '</span>'
+        + '<span class="pdest">' + dest + '</span>'
+        + '<span class="ptime ' + timeCls + '">' + time + '</span>'
+        + '</div>';
+    }
+
     /* ═══════════════════════════════════════════════════
-       BLOC 1a — MÉTRO Clémenceau
+       BLOC 1a — MÉTRO Clémenceau (split par direction)
     ═══════════════════════════════════════════════════ */
     async function loadMetro() {
       try {
         var d = await api(
-          STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records'
-          + '?where=nomarret%20like%20%22Clemenceau%22&limit=12&order_by=nomcourtligne,sens'
+          '/api/metro?where=nomarret%20like%20%22Clemenceau%22&limit=12&order_by=nomcourtligne,sens'
         );
         stamp('metro');
 
         if (!d.results || !d.results.length) {
-          err('metro', 'Aucune donnée disponible'); return;
+          err('metro-poterie', 'Aucune donnée'); err('metro-kennedy', 'Aucune donnée'); return;
         }
 
-        var html = '';
-        d.results.forEach(function (r) {
-          var nl   = normLigne(r.nomcourtligne || r.idligne);
-          var dest = r.destination || '—';
+        /* Séparer par sens : 0 = La Poterie, 1 = JF Kennedy */
+        var poterie = d.results.filter(function(r) { return r.sens === 0; });
+        var kennedy = d.results.filter(function(r) { return r.sens === 1; });
 
-          /* Premier train */
-          var m1 = minsUntil(r.arriveefirsttrain);
-          var l1 = m1 <= 0 ? 'à quai' : m1 + ' min';
-          var c1 = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
-          html += row(nl.label, nl.cls, dest, l1, c1, false);
+        function renderDir(records) {
+          if (!records.length) return '<div class="err" style="font-size:.7rem">—</div>';
+          var h = '';
+          records.forEach(function(r) {
+            var nl  = normLigne(r.nomcourtligne || r.idligne);
+            var m1  = minsUntil(r.arriveefirsttrain);
+            var l1  = m1 <= 0 ? 'à quai' : m1 + ' min';
+            var c1  = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
+            h += row(nl.label, nl.cls, '', l1, c1, false);
+            if (r.arriveesecondtrain) {
+              var m2 = minsUntil(r.arriveesecondtrain);
+              var l2 = m2 <= 0 ? 'à quai' : m2 + ' min';
+              h += row(nl.label, nl.cls, '', l2, '', true);
+            }
+          });
+          return h;
+        }
 
-          /* Deuxième train */
-          if (r.arriveesecondtrain) {
-            var m2 = minsUntil(r.arriveesecondtrain);
-            var l2 = m2 <= 0 ? 'à quai' : m2 + ' min';
-            html += row(nl.label, nl.cls, dest, l2, '', true);
-          }
-        });
-
-        document.getElementById('metro').innerHTML = html;
-      } catch (e) { err('metro', e.message); }
-    }
-
-    function row(ligne, bc, dest, time, timeCls, dim) {
-      return '<div class="prow' + (dim ? ' pdim' : '') + '">'
-        + '<span class="badge ' + bc + '">' + ligne + '</span>'
-        + '<span class="pdest">→ ' + dest + '</span>'
-        + '<span class="ptime ' + timeCls + '">' + time + '</span>'
-        + '</div>';
+        document.getElementById('metro-poterie').innerHTML = renderDir(poterie);
+        document.getElementById('metro-kennedy').innerHTML = renderDir(kennedy);
+      } catch(e) {
+        err('metro-poterie', e.message);
+        err('metro-kennedy', e.message);
+      }
     }
 
     /* ═══════════════════════════════════════════════════
@@ -507,8 +673,7 @@
     async function loadBus() {
       try {
         var d = await api(
-          STAR + '/tco-bus-circulation-passages-tr/records'
-          + '?where=nomarret%20like%20%22Binquenais%22&limit=8&order_by=arrivee'
+          '/api/bus?where=nomarret%20like%20%22%25Binquenais%25%22&limit=8&order_by=arrivee'
         );
         stamp('bus');
 
@@ -517,17 +682,18 @@
         }
 
         var html = '';
-        d.results.slice(0, 6).forEach(function (r) {
+        d.results.slice(0,6).forEach(function(r) {
           var t   = r.arrivee || r.arriveetheorique || '';
           var ts  = fmtISO(t);
           var m   = t ? minsUntil(t) : null;
           var cls = m !== null && m <= 0 ? 'now' : m !== null && m <= 2 ? 'soon' : '';
           var lbl = m !== null && m <= 0 ? 'à quai' : ts;
-          html += row(r.nomcourtligne || '?', '', r.destination || '—', lbl, cls, false);
+          var nl  = normLigne(r.nomcourtligne || r.idligne);
+          html += row(nl.label || r.nomcourtligne || '?', nl.cls, r.destination || '—', lbl, cls, false);
         });
 
         document.getElementById('bus').innerHTML = html;
-      } catch (e) { err('bus', e.message); }
+      } catch(e) { err('bus', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
@@ -535,22 +701,19 @@
     ═══════════════════════════════════════════════════ */
     async function loadVelos() {
       try {
-        var d = await api(
-          STAR + '/vls-stations-etat-tr/records'
-          + '?where=nom%20like%20%22Clemenceau%22&limit=1'
-        );
+        var d = await api('/api/velos?where=nom%20like%20%22Clemenceau%22&limit=1');
         stamp('velo');
 
         if (!d.results || !d.results.length) {
           err('velos', 'Station introuvable'); return;
         }
 
-        var s    = d.results[0];
-        var tot  = s.nombreemplacementsactuels || 0;
-        var vd   = s.nombrevelosdisponibles    || 0;
-        var pd   = s.nombreemplacementsdisponibles || 0;
-        var p    = tot > 0 ? pct(tot - pd, tot) : 0;
-        var ok   = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
+        var s   = d.results[0];
+        var tot = s.nombreemplacementsactuels || 0;
+        var vd  = s.nombrevelosdisponibles || 0;
+        var pd  = s.nombreemplacementsdisponibles || 0;
+        var p   = tot > 0 ? pct(tot - pd, tot) : 0;
+        var ok  = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
 
         document.getElementById('velos').innerHTML = [
           '<div class="velo-stat">',
@@ -565,7 +728,7 @@
           '<div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div>',
           '<div class="pbar-lbl">' + tot + ' emplacements · ' + p + '% occupé</div>',
         ].join('');
-      } catch (e) { err('velos', e.message); }
+      } catch(e) { err('velos', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
@@ -573,7 +736,7 @@
     ═══════════════════════════════════════════════════ */
     async function loadEtat() {
       try {
-        var d = await api(STAR + '/tco-metro-lignes-etat-tr/records?limit=10');
+        var d = await api('/api/etat?limit=10');
         stamp('etat');
 
         if (!d.results || !d.results.length) {
@@ -583,21 +746,19 @@
         }
 
         var html = '';
-        d.results.forEach(function (r) {
-          var ligne = (r.nomcourtligne || r.idligne || '?').toUpperCase();
-          var etat  = r.etat || r.etatservice || r.libelleetat || 'Normal';
-          var ok    = String(etat).toLowerCase().match(/normal|service|bon/);
-          var bc    = ligne === 'A' ? 'badge-a' : ligne === 'B' ? 'badge-b' : '';
+        d.results.forEach(function(r) {
+          var nl   = normLigne(r.nomcourtligne || r.idligne || '?');
+          var etat = r.etat || r.etatservice || r.libelleetat || 'Normal';
+          var ok   = String(etat).toLowerCase().match(/normal|service|bon/);
           html += '<div class="prow">'
-            + '<span class="badge ' + bc + '">' + ligne + '</span>'
+            + '<span class="badge ' + nl.cls + '">' + nl.label + '</span>'
             + '<span class="pdest" style="font-size:.78rem">' + etat + '</span>'
             + '<span>' + (ok ? '🟢' : '🟡') + '</span>'
             + '</div>';
         });
 
         document.getElementById('etat').innerHTML = html;
-      } catch (e) {
-        /* Fallback silencieux */
+      } catch(e) {
         document.getElementById('etat').innerHTML =
           '<div style="font-size:.78rem;color:var(--green)">🟢 Réseau STAR opérationnel</div>'
           + '<div style="font-size:.65rem;color:var(--muted);margin-top:.4rem">État détaillé non disponible via open data</div>';
@@ -609,7 +770,7 @@
     ═══════════════════════════════════════════════════ */
     async function loadParkings() {
       try {
-        var d = await api(STAR + '/tco-parcsrelais-star-etat-tr/records?limit=20&order_by=nom');
+        var d = await api('/api/parkings?limit=20&order_by=nom');
         stamp('pk');
 
         if (!d.results || !d.results.length) {
@@ -617,34 +778,34 @@
         }
 
         var html = '<div class="pk-grid">';
-        d.results.forEach(function (r) {
-          var nom    = r.nom || '—';
-          var cap    = r.capaciteparking || r.capacitesoliste || 0;
-          var dispo  = r.jrdinfosoliste !== undefined ? r.jrdinfosoliste : null;
-          var ouv    = (r.etatouverture || '').toUpperCase();
-          var rempl  = (r.etatremplissage || '').toUpperCase();
-          var isOpen = ouv === 'OUVERT' || ouv === 'OPEN';
-          var isFull = rempl === 'COMPLET' || rempl === 'FULL';
-          var p      = dispo !== null && cap > 0 ? pct(cap - dispo, cap) : 0;
-          var tagCls = !isOpen ? 'ko' : isFull ? 'full' : 'ok';
-          var tagLbl = !isOpen ? 'FERMÉ' : isFull ? 'COMPLET' : 'OUVERT';
+        d.results.forEach(function(r) {
+          var nom   = r.nom || '—';
+          var cap   = r.capaciteparking || r.capacitesoliste || 0;
+          var dispo = r.jrdinfosoliste !== undefined ? r.jrdinfosoliste : null;
+          var ouv   = (r.etatouverture || '').toUpperCase();
+          var rempl = (r.etatremplissage || '').toUpperCase();
+          var isOpen= ouv === 'OUVERT' || ouv === 'OPEN';
+          var isFull= rempl === 'COMPLET' || rempl === 'FULL';
+          var p     = dispo !== null && cap > 0 ? pct(cap - dispo, cap) : 0;
+          var tCls  = !isOpen ? 'ko' : isFull ? 'full' : 'ok';
+          var tLbl  = !isOpen ? 'FERMÉ' : isFull ? 'COMPLET' : 'OUVERT';
 
           html += '<div class="pk">'
             + '<div class="pk-nom">' + nom + '</div>'
             + '<div class="pk-n">' + (dispo !== null ? dispo : '—') + '</div>'
             + '<div class="pk-s">places libres / ' + cap + '</div>'
             + '<div class="pk-bar"><div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div></div>'
-            + '<span class="pk-tag ' + tagCls + '">' + tagLbl + '</span>'
+            + '<span class="pk-tag ' + tCls + '">' + tLbl + '</span>'
             + '</div>';
         });
         html += '</div>';
 
         document.getElementById('parkings').innerHTML = html;
-      } catch (e) { err('parkings', e.message); }
+      } catch(e) { err('parkings', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 3 — TRAINS via proxy serverless /api/trains
+       BLOC 3 — TRAINS via proxy /api/trains
     ═══════════════════════════════════════════════════ */
     async function loadTrains() {
       try {
@@ -656,14 +817,13 @@
         }
 
         var html = '<div class="t-list">';
-        d.departures.forEach(function (dep) {
+        d.departures.forEach(function(dep) {
           var info  = dep.display_informations || {};
           var sdt   = dep.stop_date_time || {};
           var hDep  = fmtNav(sdt.departure_date_time);
-          var hBase = fmtNav(sdt.base_departure_date_time);
           var late  = sdt.departure_date_time && sdt.base_departure_date_time
                    && sdt.departure_date_time !== sdt.base_departure_date_time;
-          var dest  = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g, '').trim();
+          var dest  = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g,'').trim();
           var type  = info.commercial_mode || info.physical_mode || '';
           var code  = info.headsign ? ' · ' + info.headsign : '';
 
@@ -679,7 +839,7 @@
         html += '</div>';
         document.getElementById('trains').innerHTML = html;
 
-      } catch (e) {
+      } catch(e) {
         document.getElementById('trains').innerHTML = [
           '<div class="key-note">',
             '<strong>🔑 Clé SNCF manquante</strong>',
@@ -696,7 +856,7 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 4 — IMAGE SATELLITE (Esri World Imagery, sans clé)
+       BLOC 4 — IMAGE SATELLITE (Esri + BAN + NASA date)
     ═══════════════════════════════════════════════════ */
     async function loadSatellite() {
       try {
@@ -713,20 +873,32 @@
         var lat   = feat.geometry.coordinates[1];
         var label = feat.properties.label || '16 Bd Oscar Leroux, Rennes';
 
-        /* Étape 2 : conversion lat/lon → coordonnées tuile XYZ zoom 17
-           (~300 m par tuile, résolution satellite ~0.3 m/px) */
+        /* Étape 2 : date de la dernière image Landsat via NASA assets */
+        var satDate = null;
+        try {
+          var nasa = await api(
+            'https://api.nasa.gov/planetary/earth/assets'
+            + '?lat=' + lat + '&lon=' + lon + '&dim=0.025&api_key=DEMO_KEY'
+          );
+          if (nasa && nasa.date) {
+            satDate = new Date(nasa.date).toLocaleDateString('fr-FR', {
+              day: 'numeric', month: 'long', year: 'numeric'
+            });
+          }
+        } catch(_) { /* silencieux */ }
+
+        /* Étape 3 : tuiles XYZ Esri World Imagery zoom 17 */
         var z  = 17;
         var n  = Math.pow(2, z);
         var tx = Math.floor((lon + 180) / 360 * n);
         var lr = lat * Math.PI / 180;
         var ty = Math.floor((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n);
 
-        /* Étape 3 : grille 3×3 de tuiles Esri World Imagery (sans clé, sans CORS) */
-        var base = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+        var base  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
         var tiles = '';
         for (var dy = -1; dy <= 1; dy++) {
           for (var dx = -1; dx <= 1; dx++) {
-            tiles += '<img src="' + base + z + '/' + (ty + dy) + '/' + (tx + dx) + '"'
+            tiles += '<img src="' + base + z + '/' + (ty+dy) + '/' + (tx+dx) + '"'
               + ' width="256" height="256" draggable="false"'
               + ' style="display:block;width:33.333%;height:33.333%;float:left">';
           }
@@ -741,7 +913,6 @@
                 tiles,
                 '<div style="clear:both"></div>',
               '</div>',
-              /* Marqueur rouge au centre */
               '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:2">',
                 '<div style="width:11px;height:11px;background:#ef4444;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.55)"></div>',
               '</div>',
@@ -750,19 +921,89 @@
               '<div class="smr"><div class="sml">Adresse</div><div class="smv" style="font-size:.72rem">' + label + '</div></div>',
               '<div class="smr"><div class="sml">Latitude</div><div class="smv">' + lat.toFixed(5) + '</div></div>',
               '<div class="smr"><div class="sml">Longitude</div><div class="smv">' + lon.toFixed(5) + '</div></div>',
-              '<div class="smr"><div class="sml">Tuile</div><div class="smv">z17 · ' + tx + '/' + ty + '</div></div>',
+              '<div class="smr"><div class="sml">Date image</div><div class="smv" style="font-size:.72rem">' + (satDate || '—') + '</div></div>',
               '<div class="smr"><div class="sml">Source</div><div class="smv" style="font-size:.72rem">Esri World Imagery</div></div>',
               '<div class="smr"><div class="sml">Géocodage</div><div class="smv" style="font-size:.72rem">BAN data.gouv.fr</div></div>',
             '</div>',
           '</div>',
         ].join('');
-      } catch (e) { err('satellite', e.message); }
+      } catch(e) { err('satellite', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 5 — ÉVÉNEMENTS à Rennes
+    ═══════════════════════════════════════════════════ */
+    function fmtEvDate(s) {
+      if (!s) return '—';
+      var d = new Date(s);
+      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function evTheme(theme) {
+      var t = (theme || '').toLowerCase();
+      if (t.includes('musiqu'))                     return { bg:'rgba(124,58,237,.1)',  fg:'#6d28d9', icon:'🎵' };
+      if (t.includes('théât') || t.includes('theat')) return { bg:'rgba(239,68,68,.1)',   fg:'#b91c1c', icon:'🎭' };
+      if (t.includes('exposi'))                     return { bg:'rgba(13,148,136,.1)',  fg:'#0f766e', icon:'🎨' };
+      if (t.includes('festival'))                   return { bg:'rgba(249,115,22,.1)',  fg:'#c2410c', icon:'🎪' };
+      if (t.includes('dans'))                       return { bg:'rgba(236,72,153,.1)',  fg:'#be185d', icon:'💃' };
+      if (t.includes('sport'))                      return { bg:'rgba(37,99,235,.1)',   fg:'#1d4ed8', icon:'⚽' };
+      if (t.includes('ciném') || t.includes('cinem')) return { bg:'rgba(79,70,229,.1)', fg:'#4338ca', icon:'🎬' };
+      if (t.includes('confér') || t.includes('conf')) return { bg:'rgba(16,185,129,.1)',fg:'#047857', icon:'🎤' };
+      return { bg:'rgba(0,0,0,.06)', fg:'#374151', icon:'📌' };
+    }
+
+    async function loadEvents() {
+      try {
+        var d = await api(
+          '/api/events?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut'
+        );
+        stamp('ev');
+
+        if (!d.results || !d.results.length) {
+          document.getElementById('events').innerHTML =
+            '<div style="font-size:.78rem;color:var(--muted)">Aucun événement à venir disponible.</div>';
+          return;
+        }
+
+        var html = '<div class="ev-grid">';
+        d.results.forEach(function(r) {
+          var titre  = r.titre || 'Sans titre';
+          var theme  = Array.isArray(r.thematique) ? r.thematique[0] : (r.thematique || '');
+          var tc     = evTheme(theme);
+          var date   = fmtEvDate(r.date_debut);
+          var lieu   = r.lieu_nom || '';
+          var img    = r.image_url || '';
+
+          html += '<div class="ev-card">';
+          if (img) {
+            html += '<div class="ev-img"><img src="' + img + '" alt="" loading="lazy"'
+              + ' onerror="this.parentNode.innerHTML=\'<span style=\\"font-size:2rem;margin:auto\\">' + tc.icon + '</span>\'">'
+              + '</div>';
+          } else {
+            html += '<div class="ev-img" style="background:' + tc.bg + ';display:flex;align-items:center;justify-content:center">'
+              + '<span style="font-size:2.2rem">' + tc.icon + '</span>'
+              + '</div>';
+          }
+          html += '<div class="ev-body">';
+          if (theme) {
+            html += '<span class="ev-tag" style="background:' + tc.bg + ';color:' + tc.fg + '">'
+              + theme + '</span>';
+          }
+          html += '<div class="ev-ttl">' + titre + '</div>';
+          html += '<div class="ev-date">📅 ' + date + '</div>';
+          if (lieu) html += '<div class="ev-lieu">📍 ' + lieu + '</div>';
+          html += '</div></div>';
+        });
+        html += '</div>';
+
+        document.getElementById('events').innerHTML = html;
+      } catch(e) { err('events', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
        LANCEMENT
     ═══════════════════════════════════════════════════ */
-    document.getElementById('globalTs').textContent = 'Données en temps réel · actualisé à ' + now();
+    updateRefreshClock();
 
     loadMetro();
     loadBus();
@@ -771,14 +1012,16 @@
     loadParkings();
     loadTrains();
     loadSatellite();
+    loadEvents();
 
-    /* Auto-refresh toutes les 60s (transport + parkings) */
-    setInterval(function () {
+    /* Auto-refresh toutes les 60s */
+    setInterval(function() {
       loadMetro();
       loadBus();
       loadVelos();
       loadParkings();
-      document.getElementById('globalTs').textContent = 'Données en temps réel · actualisé à ' + now();
+      loadEvents();
+      updateRefreshClock();
     }, 60000);
   </script>
 </body>
