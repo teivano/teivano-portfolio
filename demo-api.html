@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Démo API — Rennes · TLB</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     /* ── Variables & Reset ───────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -314,6 +316,33 @@
     .spec-val { font-size: 1.15rem; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
     .spec-lbl { font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
     .spec-note { font-size: .68rem; color: var(--muted); margin-top: .9rem; font-style: italic; }
+
+    /* ── Fuel map ─────────────────────────────────────── */
+    .fuel-view-toggle {
+      display: flex; gap: .35rem; margin-bottom: 1rem;
+      background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px;
+    }
+    .fvt-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: .4rem;
+      padding: .5rem .8rem; border: none; border-radius: 10px;
+      font-size: .78rem; font-family: inherit; cursor: pointer;
+      background: transparent; color: var(--muted); transition: all .2s var(--ease);
+    }
+    .fvt-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,.1); }
+    #fuel-map { height: 400px; border-radius: 14px; overflow: hidden; }
+    .leaflet-popup-content-wrapper {
+      background: rgba(255,255,255,.88) !important;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.9) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+      font-family: -apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif !important;
+    }
+    .leaflet-popup-tip { background: rgba(255,255,255,.88) !important; }
+    .fp-addr  { font-size: .82rem; font-weight: 500; margin-bottom: 2px; }
+    .fp-price { font-size: 1.2rem; font-weight: 200; letter-spacing: -.03em; }
+    .fp-price small { font-size: .65rem; font-weight: 400; opacity: .65; }
+    .leaflet-control-attribution { font-size: .55rem !important; opacity: .6; }
 
     /* ── Fuel price bar ──────────────────────────────── */
     .fuel-price-col { display: flex; flex-direction: column; align-items: flex-end; min-width: 72px; }
@@ -627,7 +656,7 @@
           </div>
         </div>
         <div class="fuel-header">
-          <input class="auto-in" id="fuel-city" type="text" placeholder="Ville (ex: Rennes)" style="max-width:200px">
+          <input class="auto-in" id="fuel-city" type="text" value="Rennes" style="max-width:200px">
           <select class="auto-select" id="fuel-type" style="max-width:130px">
             <option value="gazole">Gazole</option>
             <option value="sp95">SP95</option>
@@ -638,13 +667,25 @@
           </select>
           <button class="auto-btn" id="fuel-btn">Rechercher</button>
         </div>
-        <div id="fuel-results"></div>
+        <div id="fuel-status"></div>
+        <div class="fuel-view-toggle" id="fuel-view-toggle" style="display:none">
+          <button class="fvt-btn active" id="fvt-map" onclick="setFuelView('map')">
+            <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2l-6 4-6-2v14l6 2 6-4 6 2V4l-6-2z"/><path d="M7 4v14M13 2v14"/></svg>
+            Carte
+          </button>
+          <button class="fvt-btn" id="fvt-list" onclick="setFuelView('list')">
+            <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="16" y2="6"/><line x1="4" y1="10" x2="16" y2="10"/><line x1="4" y1="14" x2="16" y2="14"/></svg>
+            Liste
+          </button>
+        </div>
+        <div id="fuel-map-wrap" style="display:none"><div id="fuel-map"></div></div>
+        <div id="fuel-list-wrap" style="display:none"></div>
       </div>
     </section>
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.06</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.07</div>
     </footer>
 
   </div>
@@ -1241,18 +1282,44 @@
     ═══════════════════════════════════════════════════ */
     var CARBU = 'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets'
               + '/prix-des-carburants-en-france-flux-instantane-v2/records';
+    var fuelMap = null;
+
+    function palmIcon(color) {
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 36" width="22" height="36">'
+        + '<path d="M10.5 35 Q10 26 11 18 Q12 26 12.5 35Z" fill="#b5813e"/>'
+        + '<circle cx="11" cy="18" r="2" fill="#c8860a"/>'
+        + '<path d="M11 17 Q3 12 0 14 Q4 9 11 17" fill="CLR" opacity=".95"/>'
+        + '<path d="M11 17 Q19 12 22 14 Q18 9 11 17" fill="CLR" opacity=".95"/>'
+        + '<path d="M11 17 Q8 8 10 4 Q10 9 11 17" fill="CLR" opacity=".9"/>'
+        + '<path d="M11 17 Q14 8 12 4 Q12 9 11 17" fill="CLR" opacity=".9"/>'
+        + '<path d="M11 17 Q2 15 1 19 Q4 13 11 17" fill="CLR" opacity=".85"/>'
+        + '<path d="M11 17 Q20 15 21 19 Q18 13 11 17" fill="CLR" opacity=".85"/>'
+        + '</svg>';
+      svg = svg.replace(/CLR/g, color);
+      return L.divIcon({ html: svg, className: '', iconSize: [22, 36], iconAnchor: [11, 36], popupAnchor: [0, -38] });
+    }
+
+    function setFuelView(view) {
+      document.getElementById('fvt-map').classList.toggle('active',  view === 'map');
+      document.getElementById('fvt-list').classList.toggle('active', view === 'list');
+      document.getElementById('fuel-map-wrap').style.display  = view === 'map'  ? 'block' : 'none';
+      document.getElementById('fuel-list-wrap').style.display = view === 'list' ? 'block' : 'none';
+      if (view === 'map' && fuelMap) setTimeout(function(){ fuelMap.invalidateSize(); }, 50);
+    }
 
     async function loadCarburants() {
-      var city  = document.getElementById('fuel-city').value.trim() || 'Rennes';
-      var type  = document.getElementById('fuel-type').value;
-      var res   = document.getElementById('fuel-results');
-      var btn   = document.getElementById('fuel-btn');
+      var city   = document.getElementById('fuel-city').value.trim() || 'Rennes';
+      var type   = document.getElementById('fuel-type').value;
+      var status = document.getElementById('fuel-status');
+      var btn    = document.getElementById('fuel-btn');
 
       btn.disabled = true;
-      res.innerHTML = '<div class="spin">Recherche en cours…</div>';
+      document.getElementById('fuel-view-toggle').style.display = 'none';
+      document.getElementById('fuel-map-wrap').style.display    = 'none';
+      document.getElementById('fuel-list-wrap').style.display   = 'none';
+      status.innerHTML = '<div class="spin">Recherche en cours…</div>';
 
       try {
-        /* Champs réels : {carburant}_prix  (ex: gazole_prix, sp95_prix…) */
         var field = type + '_prix';
         var where = encodeURIComponent('ville like "%' + city.toUpperCase() + '%" and ' + field + ' is not null');
         var url   = CARBU + '?where=' + where + '&order_by=' + field + '%20asc&limit=20';
@@ -1262,34 +1329,32 @@
         var d = await r.json();
 
         if (!d.results || !d.results.length) {
-          res.innerHTML = '<div class="err">Aucune station trouvée pour "' + city + '" avec ce carburant.</div>';
+          status.innerHTML = '<div class="err">Aucune station trouvée pour "' + city + '".</div>';
           btn.disabled = false; return;
         }
 
         var prices = d.results.map(function(s){ return parseFloat(s[field]); }).filter(Boolean);
         var minP   = Math.min.apply(null, prices);
         var maxP   = Math.max.apply(null, prices);
+        var range  = maxP - minP > 0 ? maxP - minP : 0.01;
 
-        var range = maxP - minP > 0 ? maxP - minP : 0.01;
-        var html = ['<div class="fuel-list">'];
+        /* ── Liste ── */
+        var listHtml = ['<div class="fuel-list">'];
         d.results.forEach(function(s, i) {
-          var price  = parseFloat(s[field]);
+          var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
-          var dot    = isCheap ? 'dot-green'  : isMid ? 'dot-orange'  : 'dot-red';
-          var bar    = isCheap ? 'bar-green'  : isMid ? 'bar-orange'  : 'bar-red';
-          var pct    = Math.round((price - minP) / range * 100);
-          var brand  = s.adresse || 'Station';
-          var addr   = s.ville ? s.ville + (s.cp ? ' · ' + s.cp : '') : '';
-          var svcs   = parseSvcs(s.services_service);
-          var tags   = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
-
-          html.push(
+          var dot  = isCheap ? 'dot-green'  : isMid ? 'dot-orange'  : 'dot-red';
+          var bar  = isCheap ? 'bar-green'  : isMid ? 'bar-orange'  : 'bar-red';
+          var pct  = Math.round((price - minP) / range * 100);
+          var svcs = parseSvcs(s.services_service);
+          var tags = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
+          listHtml.push(
             '<div class="fuel-item">',
               '<div class="fuel-rank">' + (i+1) + '</div>',
               '<div class="fuel-dot ' + dot + '"></div>',
               '<div class="fuel-info">',
-                '<div class="fuel-brand">' + brand + '</div>',
-                '<div class="fuel-addr">' + addr + '</div>',
+                '<div class="fuel-brand">' + (s.adresse || 'Station') + '</div>',
+                '<div class="fuel-addr">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>',
                 svcs.length ? '<div class="fuel-tags">' + tags + '</div>' : '',
               '</div>',
               '<div class="fuel-price-col">',
@@ -1299,11 +1364,43 @@
             '</div>'
           );
         });
-        html.push('</div>');
-        html.push('<div class="spec-note">Min ' + minP.toFixed(3) + ' € · Max ' + maxP.toFixed(3) + ' € · ' + d.results.length + ' stations · ' + city.charAt(0).toUpperCase() + city.slice(1).toLowerCase() + '</div>');
-        res.innerHTML = html.join('');
+        listHtml.push('</div>');
+        listHtml.push('<div class="spec-note">Min ' + minP.toFixed(3) + ' € · Max ' + maxP.toFixed(3) + ' € · ' + d.results.length + ' stations</div>');
+        document.getElementById('fuel-list-wrap').innerHTML = listHtml.join('');
+
+        /* ── Carte Leaflet ── */
+        if (!fuelMap) {
+          fuelMap = L.map('fuel-map', { zoomControl: true, attributionControl: true });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap', maxZoom: 18
+          }).addTo(fuelMap);
+        } else {
+          fuelMap.eachLayer(function(l){ if (l instanceof L.Marker) fuelMap.removeLayer(l); });
+        }
+
+        var bounds = [];
+        d.results.forEach(function(s) {
+          var lat = parseFloat(s.latitude), lon = parseFloat(s.longitude);
+          if (!lat || !lon) return;
+          var price   = parseFloat(s[field]);
+          var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
+          var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
+          var marker  = L.marker([lat, lon], { icon: palmIcon(color) }).addTo(fuelMap);
+          marker.bindPopup(
+            '<div class="fp-addr">' + (s.adresse || 'Station') + '</div>'
+            + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
+            + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
+          );
+          bounds.push([lat, lon]);
+        });
+        if (bounds.length) fuelMap.fitBounds(bounds, { padding: [32, 32] });
+
+        /* Afficher carte par défaut */
+        status.innerHTML = '';
+        document.getElementById('fuel-view-toggle').style.display = 'flex';
+        setFuelView('map');
       } catch(e) {
-        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
+        status.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
       btn.disabled = false;
     }
@@ -1358,6 +1455,9 @@
 
     document.getElementById('fuel-btn').addEventListener('click', loadCarburants);
     document.getElementById('fuel-city').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCarburants(); });
+
+    /* Carburants : chargement auto Rennes au démarrage */
+    loadCarburants();
   </script>
 </body>
 </html>
