@@ -631,9 +631,9 @@
           <select class="auto-select" id="fuel-type" style="max-width:130px">
             <option value="gazole">Gazole</option>
             <option value="sp95">SP95</option>
+            <option value="sp98">SP98</option>
             <option value="e10">E10</option>
             <option value="e85">E85</option>
-            <option value="sp98">SP98</option>
             <option value="gplc">GPL</option>
           </select>
           <button class="auto-btn" id="fuel-btn">Rechercher</button>
@@ -644,7 +644,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.05</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.06</div>
     </footer>
 
   </div>
@@ -696,13 +696,13 @@
       return r.json();
     }
 
-    /* Cache localStorage pour STAR (TTL 30s) — évite les 429 sur reload */
+    /* Cache localStorage pour STAR (TTL 90s) — évite les 429 sur reload */
     function starApi(key, url) {
       try {
         var raw = localStorage.getItem('star_' + key);
         if (raw) {
           var obj = JSON.parse(raw);
-          if (Date.now() - obj.ts < 30000) return Promise.resolve(obj.data);
+          if (Date.now() - obj.ts < 90000) return Promise.resolve(obj.data);
         }
       } catch(_) {}
       return fetch(url)
@@ -1161,10 +1161,10 @@
 
       try {
         var endpoint = vehicleMode === 'car' ? '/api/cars' : '/api/motorcycles';
-        var qs = '?limit=10';
-        if (make)  qs += '&make='  + encodeURIComponent(make);
-        if (model) qs += '&model=' + encodeURIComponent(model);
-        if (year)  qs += '&year='  + encodeURIComponent(year);
+        var qs = '?';
+        if (make)  qs += 'make='  + encodeURIComponent(make) + '&';
+        if (model) qs += 'model=' + encodeURIComponent(model) + '&';
+        if (year)  qs += 'year='  + encodeURIComponent(year);
 
         var r = await fetch(endpoint + qs);
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1252,7 +1252,8 @@
       res.innerHTML = '<div class="spin">Recherche en cours…</div>';
 
       try {
-        var field = 'prix_' + type;
+        /* Champs réels : {carburant}_prix  (ex: gazole_prix, sp95_prix…) */
+        var field = type + '_prix';
         var where = encodeURIComponent('ville like "%' + city.toUpperCase() + '%" and ' + field + ' is not null');
         var url   = CARBU + '?where=' + where + '&order_by=' + field + '%20asc&limit=20';
 
@@ -1277,8 +1278,8 @@
           var dot    = isCheap ? 'dot-green'  : isMid ? 'dot-orange'  : 'dot-red';
           var bar    = isCheap ? 'bar-green'  : isMid ? 'bar-orange'  : 'bar-red';
           var pct    = Math.round((price - minP) / range * 100);
-          var brand  = s.nom || s.enseignes_enseigne || s.enseignes || 'Station';
-          var addr   = (s.adresse || '') + (s.cp ? ' · ' + s.cp : '');
+          var brand  = s.adresse || 'Station';
+          var addr   = s.ville ? s.ville + (s.cp ? ' · ' + s.cp : '') : '';
           var svcs   = parseSvcs(s.services_service);
           var tags   = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
 
@@ -1319,26 +1320,26 @@
     ═══════════════════════════════════════════════════ */
     updateRefreshClock();
 
-    /* STAR : fetch direct depuis browser + localStorage cache 30s
-       Espacés 400ms pour ne pas déclencher le rate-limit sur premiere visite */
+    /* STAR : fetch direct depuis browser + localStorage cache 90s
+       Espacés 2000ms pour ne pas déclencher le rate-limit sur premiere visite */
     loadMetro();
-    setTimeout(loadBus,      400);
-    setTimeout(loadVelos,    800);
-    setTimeout(loadEtat,    1200);
-    setTimeout(loadParkings,1600);
-    setTimeout(loadEvents,  2000);
+    setTimeout(loadBus,       2000);
+    setTimeout(loadVelos,     4000);
+    setTimeout(loadEtat,      6000);
+    setTimeout(loadParkings,  8000);
+    setTimeout(loadEvents,   10000);
     loadTrains();
     loadSatellite();
 
-    /* Auto-refresh 60s — stagger identique */
+    /* Auto-refresh 5 min — stagger identique */
     setInterval(function() {
       loadMetro();
-      setTimeout(loadBus,      400);
-      setTimeout(loadVelos,    800);
-      setTimeout(loadParkings,1200);
-      setTimeout(loadEvents,  1600);
+      setTimeout(loadBus,       2000);
+      setTimeout(loadVelos,     4000);
+      setTimeout(loadParkings,  6000);
+      setTimeout(loadEvents,    8000);
       updateRefreshClock();
-    }, 60000);
+    }, 300000);
 
     /* Calculateur — déclenchement bouton ou Enter */
     document.getElementById('kilo-btn').addEventListener('click', function() {
