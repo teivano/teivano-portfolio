@@ -245,6 +245,36 @@
     .palier.active .palier-n   { color: #059669; }
     .palier.active .palier-range { color: #065f46; }
 
+    /* ── Modale "il est bo" ───────────────────────────── */
+    #beau-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15,10,30,.55); backdrop-filter: blur(4px);
+      z-index: 9999; align-items: center; justify-content: center;
+    }
+    #beau-overlay.open { display: flex; }
+    #beau-dialog {
+      background: rgba(255,255,255,.18);
+      backdrop-filter: blur(24px) saturate(1.6) brightness(1.15);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 20px; padding: 2rem 2.2rem 1.6rem;
+      max-width: 320px; width: 90%; text-align: center;
+      box-shadow: 0 12px 48px rgba(0,0,0,.28);
+      animation: popIn .22s var(--ease) both;
+    }
+    @keyframes popIn {
+      from { transform: scale(.88); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    #beau-dialog p { font-size: 1.05rem; line-height: 1.5; margin: 0 0 1.4rem; }
+    #beau-ok {
+      background: linear-gradient(135deg,#6d28d9,#4f46e5);
+      color: #fff; border: none; border-radius: 10px;
+      padding: .65rem 1.6rem; font-size: .92rem; cursor: pointer;
+      transition: opacity .15s, transform .12s;
+    }
+    #beau-ok:hover  { opacity: .88; }
+    #beau-ok:active { transform: scale(.96); }
+
     /* ── Footer ──────────────────────────────────────── */
     footer { text-align: center; padding: 1rem 0 2rem; font-size: .62rem; color: var(--muted); letter-spacing: .1em; }
   </style>
@@ -430,6 +460,14 @@
       <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.02</div>
     </footer>
 
+  </div>
+
+  <!-- Modale "il est bo" -->
+  <div id="beau-overlay">
+    <div id="beau-dialog">
+      <p>dis moi kil est pas bo mon calculateur ??</p>
+      <button id="beau-ok">il est bo</button>
+    </div>
   </div>
 
   <script>
@@ -910,7 +948,13 @@
     }, 60000);
 
     /* Calculateur — déclenchement bouton ou Enter */
-    document.getElementById('kilo-btn').addEventListener('click', calculerTrajet);
+    document.getElementById('kilo-btn').addEventListener('click', function() {
+      document.getElementById('beau-overlay').classList.add('open');
+    });
+    document.getElementById('beau-ok').addEventListener('click', function() {
+      document.getElementById('beau-overlay').classList.remove('open');
+      calculerTrajet();
+    });
     document.getElementById('kilo-end').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
     document.getElementById('kilo-start').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
   </script>
