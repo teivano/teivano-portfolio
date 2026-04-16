@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Démo API — Rennes · TLB</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺</text></svg>">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <style>
     /* ── Variables & Reset ───────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -330,13 +331,14 @@
     }
     .fvt-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,.1); }
     #fuel-map { height: 400px; border-radius: 14px; overflow: hidden; }
-    .leaflet-popup-content-wrapper {
+    .maplibregl-popup-content {
       background: rgba(255,255,255,.88) !important;
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255,255,255,.9) !important;
       border-radius: 12px !important;
       box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
       font-family: -apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif !important;
+      padding: 10px 14px !important;
     }
     .leaflet-popup-tip { background: rgba(255,255,255,.88) !important; }
     .fp-addr  { font-size: .82rem; font-weight: 500; margin-bottom: 2px; }
@@ -685,7 +687,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.16</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.17</div>
     </footer>
 
   </div>
@@ -1291,7 +1293,7 @@
               + '/prix-des-carburants-en-france-flux-instantane-v2/records';
     var fuelMap = null;
 
-    function palmIcon(color) {
+    function palmEl(color) {
       var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 36" width="22" height="36">'
         + '<path d="M10.5 35 Q10 26 11 18 Q12 26 12.5 35Z" fill="#b5813e"/>'
         + '<circle cx="11" cy="18" r="2" fill="#c8860a"/>'
@@ -1302,8 +1304,10 @@
         + '<path d="M11 17 Q2 15 1 19 Q4 13 11 17" fill="CLR" opacity=".85"/>'
         + '<path d="M11 17 Q20 15 21 19 Q18 13 11 17" fill="CLR" opacity=".85"/>'
         + '</svg>';
-      svg = svg.replace(/CLR/g, color);
-      return L.divIcon({ html: svg, className: '', iconSize: [22, 36], iconAnchor: [11, 36], popupAnchor: [0, -38] });
+      var el = document.createElement('div');
+      el.innerHTML = svg.replace(/CLR/g, color);
+      el.style.cursor = 'pointer';
+      return el;
     }
 
     function setFuelView(view) {
@@ -1375,46 +1379,57 @@
         document.getElementById('fuel-list-wrap').innerHTML = listHtml.join('');
 
         /* ── Géocode la ville EN PREMIER (await) — centre garanti ── */
-        var cityCenter = [48.117, -1.677]; /* fallback Rennes */
+        /* MapLibre : ordre [lon, lat] */
+        var cityCenter = [-1.677, 48.117]; /* fallback Rennes */
         try {
           var geo = await geocodeAddr(city);
-          cityCenter = [geo[1], geo[0]];
+          cityCenter = [geo[0], geo[1]];
         } catch(_) {}
 
-        /* ── Container visible, PUIS init Leaflet ── */
+        /* ── Container visible, PUIS init MapLibre ── */
         status.innerHTML = '';
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
 
-        /* requestAnimationFrame garantit que le conteneur est rendu (hauteur CSS résolue)
-           avant que Leaflet calcule ses dimensions */
-        var _cityCenter = cityCenter, _field = field, _results = d.results, _minP = minP;
-        requestAnimationFrame(function() {
-          if (fuelMap) { fuelMap.remove(); fuelMap = null; }
-          fuelMap = L.map('fuel-map').setView(_cityCenter, 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap', maxZoom: 18
-          }).addTo(fuelMap);
-
-          /* ── Marqueurs ── */
-          var bounds = [];
-          _results.forEach(function(s) {
-            var lat, lon;
-            if (s.latitude)                          { lat = parseFloat(s.latitude);            lon = parseFloat(s.longitude); }
-            else if (s.geom && s.geom.coordinates)   { lon = parseFloat(s.geom.coordinates[0]); lat = parseFloat(s.geom.coordinates[1]); }
-            if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
-            var price   = parseFloat(s[_field]);
-            var isCheap = price <= _minP + 0.02, isMid = price <= _minP + 0.05;
-            var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
-            L.marker([lat, lon], { icon: palmIcon(color) }).addTo(fuelMap).bindPopup(
-              '<div class="fp-addr">' + (s.adresse || 'Station') + '</div>'
-              + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
-              + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
-            );
-            bounds.push([lat, lon]);
-          });
-          if (bounds.length > 1) fuelMap.fitBounds(bounds, { padding: [32, 32] });
+        if (fuelMap) { fuelMap.remove(); fuelMap = null; }
+        fuelMap = new maplibregl.Map({
+          container: 'fuel-map',
+          style: {
+            version: 8,
+            sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } },
+            layers:  [{ id: 'osm', type: 'raster', source: 'osm' }]
+          },
+          center: cityCenter,
+          zoom: 13
         });
+
+        /* ── Marqueurs ── */
+        var lons = [], lats = [];
+        d.results.forEach(function(s) {
+          var lat, lon;
+          if (s.latitude)                          { lat = parseFloat(s.latitude);            lon = parseFloat(s.longitude); }
+          else if (s.geom && s.geom.coordinates)   { lon = parseFloat(s.geom.coordinates[0]); lat = parseFloat(s.geom.coordinates[1]); }
+          if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
+          var price   = parseFloat(s[field]);
+          var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
+          var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
+          var popup = new maplibregl.Popup({ offset: 28 }).setHTML(
+            '<div class="fp-addr">' + (s.adresse || 'Station') + '</div>'
+            + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
+            + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
+          );
+          new maplibregl.Marker({ element: palmEl(color), anchor: 'bottom' })
+            .setLngLat([lon, lat])
+            .setPopup(popup)
+            .addTo(fuelMap);
+          lons.push(lon); lats.push(lat);
+        });
+        if (lons.length > 1) {
+          fuelMap.fitBounds(
+            [[Math.min.apply(null,lons), Math.min.apply(null,lats)], [Math.max.apply(null,lons), Math.max.apply(null,lats)]],
+            { padding: 40 }
+          );
+        }
       } catch(e) {
         status.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
