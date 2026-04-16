@@ -24,14 +24,12 @@
     }
     body {
       font-family: -apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden;
     }
     a { color: inherit; text-decoration: none; }
 
-    /* ── Background blobs (fixes) ────────────────────── */
+    /* ── Background blobs ────────────────────────────── */
     .blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .blob  { position: absolute; border-radius: 50%; }
     @keyframes bm1{from{transform:translate(0,0)}to{transform:translate(4%,7%)}}
@@ -46,9 +44,7 @@
     }
 
     /* ── Header ──────────────────────────────────────── */
-    .page-hd {
-      padding: clamp(2rem,6vh,4.5rem) 0 clamp(1.5rem,4vh,2.5rem);
-    }
+    .page-hd { padding: clamp(2rem,6vh,4.5rem) 0 clamp(1.5rem,4vh,2.5rem); }
     .back {
       display: inline-flex; align-items: center; gap: .4rem;
       font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
@@ -65,30 +61,14 @@
     .refresh-block {
       display: inline-flex; align-items: center; gap: 1.1rem;
       background: var(--glass);
-      backdrop-filter: var(--gblur);
-      -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid var(--gb);
-      border-radius: 16px;
-      box-shadow: var(--gshadow);
-      padding: .55rem 1.1rem .55rem .9rem;
+      backdrop-filter: var(--gblur); -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid var(--gb); border-radius: 16px;
+      box-shadow: var(--gshadow); padding: .55rem 1.1rem .55rem .9rem;
     }
-    .rt-label {
-      font-size: .6rem; letter-spacing: .24em; text-transform: uppercase;
-      color: var(--muted); white-space: nowrap; line-height: 1;
-    }
-    .rt-clock {
-      font-size: 2rem; font-weight: 200; letter-spacing: -.05em; line-height: 1;
-      font-family: 'Courier New', monospace; color: var(--text);
-      display: flex; align-items: baseline; gap: 0;
-    }
-    .rt-colon {
-      animation: colonBlink 1s step-start infinite;
-      margin: 0 1px;
-    }
-    @keyframes colonBlink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: .15; }
-    }
+    .rt-label { font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 1; }
+    .rt-clock { font-size: 2rem; font-weight: 200; letter-spacing: -.05em; line-height: 1; font-family: 'Courier New',monospace; color: var(--text); display: flex; align-items: baseline; }
+    .rt-colon { animation: colonBlink 1s step-start infinite; margin: 0 1px; }
+    @keyframes colonBlink { 0%,100%{opacity:1} 50%{opacity:.15} }
 
     /* ── Section bloc ─────────────────────────────────── */
     .bloc { margin-bottom: clamp(2rem,5vh,3.5rem); }
@@ -102,28 +82,18 @@
     /* ── Glass card ──────────────────────────────────── */
     .gc {
       background: var(--glass);
-      backdrop-filter: var(--gblur);
-      -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid var(--gb);
-      border-radius: var(--r);
-      box-shadow: var(--gshadow);
-      padding: clamp(1.1rem,3vw,1.6rem);
+      backdrop-filter: var(--gblur); -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid var(--gb); border-radius: var(--r);
+      box-shadow: var(--gshadow); padding: clamp(1.1rem,3vw,1.6rem);
       position: relative; overflow: hidden;
     }
 
     /* ── Grid 2 colonnes ─────────────────────────────── */
-    .g2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-      gap: 1rem;
-    }
+    .g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,360px),1fr)); gap: 1rem; }
     @media(max-width:520px) { .g2 { grid-template-columns: 1fr; } }
 
     /* ── Card header ─────────────────────────────────── */
-    .ch {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      margin-bottom: 1rem; gap: .5rem;
-    }
+    .ch { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; gap: .5rem; }
     .ch-l { display: flex; align-items: center; gap: .6rem; }
     .ch-ico { font-size: 1.05rem; }
     .ch-ttl { font-size: .82rem; font-weight: 500; letter-spacing: .02em; }
@@ -132,61 +102,30 @@
 
     /* ── Spinner ─────────────────────────────────────── */
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spin {
-      display: flex; align-items: center; gap: .5rem;
-      color: var(--muted); font-size: .76rem; padding: .4rem 0;
-    }
-    .spin::before {
-      content: ''; flex-shrink: 0;
-      width: 13px; height: 13px; border-radius: 50%;
-      border: 1.5px solid rgba(0,0,0,.12); border-top-color: var(--accent);
-      animation: spin .65s linear infinite;
-    }
+    .spin { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .76rem; padding: .4rem 0; }
+    .spin::before { content: ''; flex-shrink: 0; width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); border-top-color: var(--accent); animation: spin .65s linear infinite; }
 
     /* ── Erreur ──────────────────────────────────────── */
     .err { font-size: .74rem; color: rgba(220,40,40,.75); padding: .3rem 0; }
 
     /* ── Metro SVG train ─────────────────────────────── */
     .metro-train-wrap {
-      margin: -.2rem -.2rem .9rem;
-      border-radius: 14px; overflow: hidden;
-      background: linear-gradient(135deg, rgba(109,40,217,.06) 0%, rgba(8,145,178,.06) 100%);
+      margin: -.2rem -.2rem .9rem; border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg,rgba(109,40,217,.06),rgba(8,145,178,.06));
       padding: .6rem .4rem .2rem;
     }
-    .metro-svg {
-      width: 100%; height: auto; display: block;
-      animation: trainIdle 5s ease-in-out infinite;
-    }
-    @keyframes trainIdle {
-      0%,100% { transform: translateX(0); }
-      40%,60% { transform: translateX(-3px); }
-    }
+    .metro-svg { width: 100%; height: auto; display: block; animation: trainIdle 5s ease-in-out infinite; }
+    @keyframes trainIdle { 0%,100%{transform:translateX(0)} 40%,60%{transform:translateX(-3px)} }
 
-    /* ── Metro split by direction ─────────────────────── */
-    .metro-split {
-      display: grid; grid-template-columns: 1fr 1fr; gap: .8rem;
-    }
+    /* ── Metro split ──────────────────────────────────── */
+    .metro-split { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
     @media(max-width:420px) { .metro-split { grid-template-columns: 1fr; } }
-    .mdir-hd {
-      font-size: .6rem; font-weight: 600; letter-spacing: .18em;
-      text-transform: uppercase; color: var(--muted);
-      padding-bottom: .4rem; margin-bottom: .3rem;
-      border-bottom: 1px solid rgba(0,0,0,.06);
-    }
+    .mdir-hd { font-size: .6rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); padding-bottom: .4rem; margin-bottom: .3rem; border-bottom: 1px solid rgba(0,0,0,.06); }
 
-    /* ── Passage row (métro + bus) ───────────────────── */
-    .prow {
-      display: flex; align-items: center; gap: .65rem;
-      padding: .5rem 0; border-bottom: 1px solid rgba(0,0,0,.05);
-    }
+    /* ── Passage row ─────────────────────────────────── */
+    .prow { display: flex; align-items: center; gap: .65rem; padding: .5rem 0; border-bottom: 1px solid rgba(0,0,0,.05); }
     .prow:last-child { border-bottom: none; }
-    .badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 26px; height: 19px; border-radius: 4px;
-      font-size: .6rem; font-weight: 700; text-transform: uppercase;
-      background: rgba(0,0,0,.08); color: var(--text); padding: 0 4px;
-      flex-shrink: 0;
-    }
+    .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 19px; border-radius: 4px; font-size: .6rem; font-weight: 700; text-transform: uppercase; background: rgba(0,0,0,.08); color: var(--text); padding: 0 4px; flex-shrink: 0; }
     .badge-a { background: #e85d04; color: #fff; }
     .badge-b { background: #2563eb; color: #fff; }
     .pdest { flex: 1; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -203,75 +142,39 @@
 
     /* ── Progress bar ────────────────────────────────── */
     .pbar { height: 4px; background: rgba(0,0,0,.07); border-radius: 2px; overflow: hidden; }
-    .pfill {
-      height: 100%; border-radius: 2px;
-      background: linear-gradient(to right, var(--accent), #06b6d4);
-      transition: width .9s var(--ease);
-    }
-    .pfill.hi { background: linear-gradient(to right, var(--red), var(--orange)); }
+    .pfill { height: 100%; border-radius: 2px; background: linear-gradient(to right,var(--accent),#06b6d4); transition: width .9s var(--ease); }
+    .pfill.hi { background: linear-gradient(to right,var(--red),var(--orange)); }
     .pbar-lbl { font-size: .62rem; color: var(--muted); margin-top: .28rem; }
 
     /* ── Parking grid ────────────────────────────────── */
-    .pk-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
-      gap: .75rem;
-    }
-    .pk {
-      background: rgba(255,255,255,.48);
-      backdrop-filter: blur(18px) saturate(160%);
-      -webkit-backdrop-filter: blur(18px) saturate(160%);
-      border: 1px solid rgba(255,255,255,.78);
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,.05);
-      padding: 1rem;
-    }
+    .pk-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,190px),1fr)); gap: .75rem; }
+    .pk { background: rgba(255,255,255,.48); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid rgba(255,255,255,.78); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.05); padding: 1rem; }
     .pk-nom { font-size: .76rem; font-weight: 500; margin-bottom: .55rem; line-height: 1.3; }
     .pk-n   { font-size: 1.8rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
     .pk-s   { font-size: .64rem; color: var(--muted); margin-top: 1px; }
     .pk-bar { margin: .5rem 0 .4rem; }
-    .pk-tag {
-      display: inline-block; font-size: .58rem; letter-spacing: .1em;
-      font-weight: 600; text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
-    }
-    .pk-tag.ok  { background: rgba(16,185,129,.12); color: #047857; }
-    .pk-tag.ko  { background: rgba(239,68,68,.12);  color: #b91c1c; }
-    .pk-tag.full{ background: rgba(249,115,22,.12); color: #c2410c; }
+    .pk-tag { display: inline-block; font-size: .58rem; letter-spacing: .1em; font-weight: 600; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; }
+    .pk-tag.ok   { background: rgba(16,185,129,.12); color: #047857; }
+    .pk-tag.ko   { background: rgba(239,68,68,.12);  color: #b91c1c; }
+    .pk-tag.full { background: rgba(249,115,22,.12); color: #c2410c; }
 
     /* ── Trains ──────────────────────────────────────── */
     .t-list { display: flex; flex-direction: column; }
-    .trow {
-      display: flex; align-items: center; gap: .8rem;
-      padding: .6rem 0; border-bottom: 1px solid rgba(0,0,0,.05);
-    }
+    .trow { display: flex; align-items: center; gap: .8rem; padding: .6rem 0; border-bottom: 1px solid rgba(0,0,0,.05); }
     .trow:last-child { border-bottom: none; }
     .th { font-size: 1.05rem; font-weight: 200; font-family: 'Courier New',monospace; min-width: 54px; }
     .ti { flex: 1; }
     .td { font-size: .84rem; font-weight: 500; }
     .tt { font-size: .67rem; color: var(--muted); margin-top: 2px; }
     .tdel{ font-size: .7rem; color: var(--red); font-weight: 500; }
-    .key-note {
-      background: rgba(124,58,237,.06);
-      border: 1px solid rgba(124,58,237,.15);
-      border-radius: 12px; padding: .9rem 1.1rem;
-      font-size: .76rem; line-height: 1.65;
-    }
+    .key-note { background: rgba(124,58,237,.06); border: 1px solid rgba(124,58,237,.15); border-radius: 12px; padding: .9rem 1.1rem; font-size: .76rem; line-height: 1.65; }
     .key-note strong { display: block; margin-bottom: .4rem; font-size: .82rem; }
-    .key-note code {
-      font-family: 'Courier New',monospace; font-size: .8em;
-      background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px;
-    }
+    .key-note code { font-family: 'Courier New',monospace; font-size: .8em; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px; }
 
     /* ── Satellite ───────────────────────────────────── */
-    .sat-wrap {
-      display: grid; grid-template-columns: 1fr auto; gap: 1.2rem; align-items: start;
-    }
+    .sat-wrap { display: grid; grid-template-columns: 1fr auto; gap: 1.2rem; align-items: start; }
     @media(max-width:560px){ .sat-wrap{ grid-template-columns:1fr; } }
-    .sat-img-box {
-      border-radius: 14px; overflow: hidden;
-      aspect-ratio: 1; background: rgba(0,0,0,.05);
-      display: flex; align-items: center; justify-content: center;
-    }
+    .sat-img-box { border-radius: 14px; overflow: hidden; aspect-ratio: 1; background: rgba(0,0,0,.05); display: flex; align-items: center; justify-content: center; }
     .sat-img-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .sat-meta { min-width: 150px; }
     .smr { margin-bottom: .65rem; }
@@ -279,57 +182,75 @@
     .smv { font-size: .8rem; font-weight: 500; }
 
     /* ── Événements ──────────────────────────────────── */
-    .ev-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(100%,260px),1fr));
-      gap: 1rem;
-    }
-    .ev-card {
-      background: rgba(255,255,255,.5);
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      border: 1px solid rgba(255,255,255,.8);
-      border-radius: 18px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.06);
-      overflow: hidden;
-      display: flex; flex-direction: column;
-    }
-    .ev-img {
-      width: 100%; aspect-ratio: 16/9;
-      background: linear-gradient(135deg, rgba(109,40,217,.12), rgba(8,145,178,.12));
-      overflow: hidden; flex-shrink: 0;
-    }
+    .ev-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)); gap: 1rem; }
+    .ev-card { background: rgba(255,255,255,.5); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border: 1px solid rgba(255,255,255,.8); border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.06); overflow: hidden; display: flex; flex-direction: column; }
+    .ev-img { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg,rgba(109,40,217,.12),rgba(8,145,178,.12)); overflow: hidden; flex-shrink: 0; }
     .ev-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .ev-body { padding: .85rem 1rem 1rem; flex: 1; display: flex; flex-direction: column; gap: .35rem; }
-    .ev-tag {
-      display: inline-block; font-size: .58rem; font-weight: 600;
-      letter-spacing: .1em; text-transform: uppercase;
-      padding: 2px 8px; border-radius: 4px; align-self: flex-start;
-    }
-    .ev-ttl {
-      font-size: .82rem; font-weight: 500; line-height: 1.35;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .ev-tag { display: inline-block; font-size: .58rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; align-self: flex-start; }
+    .ev-ttl { font-size: .82rem; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .ev-date { font-size: .68rem; color: var(--muted); }
     .ev-lieu { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ── Note info ───────────────────────────────────── */
-    .note {
-      font-size: .68rem; color: var(--muted); margin-top: .6rem;
-      padding: .5rem .8rem; border-left: 2px solid rgba(0,0,0,.1);
-      line-height: 1.5;
+    /* ── Calculateur kilométrique ────────────────────── */
+    .kilo-inputs {
+      display: flex; align-items: center; gap: .6rem;
+      flex-wrap: wrap; margin-bottom: 1.2rem;
     }
+    .kilo-in {
+      flex: 1; min-width: 180px;
+      background: rgba(255,255,255,.62);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,.82); border-radius: 12px;
+      padding: .7rem 1rem; font-size: .8rem; font-family: inherit;
+      color: var(--text); outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .kilo-in::placeholder { color: var(--muted); }
+    .kilo-in:focus { border-color: rgba(124,58,237,.4); box-shadow: 0 0 0 3px rgba(124,58,237,.08); }
+    .kilo-sep { color: var(--muted); font-size: 1rem; flex-shrink: 0; user-select: none; }
+    .kilo-btn {
+      background: linear-gradient(135deg,var(--accent),#0891b2);
+      color: #fff; border: none; border-radius: 12px;
+      padding: .7rem 1.4rem; font-size: .8rem; font-weight: 500;
+      font-family: inherit; cursor: pointer; flex-shrink: 0;
+      transition: opacity .2s, transform .1s;
+    }
+    .kilo-btn:hover  { opacity: .88; }
+    .kilo-btn:active { transform: scale(.97); }
+    .kilo-btn:disabled { opacity: .45; cursor: default; }
+    .kilo-stats { display: flex; gap: 1.5rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
+    .kilo-stat  { flex: 1; min-width: 90px; }
+    .ks-val { font-size: 2rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
+    .ks-lbl { font-size: .62rem; color: var(--muted); margin-top: 3px; letter-spacing: .08em; text-transform: uppercase; }
+    .bareme-hd { font-size: .62rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-bottom: .75rem; }
+    .bareme { display: grid; grid-template-columns: repeat(4,1fr); gap: .55rem; }
+    @media(max-width:480px) { .bareme { grid-template-columns: repeat(2,1fr); } }
+    .palier {
+      background: rgba(255,255,255,.45);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 14px; padding: .85rem .7rem; text-align: center;
+      transition: all .35s var(--ease);
+    }
+    .palier-n   { font-size: .55rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+    .palier-amt { font-size: 1.5rem; font-weight: 200; letter-spacing: -.03em; line-height: 1; }
+    .palier-range { font-size: .6rem; color: var(--muted); margin-top: 4px; }
+    .palier.active {
+      background: linear-gradient(135deg,rgba(16,185,129,.14),rgba(5,150,105,.08));
+      border-color: rgba(16,185,129,.38);
+      box-shadow: 0 6px 20px rgba(16,185,129,.14);
+      transform: translateY(-3px) scale(1.03);
+    }
+    .palier.active .palier-amt { color: #047857; }
+    .palier.active .palier-n   { color: #059669; }
+    .palier.active .palier-range { color: #065f46; }
 
     /* ── Footer ──────────────────────────────────────── */
-    footer {
-      text-align: center; padding: 1rem 0 2rem;
-      font-size: .62rem; color: var(--muted); letter-spacing: .1em;
-    }
+    footer { text-align: center; padding: 1rem 0 2rem; font-size: .62rem; color: var(--muted); letter-spacing: .1em; }
   </style>
 </head>
 <body>
 
-  <!-- Blobs fond -->
   <div class="blobs" aria-hidden="true">
     <div class="blob" style="width:480px;height:480px;top:-18%;left:-12%;background:radial-gradient(#a78bfa,#6d28d9);filter:blur(85px);opacity:.38;animation:bm1 14s ease-in-out infinite alternate"></div>
     <div class="blob" style="width:380px;height:380px;bottom:5%;right:-10%;background:radial-gradient(#67e8f9,#0891b2);filter:blur(78px);opacity:.35;animation:bm2 12s ease-in-out infinite alternate"></div>
@@ -339,7 +260,6 @@
 
   <div class="wrap">
 
-    <!-- Header -->
     <header class="page-hd">
       <a href="/" class="back">← TLB</a>
       <h1>Démo API<br>Rennes</h1>
@@ -356,110 +276,71 @@
       <div class="bloc-hd">01 · Transports STAR</div>
       <div class="g2">
 
-        <!-- Métro Clémenceau — SVG + 2 directions -->
         <div class="gc">
           <div class="ch">
-            <div class="ch-l">
-              <span class="ch-ico">🚇</span>
-              <div>
-                <div class="ch-ttl">Métro · Clémenceau</div>
-                <div class="ch-sub">Lignes a &amp; b — temps réel</div>
-              </div>
+            <div class="ch-l"><span class="ch-ico">🚇</span>
+              <div><div class="ch-ttl">Métro · Clémenceau</div><div class="ch-sub">Lignes a &amp; b — temps réel</div></div>
             </div>
             <span class="ch-ts" id="ts-metro">—</span>
           </div>
-
-          <!-- Train SVG -->
           <div class="metro-train-wrap" aria-hidden="true">
             <svg class="metro-svg" viewBox="0 0 290 70" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="mg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#6d28d9"/>
-                  <stop offset="100%" stop-color="#0891b2"/>
+                  <stop offset="0%" stop-color="#6d28d9"/><stop offset="100%" stop-color="#0891b2"/>
                 </linearGradient>
                 <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(220,245,255,.92)"/>
-                  <stop offset="100%" stop-color="rgba(165,215,240,.72)"/>
+                  <stop offset="0%" stop-color="rgba(220,245,255,.92)"/><stop offset="100%" stop-color="rgba(165,215,240,.72)"/>
                 </linearGradient>
               </defs>
-              <!-- Rail -->
               <rect x="0" y="67" width="290" height="2" rx="1" fill="rgba(0,0,0,.1)"/>
-              <!-- Body -->
               <path d="M38,7 L264,7 Q278,7 278,20 L278,53 Q278,65 264,65 L38,65 Q22,65 14,56 L6,36 L14,17 Q22,7 38,7 Z" fill="url(#mg)"/>
-              <!-- Top shine -->
               <path d="M38,7 L264,7 Q278,7 278,20 L278,26 L14,20 L16,13 Q24,7 38,7 Z" fill="rgba(255,255,255,.18)"/>
-              <!-- Windows -->
               <rect x="46" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
               <rect x="94" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
               <rect x="142" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
               <rect x="190" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
               <rect x="238" y="12" width="32" height="20" rx="4" fill="url(#wg)"/>
-              <!-- Door lines -->
               <line x1="91"  y1="36" x2="91"  y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
               <line x1="139" y1="36" x2="139" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
               <line x1="187" y1="36" x2="187" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
               <line x1="235" y1="36" x2="235" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
-              <!-- Headlight -->
               <ellipse cx="9" cy="36" rx="4" ry="6" fill="rgba(255,235,130,.9)"/>
-              <!-- Wheels -->
               <ellipse cx="75"  cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
               <ellipse cx="163" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
               <ellipse cx="251" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
             </svg>
           </div>
-
-          <!-- Split by direction -->
           <div class="metro-split">
-            <div>
-              <div class="mdir-hd">→ La Poterie</div>
-              <div id="metro-poterie"><div class="spin">…</div></div>
-            </div>
-            <div>
-              <div class="mdir-hd">→ JF Kennedy</div>
-              <div id="metro-kennedy"><div class="spin">…</div></div>
-            </div>
+            <div><div class="mdir-hd">→ La Poterie</div><div id="metro-poterie"><div class="spin">…</div></div></div>
+            <div><div class="mdir-hd">→ JF Kennedy</div><div id="metro-kennedy"><div class="spin">…</div></div></div>
           </div>
         </div>
 
-        <!-- Bus Binquenais -->
         <div class="gc">
           <div class="ch">
-            <div class="ch-l">
-              <span class="ch-ico">🚌</span>
-              <div>
-                <div class="ch-ttl">Bus · Binquenais</div>
-                <div class="ch-sub">Prochains passages</div>
-              </div>
+            <div class="ch-l"><span class="ch-ico">🚌</span>
+              <div><div class="ch-ttl">Bus · Binquenais</div><div class="ch-sub">Prochains passages</div></div>
             </div>
             <span class="ch-ts" id="ts-bus">—</span>
           </div>
           <div id="bus"><div class="spin">Chargement</div></div>
         </div>
 
-        <!-- Vélos Clémenceau -->
         <div class="gc">
           <div class="ch">
-            <div class="ch-l">
-              <span class="ch-ico">🚲</span>
-              <div>
-                <div class="ch-ttl">LE vélo STAR</div>
-                <div class="ch-sub">Station Clémenceau</div>
-              </div>
+            <div class="ch-l"><span class="ch-ico">🚲</span>
+              <div><div class="ch-ttl">LE vélo STAR</div><div class="ch-sub">Station Clémenceau</div></div>
             </div>
             <span class="ch-ts" id="ts-velo">—</span>
           </div>
           <div id="velos"><div class="spin">Chargement</div></div>
         </div>
 
-        <!-- État lignes métro -->
         <div class="gc">
           <div class="ch">
-            <div class="ch-l">
-              <span class="ch-ico">📡</span>
-              <div>
-                <div class="ch-ttl">État du réseau</div>
-                <div class="ch-sub">Lignes métro STAR</div>
-              </div>
+            <div class="ch-l"><span class="ch-ico">📡</span>
+              <div><div class="ch-ttl">État du réseau</div><div class="ch-sub">Lignes métro STAR</div></div>
             </div>
             <span class="ch-ts" id="ts-etat">—</span>
           </div>
@@ -469,17 +350,13 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 2 — Parcs Relais STAR ═════════════════════ -->
+    <!-- ══ BLOC 2 — Parcs Relais ══════════════════════════ -->
     <section class="bloc">
       <div class="bloc-hd">02 · Parcs Relais STAR</div>
       <div class="gc">
         <div class="ch">
-          <div class="ch-l">
-            <span class="ch-ico">🅿️</span>
-            <div>
-              <div class="ch-ttl">Disponibilités temps réel</div>
-              <div class="ch-sub">8 parcs relais du réseau STAR</div>
-            </div>
+          <div class="ch-l"><span class="ch-ico">🅿️</span>
+            <div><div class="ch-ttl">Disponibilités temps réel</div><div class="ch-sub">8 parcs relais du réseau STAR</div></div>
           </div>
           <span class="ch-ts" id="ts-pk">—</span>
         </div>
@@ -492,12 +369,8 @@
       <div class="bloc-hd">03 · Trains depuis Rennes · SNCF</div>
       <div class="gc">
         <div class="ch">
-          <div class="ch-l">
-            <span class="ch-ico">🚆</span>
-            <div>
-              <div class="ch-ttl">Prochains départs</div>
-              <div class="ch-sub">Gare de Rennes · TGV, TER, Intercités</div>
-            </div>
+          <div class="ch-l"><span class="ch-ico">🚆</span>
+            <div><div class="ch-ttl">Prochains départs</div><div class="ch-sub">Gare de Rennes · TGV, TER, Intercités</div></div>
           </div>
           <span class="ch-ts" id="ts-train">—</span>
         </div>
@@ -510,12 +383,8 @@
       <div class="bloc-hd">04 · Image satellite · Esri + BAN</div>
       <div class="gc">
         <div class="ch">
-          <div class="ch-l">
-            <span class="ch-ico">🛰️</span>
-            <div>
-              <div class="ch-ttl">16 Bd Oscar Leroux, Rennes</div>
-              <div class="ch-sub">Géocodage BAN → imagerie Esri World Imagery</div>
-            </div>
+          <div class="ch-l"><span class="ch-ico">🛰️</span>
+            <div><div class="ch-ttl">16 Bd Oscar Leroux, Rennes</div><div class="ch-sub">Géocodage BAN → imagerie Esri World Imagery</div></div>
           </div>
           <span class="ch-ts" id="ts-sat">—</span>
         </div>
@@ -523,17 +392,13 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 5 — Événements à Rennes ══════════════════ -->
+    <!-- ══ BLOC 5 — Événements ════════════════════════════ -->
     <section class="bloc">
       <div class="bloc-hd">05 · Événements à Rennes</div>
       <div class="gc">
         <div class="ch">
-          <div class="ch-l">
-            <span class="ch-ico">🎭</span>
-            <div>
-              <div class="ch-ttl">Agenda · Prochains événements</div>
-              <div class="ch-sub">Culture, musique, sport · open data Rennes</div>
-            </div>
+          <div class="ch-l"><span class="ch-ico">🎭</span>
+            <div><div class="ch-ttl">Agenda · Prochains événements</div><div class="ch-sub">Culture, musique, sport · open data Rennes</div></div>
           </div>
           <span class="ch-ts" id="ts-ev">—</span>
         </div>
@@ -541,34 +406,49 @@
       </div>
     </section>
 
+    <!-- ══ BLOC 6 — Calculateur kilométrique ══════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">06 · Calculateur de frais kilométriques</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l"><span class="ch-ico">🚗</span>
+            <div><div class="ch-ttl">Distance routière · Barème</div><div class="ch-sub">Géocodage BAN + Itinéraire IGN Géoplateforme</div></div>
+          </div>
+        </div>
+        <div class="kilo-inputs">
+          <input class="kilo-in" id="kilo-start" type="text" placeholder="Adresse de départ">
+          <span class="kilo-sep">→</span>
+          <input class="kilo-in" id="kilo-end" type="text" placeholder="Adresse d'arrivée">
+          <button class="kilo-btn" id="kilo-btn">Calculer</button>
+        </div>
+        <div id="kilo-results"></div>
+      </div>
+    </section>
+
     <footer>
-      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.01</div>
+      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · TLB
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.02</div>
     </footer>
 
-  </div><!-- /.wrap -->
+  </div>
 
   <script>
     /* ═══════════════════════════════════════════════════
        CONFIG
     ═══════════════════════════════════════════════════ */
-    /* STAR datasets sont proxiés via /api/* (Vercel cache s-maxage=30) */
+    var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
 
     /* ═══════════════════════════════════════════════════
        UTILITAIRES
     ═══════════════════════════════════════════════════ */
     function nowHM() {
       var d = new Date();
-      return {
-        h: String(d.getHours()).padStart(2,'0'),
-        m: String(d.getMinutes()).padStart(2,'0')
-      };
+      return { h: String(d.getHours()).padStart(2,'0'), m: String(d.getMinutes()).padStart(2,'0') };
     }
 
     function updateRefreshClock() {
       var t = nowHM();
-      var hEl = document.getElementById('rt-h');
-      var mEl = document.getElementById('rt-m');
+      var hEl = document.getElementById('rt-h'), mEl = document.getElementById('rt-m');
       if (hEl) hEl.textContent = t.h;
       if (mEl) mEl.textContent = t.m;
     }
@@ -583,9 +463,7 @@
       return s.substr(9,2) + ':' + s.substr(11,2);
     }
 
-    function minsUntil(s) {
-      return Math.round((new Date(s) - Date.now()) / 60000);
-    }
+    function minsUntil(s) { return Math.round((new Date(s) - Date.now()) / 60000); }
 
     async function api(url, opts) {
       var r = await fetch(url, opts || {});
@@ -593,9 +471,29 @@
       return r.json();
     }
 
+    /* Cache localStorage pour STAR (TTL 30s) — évite les 429 sur reload */
+    function starApi(key, url) {
+      try {
+        var raw = localStorage.getItem('star_' + key);
+        if (raw) {
+          var obj = JSON.parse(raw);
+          if (Date.now() - obj.ts < 30000) return Promise.resolve(obj.data);
+        }
+      } catch(_) {}
+      return fetch(url)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function(data) {
+          try { localStorage.setItem('star_' + key, JSON.stringify({ ts: Date.now(), data: data })); } catch(_) {}
+          return data;
+        });
+    }
+
     function stamp(id) {
       var el = document.getElementById('ts-' + id);
-      if (el) el.textContent = nowHM().h + ':' + nowHM().m;
+      if (el) { var t = nowHM(); el.textContent = t.h + ':' + t.m; }
     }
 
     function err(id, msg) {
@@ -624,47 +522,40 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 1a — MÉTRO Clémenceau (split par direction)
+       BLOC 1a — MÉTRO Clémenceau
     ═══════════════════════════════════════════════════ */
     async function loadMetro() {
       try {
-        var d = await api(
-          '/api/metro?where=nomarret%20like%20%22Clemenceau%22&limit=12&order_by=nomcourtligne,sens'
+        var d = await starApi('metro',
+          STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records'
+          + '?where=nomarret%20like%20%22Clemenceau%22&limit=12&order_by=nomcourtligne,sens'
         );
         stamp('metro');
-
         if (!d.results || !d.results.length) {
-          err('metro-poterie', 'Aucune donnée'); err('metro-kennedy', 'Aucune donnée'); return;
+          err('metro-poterie','Aucune donnée'); err('metro-kennedy','Aucune donnée'); return;
         }
-
-        /* Séparer par sens : 0 = La Poterie, 1 = JF Kennedy */
-        var poterie = d.results.filter(function(r) { return r.sens === 0; });
-        var kennedy = d.results.filter(function(r) { return r.sens === 1; });
+        var poterie = d.results.filter(function(r){ return r.sens === 0; });
+        var kennedy = d.results.filter(function(r){ return r.sens === 1; });
 
         function renderDir(records) {
           if (!records.length) return '<div class="err" style="font-size:.7rem">—</div>';
           var h = '';
           records.forEach(function(r) {
-            var nl  = normLigne(r.nomcourtligne || r.idligne);
-            var m1  = minsUntil(r.arriveefirsttrain);
-            var l1  = m1 <= 0 ? 'à quai' : m1 + ' min';
-            var c1  = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
+            var nl = normLigne(r.nomcourtligne || r.idligne);
+            var m1 = minsUntil(r.arriveefirsttrain);
+            var l1 = m1 <= 0 ? 'à quai' : m1 + ' min';
+            var c1 = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
             h += row(nl.label, nl.cls, '', l1, c1, false);
             if (r.arriveesecondtrain) {
               var m2 = minsUntil(r.arriveesecondtrain);
-              var l2 = m2 <= 0 ? 'à quai' : m2 + ' min';
-              h += row(nl.label, nl.cls, '', l2, '', true);
+              h += row(nl.label, nl.cls, '', m2 <= 0 ? 'à quai' : m2 + ' min', '', true);
             }
           });
           return h;
         }
-
         document.getElementById('metro-poterie').innerHTML = renderDir(poterie);
         document.getElementById('metro-kennedy').innerHTML = renderDir(kennedy);
-      } catch(e) {
-        err('metro-poterie', e.message);
-        err('metro-kennedy', e.message);
-      }
+      } catch(e) { err('metro-poterie', e.message); err('metro-kennedy', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
@@ -672,15 +563,12 @@
     ═══════════════════════════════════════════════════ */
     async function loadBus() {
       try {
-        var d = await api(
-          '/api/bus?where=nomarret%20like%20%22%25Binquenais%25%22&limit=8&order_by=arrivee'
+        var d = await starApi('bus',
+          STAR + '/tco-bus-circulation-passages-tr/records'
+          + '?where=nomarret%20like%20%22%25Binquenais%25%22&limit=8&order_by=arrivee'
         );
         stamp('bus');
-
-        if (!d.results || !d.results.length) {
-          err('bus', 'Aucune donnée disponible'); return;
-        }
-
+        if (!d.results || !d.results.length) { err('bus','Aucune donnée disponible'); return; }
         var html = '';
         d.results.slice(0,6).forEach(function(r) {
           var t   = r.arrivee || r.arriveetheorique || '';
@@ -691,7 +579,6 @@
           var nl  = normLigne(r.nomcourtligne || r.idligne);
           html += row(nl.label || r.nomcourtligne || '?', nl.cls, r.destination || '—', lbl, cls, false);
         });
-
         document.getElementById('bus').innerHTML = html;
       } catch(e) { err('bus', e.message); }
     }
@@ -701,20 +588,17 @@
     ═══════════════════════════════════════════════════ */
     async function loadVelos() {
       try {
-        var d = await api('/api/velos?where=nom%20like%20%22Clemenceau%22&limit=1');
+        var d = await starApi('velos',
+          STAR + '/vls-stations-etat-tr/records?where=nom%20like%20%22Clemenceau%22&limit=1'
+        );
         stamp('velo');
-
-        if (!d.results || !d.results.length) {
-          err('velos', 'Station introuvable'); return;
-        }
-
+        if (!d.results || !d.results.length) { err('velos','Station introuvable'); return; }
         var s   = d.results[0];
         var tot = s.nombreemplacementsactuels || 0;
         var vd  = s.nombrevelosdisponibles || 0;
         var pd  = s.nombreemplacementsdisponibles || 0;
         var p   = tot > 0 ? pct(tot - pd, tot) : 0;
         var ok  = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
-
         document.getElementById('velos').innerHTML = [
           '<div class="velo-stat">',
             '<div><div class="vn">' + vd + '</div><div class="vl">vélos</div></div>',
@@ -736,27 +620,22 @@
     ═══════════════════════════════════════════════════ */
     async function loadEtat() {
       try {
-        var d = await api('/api/etat?limit=10');
+        var d = await starApi('etat', STAR + '/tco-metro-lignes-etat-tr/records?limit=10');
         stamp('etat');
-
         if (!d.results || !d.results.length) {
           document.getElementById('etat').innerHTML =
             '<div style="font-size:.78rem;color:var(--green)">🟢 Réseau métro — données état non publiées en TR</div>';
           return;
         }
-
         var html = '';
         d.results.forEach(function(r) {
           var nl   = normLigne(r.nomcourtligne || r.idligne || '?');
           var etat = r.etat || r.etatservice || r.libelleetat || 'Normal';
           var ok   = String(etat).toLowerCase().match(/normal|service|bon/);
-          html += '<div class="prow">'
-            + '<span class="badge ' + nl.cls + '">' + nl.label + '</span>'
+          html += '<div class="prow"><span class="badge ' + nl.cls + '">' + nl.label + '</span>'
             + '<span class="pdest" style="font-size:.78rem">' + etat + '</span>'
-            + '<span>' + (ok ? '🟢' : '🟡') + '</span>'
-            + '</div>';
+            + '<span>' + (ok ? '🟢' : '🟡') + '</span></div>';
         });
-
         document.getElementById('etat').innerHTML = html;
       } catch(e) {
         document.getElementById('etat').innerHTML =
@@ -766,17 +645,15 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 2 — PARCS RELAIS STAR
+       BLOC 2 — PARCS RELAIS
     ═══════════════════════════════════════════════════ */
     async function loadParkings() {
       try {
-        var d = await api('/api/parkings?limit=20&order_by=nom');
+        var d = await starApi('parkings',
+          STAR + '/tco-parcsrelais-star-etat-tr/records?limit=20&order_by=nom'
+        );
         stamp('pk');
-
-        if (!d.results || !d.results.length) {
-          err('parkings', 'Données indisponibles'); return;
-        }
-
+        if (!d.results || !d.results.length) { err('parkings','Données indisponibles'); return; }
         var html = '<div class="pk-grid">';
         d.results.forEach(function(r) {
           var nom   = r.nom || '—';
@@ -789,130 +666,83 @@
           var p     = dispo !== null && cap > 0 ? pct(cap - dispo, cap) : 0;
           var tCls  = !isOpen ? 'ko' : isFull ? 'full' : 'ok';
           var tLbl  = !isOpen ? 'FERMÉ' : isFull ? 'COMPLET' : 'OUVERT';
-
-          html += '<div class="pk">'
-            + '<div class="pk-nom">' + nom + '</div>'
+          html += '<div class="pk"><div class="pk-nom">' + nom + '</div>'
             + '<div class="pk-n">' + (dispo !== null ? dispo : '—') + '</div>'
             + '<div class="pk-s">places libres / ' + cap + '</div>'
             + '<div class="pk-bar"><div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div></div>'
-            + '<span class="pk-tag ' + tCls + '">' + tLbl + '</span>'
-            + '</div>';
+            + '<span class="pk-tag ' + tCls + '">' + tLbl + '</span></div>';
         });
-        html += '</div>';
-
-        document.getElementById('parkings').innerHTML = html;
+        document.getElementById('parkings').innerHTML = html + '</div>';
       } catch(e) { err('parkings', e.message); }
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 3 — TRAINS via proxy /api/trains
+       BLOC 3 — TRAINS SNCF
     ═══════════════════════════════════════════════════ */
     async function loadTrains() {
       try {
         var d = await api('/api/trains');
         stamp('train');
-
-        if (!d.departures || !d.departures.length) {
-          err('trains', 'Aucun départ trouvé'); return;
-        }
-
+        if (!d.departures || !d.departures.length) { err('trains','Aucun départ trouvé'); return; }
         var html = '<div class="t-list">';
         d.departures.forEach(function(dep) {
-          var info  = dep.display_informations || {};
-          var sdt   = dep.stop_date_time || {};
-          var hDep  = fmtNav(sdt.departure_date_time);
-          var late  = sdt.departure_date_time && sdt.base_departure_date_time
-                   && sdt.departure_date_time !== sdt.base_departure_date_time;
-          var dest  = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g,'').trim();
-          var type  = info.commercial_mode || info.physical_mode || '';
-          var code  = info.headsign ? ' · ' + info.headsign : '';
-
-          html += '<div class="trow">'
-            + '<div class="th">' + hDep + '</div>'
-            + '<div class="ti">'
-              + '<div class="td">→ ' + dest + '</div>'
-              + '<div class="tt">' + type + code + '</div>'
-            + '</div>'
-            + (late ? '<div class="tdel">Retard</div>' : '')
-            + '</div>';
+          var info = dep.display_informations || {};
+          var sdt  = dep.stop_date_time || {};
+          var hDep = fmtNav(sdt.departure_date_time);
+          var late = sdt.departure_date_time && sdt.base_departure_date_time
+                  && sdt.departure_date_time !== sdt.base_departure_date_time;
+          var dest = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g,'').trim();
+          var type = info.commercial_mode || info.physical_mode || '';
+          var code = info.headsign ? ' · ' + info.headsign : '';
+          html += '<div class="trow"><div class="th">' + hDep + '</div>'
+            + '<div class="ti"><div class="td">→ ' + dest + '</div><div class="tt">' + type + code + '</div></div>'
+            + (late ? '<div class="tdel">Retard</div>' : '') + '</div>';
         });
-        html += '</div>';
-        document.getElementById('trains').innerHTML = html;
-
+        document.getElementById('trains').innerHTML = html + '</div>';
       } catch(e) {
         document.getElementById('trains').innerHTML = [
-          '<div class="key-note">',
-            '<strong>🔑 Clé SNCF manquante</strong>',
-            '1. Clé gratuite sur <strong>numerique.sncf.com/startup/api</strong><br>',
-            '2. Vercel → Project Settings → Environment Variables<br>',
-            '&nbsp;&nbsp;&nbsp;→ Ajoute <code>SNCF_KEY</code> = ta clé<br>',
-            '3. Redéploie (ou push automatique)<br><br>',
-            '<span style="color:var(--muted);font-size:.7rem">',
-              'La fonction <code>/api/trains</code> appelle l\'API SNCF côté serveur (pas de restriction CORS).',
-            '</span>',
-          '</div>',
+          '<div class="key-note"><strong>🔑 Clé SNCF manquante</strong>',
+          '1. Clé gratuite sur <strong>numerique.sncf.com/startup/api</strong><br>',
+          '2. Vercel → Project Settings → Environment Variables<br>',
+          '&nbsp;&nbsp;&nbsp;→ Ajoute <code>SNCF_KEY</code> = ta clé<br>',
+          '3. Redéploie (ou push automatique)<br><br>',
+          '<span style="color:var(--muted);font-size:.7rem">La fonction <code>/api/trains</code> appelle l\'API SNCF côté serveur.</span></div>',
         ].join('');
       }
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 4 — IMAGE SATELLITE (Esri + BAN + NASA date)
+       BLOC 4 — SATELLITE
     ═══════════════════════════════════════════════════ */
     async function loadSatellite() {
       try {
-        /* Étape 1 : géocodage BAN */
-        var ban = await api(
-          'https://api-adresse.data.gouv.fr/search/?q=16+boulevard+oscar+leroux+rennes&limit=1'
-        );
-        if (!ban.features || !ban.features.length) {
-          err('satellite', 'Adresse introuvable'); return;
-        }
-
+        var ban = await api('https://api-adresse.data.gouv.fr/search/?q=16+boulevard+oscar+leroux+rennes&limit=1');
+        if (!ban.features || !ban.features.length) { err('satellite','Adresse introuvable'); return; }
         var feat  = ban.features[0];
         var lon   = feat.geometry.coordinates[0];
         var lat   = feat.geometry.coordinates[1];
         var label = feat.properties.label || '16 Bd Oscar Leroux, Rennes';
 
-        /* Étape 2 : date de la dernière image Landsat via NASA assets */
         var satDate = null;
         try {
-          var nasa = await api(
-            'https://api.nasa.gov/planetary/earth/assets'
-            + '?lat=' + lat + '&lon=' + lon + '&dim=0.025&api_key=DEMO_KEY'
-          );
-          if (nasa && nasa.date) {
-            satDate = new Date(nasa.date).toLocaleDateString('fr-FR', {
-              day: 'numeric', month: 'long', year: 'numeric'
-            });
-          }
-        } catch(_) { /* silencieux */ }
+          var nasa = await api('https://api.nasa.gov/planetary/earth/assets?lat=' + lat + '&lon=' + lon + '&dim=0.025&api_key=DEMO_KEY');
+          if (nasa && nasa.date) satDate = new Date(nasa.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+        } catch(_) {}
 
-        /* Étape 3 : tuiles XYZ Esri World Imagery zoom 17 */
-        var z  = 17;
-        var n  = Math.pow(2, z);
-        var tx = Math.floor((lon + 180) / 360 * n);
-        var lr = lat * Math.PI / 180;
-        var ty = Math.floor((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n);
-
-        var base  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+        var z = 17, n = Math.pow(2,z);
+        var tx = Math.floor((lon+180)/360*n);
+        var lr = lat*Math.PI/180;
+        var ty = Math.floor((1-Math.log(Math.tan(lr)+1/Math.cos(lr))/Math.PI)/2*n);
+        var base = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
         var tiles = '';
-        for (var dy = -1; dy <= 1; dy++) {
-          for (var dx = -1; dx <= 1; dx++) {
-            tiles += '<img src="' + base + z + '/' + (ty+dy) + '/' + (tx+dx) + '"'
-              + ' width="256" height="256" draggable="false"'
-              + ' style="display:block;width:33.333%;height:33.333%;float:left">';
-          }
-        }
+        for (var dy=-1;dy<=1;dy++) for (var dx=-1;dx<=1;dx++)
+          tiles += '<img src="'+base+z+'/'+(ty+dy)+'/'+(tx+dx)+'" width="256" height="256" draggable="false" style="display:block;width:33.333%;height:33.333%;float:left">';
 
         stamp('sat');
-
         document.getElementById('satellite').innerHTML = [
           '<div class="sat-wrap">',
             '<div class="sat-img-box" style="position:relative">',
-              '<div style="width:100%;height:100%;overflow:hidden;line-height:0">',
-                tiles,
-                '<div style="clear:both"></div>',
-              '</div>',
+              '<div style="width:100%;height:100%;overflow:hidden;line-height:0">' + tiles + '<div style="clear:both"></div></div>',
               '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:2">',
                 '<div style="width:11px;height:11px;background:#ef4444;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.55)"></div>',
               '</div>',
@@ -921,7 +751,7 @@
               '<div class="smr"><div class="sml">Adresse</div><div class="smv" style="font-size:.72rem">' + label + '</div></div>',
               '<div class="smr"><div class="sml">Latitude</div><div class="smv">' + lat.toFixed(5) + '</div></div>',
               '<div class="smr"><div class="sml">Longitude</div><div class="smv">' + lon.toFixed(5) + '</div></div>',
-              '<div class="smr"><div class="sml">Date image</div><div class="smv" style="font-size:.72rem">' + (satDate || '—') + '</div></div>',
+              '<div class="smr"><div class="sml">Date image</div><div class="smv" style="font-size:.72rem">' + (satDate||'—') + '</div></div>',
               '<div class="smr"><div class="sml">Source</div><div class="smv" style="font-size:.72rem">Esri World Imagery</div></div>',
               '<div class="smr"><div class="sml">Géocodage</div><div class="smv" style="font-size:.72rem">BAN data.gouv.fr</div></div>',
             '</div>',
@@ -931,73 +761,126 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 5 — ÉVÉNEMENTS à Rennes
+       BLOC 5 — ÉVÉNEMENTS
     ═══════════════════════════════════════════════════ */
     function fmtEvDate(s) {
       if (!s) return '—';
-      var d = new Date(s);
-      return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+      return new Date(s).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
     }
-
     function evTheme(theme) {
       var t = (theme || '').toLowerCase();
-      if (t.includes('musiqu'))                     return { bg:'rgba(124,58,237,.1)',  fg:'#6d28d9', icon:'🎵' };
-      if (t.includes('théât') || t.includes('theat')) return { bg:'rgba(239,68,68,.1)',   fg:'#b91c1c', icon:'🎭' };
-      if (t.includes('exposi'))                     return { bg:'rgba(13,148,136,.1)',  fg:'#0f766e', icon:'🎨' };
-      if (t.includes('festival'))                   return { bg:'rgba(249,115,22,.1)',  fg:'#c2410c', icon:'🎪' };
-      if (t.includes('dans'))                       return { bg:'rgba(236,72,153,.1)',  fg:'#be185d', icon:'💃' };
-      if (t.includes('sport'))                      return { bg:'rgba(37,99,235,.1)',   fg:'#1d4ed8', icon:'⚽' };
-      if (t.includes('ciném') || t.includes('cinem')) return { bg:'rgba(79,70,229,.1)', fg:'#4338ca', icon:'🎬' };
-      if (t.includes('confér') || t.includes('conf')) return { bg:'rgba(16,185,129,.1)',fg:'#047857', icon:'🎤' };
-      return { bg:'rgba(0,0,0,.06)', fg:'#374151', icon:'📌' };
+      if (t.includes('musiqu'))                       return {bg:'rgba(124,58,237,.1)', fg:'#6d28d9',icon:'🎵'};
+      if (t.includes('théât')||t.includes('theat'))   return {bg:'rgba(239,68,68,.1)',  fg:'#b91c1c',icon:'🎭'};
+      if (t.includes('exposi'))                       return {bg:'rgba(13,148,136,.1)', fg:'#0f766e',icon:'🎨'};
+      if (t.includes('festival'))                     return {bg:'rgba(249,115,22,.1)', fg:'#c2410c',icon:'🎪'};
+      if (t.includes('dans'))                         return {bg:'rgba(236,72,153,.1)', fg:'#be185d',icon:'💃'};
+      if (t.includes('sport'))                        return {bg:'rgba(37,99,235,.1)',  fg:'#1d4ed8',icon:'⚽'};
+      if (t.includes('ciném')||t.includes('cinem'))   return {bg:'rgba(79,70,229,.1)',  fg:'#4338ca',icon:'🎬'};
+      if (t.includes('confér')||t.includes('conf'))   return {bg:'rgba(16,185,129,.1)', fg:'#047857',icon:'🎤'};
+      return {bg:'rgba(0,0,0,.06)',fg:'#374151',icon:'📌'};
     }
-
     async function loadEvents() {
       try {
-        var d = await api(
-          '/api/events?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut'
+        var d = await starApi('events',
+          STAR + '/evenements-rennes-en-temps-reel/records'
+          + '?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut'
         );
         stamp('ev');
-
         if (!d.results || !d.results.length) {
-          document.getElementById('events').innerHTML =
-            '<div style="font-size:.78rem;color:var(--muted)">Aucun événement à venir disponible.</div>';
+          document.getElementById('events').innerHTML = '<div style="font-size:.78rem;color:var(--muted)">Aucun événement à venir disponible.</div>';
           return;
         }
-
         var html = '<div class="ev-grid">';
         d.results.forEach(function(r) {
-          var titre  = r.titre || 'Sans titre';
-          var theme  = Array.isArray(r.thematique) ? r.thematique[0] : (r.thematique || '');
-          var tc     = evTheme(theme);
-          var date   = fmtEvDate(r.date_debut);
-          var lieu   = r.lieu_nom || '';
-          var img    = r.image_url || '';
-
+          var titre = r.titre || 'Sans titre';
+          var theme = Array.isArray(r.thematique) ? r.thematique[0] : (r.thematique || '');
+          var tc    = evTheme(theme);
+          var date  = fmtEvDate(r.date_debut);
+          var lieu  = r.lieu_nom || '';
+          var img   = r.image_url || '';
           html += '<div class="ev-card">';
           if (img) {
             html += '<div class="ev-img"><img src="' + img + '" alt="" loading="lazy"'
-              + ' onerror="this.parentNode.innerHTML=\'<span style=\\"font-size:2rem;margin:auto\\">' + tc.icon + '</span>\'">'
-              + '</div>';
+              + ' onerror="this.parentNode.innerHTML=\'<span style=\\"font-size:2rem;margin:auto\\">' + tc.icon + '</span>\'"></div>';
           } else {
-            html += '<div class="ev-img" style="background:' + tc.bg + ';display:flex;align-items:center;justify-content:center">'
-              + '<span style="font-size:2.2rem">' + tc.icon + '</span>'
-              + '</div>';
+            html += '<div class="ev-img" style="background:' + tc.bg + ';display:flex;align-items:center;justify-content:center"><span style="font-size:2.2rem">' + tc.icon + '</span></div>';
           }
           html += '<div class="ev-body">';
-          if (theme) {
-            html += '<span class="ev-tag" style="background:' + tc.bg + ';color:' + tc.fg + '">'
-              + theme + '</span>';
-          }
-          html += '<div class="ev-ttl">' + titre + '</div>';
-          html += '<div class="ev-date">📅 ' + date + '</div>';
+          if (theme) html += '<span class="ev-tag" style="background:' + tc.bg + ';color:' + tc.fg + '">' + theme + '</span>';
+          html += '<div class="ev-ttl">' + titre + '</div><div class="ev-date">📅 ' + date + '</div>';
           if (lieu) html += '<div class="ev-lieu">📍 ' + lieu + '</div>';
           html += '</div></div>';
         });
-        html += '</div>';
-
-        document.getElementById('events').innerHTML = html;
+        document.getElementById('events').innerHTML = html + '</div>';
       } catch(e) { err('events', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 6 — CALCULATEUR KILOMÉTRIQUE
+    ═══════════════════════════════════════════════════ */
+    async function geocodeAddr(addr) {
+      var r = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(addr) + '&limit=1');
+      if (!r.ok) throw new Error('Géocodage impossible');
+      var d = await r.json();
+      if (!d.features || !d.features.length) throw new Error('Adresse introuvable : ' + addr);
+      return d.features[0].geometry.coordinates; /* [lon, lat] */
+    }
+
+    function palierCard(n, range, amt, active) {
+      return '<div class="palier' + (n === active ? ' active' : '') + '">'
+        + '<div class="palier-n">Palier ' + n + '</div>'
+        + '<div class="palier-amt">' + amt + '</div>'
+        + '<div class="palier-range">' + range + '</div>'
+        + '</div>';
+    }
+
+    async function calculerTrajet() {
+      var startVal = document.getElementById('kilo-start').value.trim();
+      var endVal   = document.getElementById('kilo-end').value.trim();
+      if (!startVal || !endVal) return;
+
+      var btn = document.getElementById('kilo-btn');
+      var res = document.getElementById('kilo-results');
+      btn.disabled = true;
+      res.innerHTML = '<div class="spin">Calcul en cours…</div>';
+
+      try {
+        var start = await geocodeAddr(startVal);
+        var end   = await geocodeAddr(endVal);
+
+        var ign = await fetch(
+          'https://data.geopf.fr/navigation/itineraire'
+          + '?resource=bdtopo-osrm'
+          + '&start=' + start[0] + ',' + start[1]
+          + '&end='   + end[0]   + ',' + end[1]
+          + '&profile=car&optimization=fastest'
+        );
+        if (!ign.ok) throw new Error('Calcul d\'itinéraire impossible (HTTP ' + ign.status + ')');
+        var route = await ign.json();
+
+        var distKm   = route.distance / 1000;
+        var tempsMin = Math.round(route.duration / 60);
+        var palier   = distKm <= 20 ? 1 : distKm <= 50 ? 2 : distKm <= 150 ? 3 : 4;
+        var montants = [0, 40, 80, 150, 250];
+
+        res.innerHTML = [
+          '<div class="kilo-stats">',
+            '<div class="kilo-stat"><div class="ks-val">' + distKm.toFixed(1) + ' <span style="font-size:.85rem">km</span></div><div class="ks-lbl">Distance</div></div>',
+            '<div class="kilo-stat"><div class="ks-val">' + tempsMin + ' <span style="font-size:.85rem">min</span></div><div class="ks-lbl">Durée estimée</div></div>',
+            '<div class="kilo-stat"><div class="ks-val" style="color:#047857">' + montants[palier] + ' <span style="font-size:.85rem">€</span></div><div class="ks-lbl">Remboursement</div></div>',
+          '</div>',
+          '<div class="bareme-hd">Barème de remboursement</div>',
+          '<div class="bareme">',
+            palierCard(1, '≤ 20 km',   '40 €',  palier),
+            palierCard(2, '21–50 km',  '80 €',  palier),
+            palierCard(3, '51–150 km', '150 €', palier),
+            palierCard(4, '> 150 km',  '250 €', palier),
+          '</div>',
+        ].join('');
+      } catch(e) {
+        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
+      }
+      btn.disabled = false;
     }
 
     /* ═══════════════════════════════════════════════════
@@ -1005,18 +888,18 @@
     ═══════════════════════════════════════════════════ */
     updateRefreshClock();
 
-    /* Appels STAR espacés de 400ms pour éviter le rate-limit (429) */
+    /* STAR : fetch direct depuis browser + localStorage cache 30s
+       Espacés 400ms pour ne pas déclencher le rate-limit sur premiere visite */
     loadMetro();
     setTimeout(loadBus,      400);
     setTimeout(loadVelos,    800);
     setTimeout(loadEtat,    1200);
     setTimeout(loadParkings,1600);
     setTimeout(loadEvents,  2000);
-    /* APIs tierces indépendantes — pas de contrainte STAR */
     loadTrains();
     loadSatellite();
 
-    /* Auto-refresh toutes les 60s — espacé comme le chargement initial */
+    /* Auto-refresh 60s — stagger identique */
     setInterval(function() {
       loadMetro();
       setTimeout(loadBus,      400);
@@ -1025,6 +908,11 @@
       setTimeout(loadEvents,  1600);
       updateRefreshClock();
     }, 60000);
+
+    /* Calculateur — déclenchement bouton ou Enter */
+    document.getElementById('kilo-btn').addEventListener('click', calculerTrajet);
+    document.getElementById('kilo-end').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
+    document.getElementById('kilo-start').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
   </script>
 </body>
 </html>
