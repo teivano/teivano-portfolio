@@ -685,7 +685,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.07</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.08</div>
     </footer>
 
   </div>
@@ -1304,7 +1304,6 @@
       document.getElementById('fvt-list').classList.toggle('active', view === 'list');
       document.getElementById('fuel-map-wrap').style.display  = view === 'map'  ? 'block' : 'none';
       document.getElementById('fuel-list-wrap').style.display = view === 'list' ? 'block' : 'none';
-      if (view === 'map' && fuelMap) setTimeout(function(){ fuelMap.invalidateSize(); }, 50);
     }
 
     async function loadCarburants() {
@@ -1393,12 +1392,14 @@
           );
           bounds.push([lat, lon]);
         });
-        if (bounds.length) fuelMap.fitBounds(bounds, { padding: [32, 32] });
-
-        /* Afficher carte par défaut */
+        /* Afficher carte par défaut, puis fitBounds après invalidateSize */
         status.innerHTML = '';
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
+        setTimeout(function() {
+          fuelMap.invalidateSize();
+          if (bounds.length) fuelMap.fitBounds(bounds, { padding: [32, 32] });
+        }, 80);
       } catch(e) {
         status.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
