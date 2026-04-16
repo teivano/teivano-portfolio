@@ -351,7 +351,6 @@
           <span class="ch-ts" id="ts-pk">—</span>
         </div>
         <div id="parkings"><div class="spin">Chargement</div></div>
-        <p class="note">Le parking Place des Lices (Indigo) n'est pas disponible via les APIs ouvertes. Cette section affiche les données temps réel des Parcs Relais STAR.</p>
       </div>
     </section>
 
@@ -401,8 +400,6 @@
     /* ═══════════════════════════════════════════════════
        CONFIG
     ═══════════════════════════════════════════════════ */
-    var NAVITIA_KEY = 'YOUR_NAVITIA_KEY'; // ← Remplace avec ta clé navitia.io
-
     var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
 
     /* ═══════════════════════════════════════════════════
@@ -450,6 +447,14 @@
       return Math.max(0, Math.min(100, Math.round(val / total * 100)));
     }
 
+    function normLigne(val) {
+      /* Normalise les codes ligne STAR : "1001"/"a" → A, "1002"/"b" → B */
+      var s = String(val || '').trim().toLowerCase();
+      if (s === 'a' || s === '1001' || s === '0001') return { label: 'A', cls: 'badge-a' };
+      if (s === 'b' || s === '1002' || s === '0002') return { label: 'B', cls: 'badge-b' };
+      return { label: s.toUpperCase() || '?', cls: '' };
+    }
+
     /* ═══════════════════════════════════════════════════
        BLOC 1a — MÉTRO Clémenceau
     ═══════════════════════════════════════════════════ */
@@ -467,21 +472,20 @@
 
         var html = '';
         d.results.forEach(function (r) {
-          var ligne  = (r.nomcourtligne || '?').toLowerCase();
-          var bc     = ligne === 'a' ? 'badge-a' : ligne === 'b' ? 'badge-b' : '';
-          var dest   = r.destination || '—';
+          var nl   = normLigne(r.nomcourtligne || r.idligne);
+          var dest = r.destination || '—';
 
           /* Premier train */
           var m1 = minsUntil(r.arriveefirsttrain);
           var l1 = m1 <= 0 ? 'à quai' : m1 + ' min';
           var c1 = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
-          html += row(ligne.toUpperCase(), bc, dest, l1, c1, false);
+          html += row(nl.label, nl.cls, dest, l1, c1, false);
 
           /* Deuxième train */
           if (r.arriveesecondtrain) {
             var m2 = minsUntil(r.arriveesecondtrain);
             var l2 = m2 <= 0 ? 'à quai' : m2 + ' min';
-            html += row(ligne.toUpperCase(), bc, dest, l2, '', true);
+            html += row(nl.label, nl.cls, dest, l2, '', true);
           }
         });
 
@@ -640,34 +644,11 @@
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 3 — TRAINS via Navitia
+       BLOC 3 — TRAINS via proxy serverless /api/trains
     ═══════════════════════════════════════════════════ */
     async function loadTrains() {
-      if (NAVITIA_KEY === 'YOUR_NAVITIA_KEY') {
-        document.getElementById('ts-train').textContent = '—';
-        document.getElementById('trains').innerHTML = [
-          '<div class="key-note">',
-            '<strong>🔑 Clé Navitia manquante</strong>',
-            '1. Inscris-toi sur <strong>navitia.io</strong> (gratuit, immédiat)<br>',
-            '2. Tu reçois une clé par email (format : <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>)<br>',
-            '3. Dans <code>demo-api.html</code>, remplace <code>YOUR_NAVITIA_KEY</code> par ta clé<br><br>',
-            '<span style="color:var(--muted);font-size:.7rem">',
-              'Navitia couvre TGV, TER et Intercités depuis Rennes en temps réel. ',
-              'Contrairement à l\'API SNCF officielle, Navitia autorise les requêtes depuis un navigateur (CORS ouvert).',
-            '</span>',
-          '</div>',
-        ].join('');
-        return;
-      }
-
       try {
-        var url = 'https://api.navitia.io/v1/coverage/sncf'
-          + '/stop_areas/stop_area:SNCF:87471003/departures'
-          + '?count=6&datetime_represents=departure';
-
-        var d = await api(url, {
-          headers: { 'Authorization': 'Basic ' + btoa(NAVITIA_KEY + ':') }
-        });
+        var d = await api('/api/trains');
         stamp('train');
 
         if (!d.departures || !d.departures.length) {
@@ -676,15 +657,15 @@
 
         var html = '<div class="t-list">';
         d.departures.forEach(function (dep) {
-          var info   = dep.display_informations || {};
-          var sdt    = dep.stop_date_time || {};
-          var hDep   = fmtNav(sdt.departure_date_time);
-          var hBase  = fmtNav(sdt.base_departure_date_time);
-          var late   = sdt.departure_date_time && sdt.base_departure_date_time
-                    && sdt.departure_date_time !== sdt.base_departure_date_time;
-          var dest   = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g, '').trim();
-          var type   = info.commercial_mode || info.physical_mode || '';
-          var code   = info.headsign ? ' · ' + info.headsign : '';
+          var info  = dep.display_informations || {};
+          var sdt   = dep.stop_date_time || {};
+          var hDep  = fmtNav(sdt.departure_date_time);
+          var hBase = fmtNav(sdt.base_departure_date_time);
+          var late  = sdt.departure_date_time && sdt.base_departure_date_time
+                   && sdt.departure_date_time !== sdt.base_departure_date_time;
+          var dest  = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g, '').trim();
+          var type  = info.commercial_mode || info.physical_mode || '';
+          var code  = info.headsign ? ' · ' + info.headsign : '';
 
           html += '<div class="trow">'
             + '<div class="th">' + hDep + '</div>'
@@ -692,17 +673,30 @@
               + '<div class="td">→ ' + dest + '</div>'
               + '<div class="tt">' + type + code + '</div>'
             + '</div>'
-            + (late ? '<div class="tdel">+' + hBase + '</div>' : '')
+            + (late ? '<div class="tdel">Retard</div>' : '')
             + '</div>';
         });
         html += '</div>';
-
         document.getElementById('trains').innerHTML = html;
-      } catch (e) { err('trains', e.message); }
+
+      } catch (e) {
+        document.getElementById('trains').innerHTML = [
+          '<div class="key-note">',
+            '<strong>🔑 Clé SNCF manquante</strong>',
+            '1. Clé gratuite sur <strong>numerique.sncf.com/startup/api</strong><br>',
+            '2. Vercel → Project Settings → Environment Variables<br>',
+            '&nbsp;&nbsp;&nbsp;→ Ajoute <code>SNCF_KEY</code> = ta clé<br>',
+            '3. Redéploie (ou push automatique)<br><br>',
+            '<span style="color:var(--muted);font-size:.7rem">',
+              'La fonction <code>/api/trains</code> appelle l\'API SNCF côté serveur (pas de restriction CORS).',
+            '</span>',
+          '</div>',
+        ].join('');
+      }
     }
 
     /* ═══════════════════════════════════════════════════
-       BLOC 4 — IMAGE SATELLITE
+       BLOC 4 — IMAGE SATELLITE (Esri World Imagery, sans clé)
     ═══════════════════════════════════════════════════ */
     async function loadSatellite() {
       try {
@@ -710,7 +704,6 @@
         var ban = await api(
           'https://api-adresse.data.gouv.fr/search/?q=16+boulevard+oscar+leroux+rennes&limit=1'
         );
-
         if (!ban.features || !ban.features.length) {
           err('satellite', 'Adresse introuvable'); return;
         }
@@ -720,34 +713,46 @@
         var lat   = feat.geometry.coordinates[1];
         var label = feat.properties.label || '16 Bd Oscar Leroux, Rennes';
 
-        /* Étape 2 : métadonnées NASA (date de la prise de vue) */
-        var assets = await api(
-          'https://api.nasa.gov/planetary/earth/assets'
-          + '?lat=' + lat + '&lon=' + lon + '&dim=0.012&api_key=DEMO_KEY'
-        ).catch(function () { return null; });
+        /* Étape 2 : conversion lat/lon → coordonnées tuile XYZ zoom 17
+           (~300 m par tuile, résolution satellite ~0.3 m/px) */
+        var z  = 17;
+        var n  = Math.pow(2, z);
+        var tx = Math.floor((lon + 180) / 360 * n);
+        var lr = lat * Math.PI / 180;
+        var ty = Math.floor((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n);
 
-        var satDate = (assets && assets.date) ? assets.date.substr(0, 10) : '—';
-
-        /* Étape 3 : image (PNG direct — pas de CORS) */
-        var imgSrc = 'https://api.nasa.gov/planetary/earth/imagery'
-          + '?lat=' + lat + '&lon=' + lon + '&dim=0.012&api_key=DEMO_KEY';
+        /* Étape 3 : grille 3×3 de tuiles Esri World Imagery (sans clé, sans CORS) */
+        var base = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+        var tiles = '';
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            tiles += '<img src="' + base + z + '/' + (ty + dy) + '/' + (tx + dx) + '"'
+              + ' width="256" height="256" draggable="false"'
+              + ' style="display:block;width:33.333%;height:33.333%;float:left">';
+          }
+        }
 
         stamp('sat');
 
         document.getElementById('satellite').innerHTML = [
           '<div class="sat-wrap">',
-            '<div class="sat-img-box">',
-              '<img src="' + imgSrc + '" alt="Image satellite 16 Bd Oscar Leroux"',
-              ' onerror="this.parentNode.innerHTML=\'<div style=&quot;padding:2rem;text-align:center;color:rgba(0,0,0,.4);font-size:.8rem;line-height:1.5&quot;>Image NASA indisponible<br><span style=&quot;font-size:.7rem&quot;>(limite DEMO_KEY atteinte — réessaie dans 1h)</span></div>\'"',
-              '/>',
+            '<div class="sat-img-box" style="position:relative">',
+              '<div style="width:100%;height:100%;overflow:hidden;line-height:0">',
+                tiles,
+                '<div style="clear:both"></div>',
+              '</div>',
+              /* Marqueur rouge au centre */
+              '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:2">',
+                '<div style="width:11px;height:11px;background:#ef4444;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 12px rgba(0,0,0,.55)"></div>',
+              '</div>',
             '</div>',
             '<div class="sat-meta">',
               '<div class="smr"><div class="sml">Adresse</div><div class="smv" style="font-size:.72rem">' + label + '</div></div>',
               '<div class="smr"><div class="sml">Latitude</div><div class="smv">' + lat.toFixed(5) + '</div></div>',
               '<div class="smr"><div class="sml">Longitude</div><div class="smv">' + lon.toFixed(5) + '</div></div>',
-              '<div class="smr"><div class="sml">Date satellite</div><div class="smv">' + satDate + '</div></div>',
-              '<div class="smr"><div class="sml">Satellite</div><div class="smv" style="font-size:.72rem">Landsat 8 · NASA</div></div>',
-              '<div class="smr"><div class="sml">Source géo</div><div class="smv" style="font-size:.72rem">BAN data.gouv.fr</div></div>',
+              '<div class="smr"><div class="sml">Tuile</div><div class="smv">z17 · ' + tx + '/' + ty + '</div></div>',
+              '<div class="smr"><div class="sml">Source</div><div class="smv" style="font-size:.72rem">Esri World Imagery</div></div>',
+              '<div class="smr"><div class="sml">Géocodage</div><div class="smv" style="font-size:.72rem">BAN data.gouv.fr</div></div>',
             '</div>',
           '</div>',
         ].join('');
