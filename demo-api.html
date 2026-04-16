@@ -687,7 +687,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.17</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.17b</div>
     </footer>
 
   </div>
@@ -1406,9 +1406,9 @@
         /* ── Marqueurs ── */
         var lons = [], lats = [];
         d.results.forEach(function(s) {
-          var lat, lon;
-          if (s.latitude)                          { lat = parseFloat(s.latitude);            lon = parseFloat(s.longitude); }
-          else if (s.geom && s.geom.coordinates)   { lon = parseFloat(s.geom.coordinates[0]); lat = parseFloat(s.geom.coordinates[1]); }
+          /* geom = {lon, lat} — les champs latitude/longitude sont des entiers scalés inutilisables */
+          var lat = s.geom ? parseFloat(s.geom.lat) : NaN;
+          var lon = s.geom ? parseFloat(s.geom.lon) : NaN;
           if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
           var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
