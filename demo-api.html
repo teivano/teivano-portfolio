@@ -1016,13 +1016,13 @@
     loadTrains();
     loadSatellite();
 
-    /* Auto-refresh toutes les 60s */
+    /* Auto-refresh toutes les 60s — espacé comme le chargement initial */
     setInterval(function() {
       loadMetro();
-      loadBus();
-      loadVelos();
-      loadParkings();
-      loadEvents();
+      setTimeout(loadBus,      400);
+      setTimeout(loadVelos,    800);
+      setTimeout(loadParkings,1200);
+      setTimeout(loadEvents,  1600);
       updateRefreshClock();
     }, 60000);
   </script>
