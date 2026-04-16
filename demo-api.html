@@ -7,6 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%237c3aed'><animate attributeName='fill' values='%237c3aed;%232563eb;%23059669;%23dc2626;%237c3aed' dur='4s' repeatCount='indefinite'/></rect><text x='32' y='46' font-family='system-ui,Arial Black,sans-serif' font-size='28' font-weight='900' fill='white' text-anchor='middle' letter-spacing='-1'>TLB</text></svg>">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
   <style>
     /* ── Variables & Reset ───────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,7 +75,13 @@
     @keyframes colonBlink { 0%,100%{opacity:1} 50%{opacity:.15} }
 
     /* ── Section bloc ─────────────────────────────────── */
-    .bloc { margin-bottom: clamp(2rem,5vh,3.5rem); }
+    .bloc {
+      margin-bottom: clamp(2rem,5vh,3.5rem);
+      transform: perspective(1400px) rotateX(var(--rx, 0deg));
+      transition: transform 0.72s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: transform;
+    }
+    .bloc.tilting { transition: transform 0.05s linear; }
     .bloc-hd {
       font-size: .62rem; letter-spacing: .34em; text-transform: uppercase;
       color: var(--muted); margin-bottom: .85rem;
@@ -383,6 +390,18 @@
     .dot-orange { background: var(--orange); }
     .dot-red    { background: var(--red); }
 
+    /* ── Animations liquides ─────────────────────────── */
+    .crystal-ripple {
+      position: absolute; inset: 0; border-radius: inherit;
+      pointer-events: none; z-index: 10; transform-origin: center;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0%, rgba(255,255,255,.35) 45%, transparent 70%);
+    }
+    #fuel-map-wrap { position: relative; overflow: hidden; border-radius: 14px; }
+    @media (prefers-reduced-motion: reduce) {
+      .bloc { transform: none !important; transition: none !important; }
+      .gc   { opacity: 1 !important; transition: none !important; }
+    }
+
     /* ── Modale "il est bo" ───────────────────────────── */
     #beau-overlay {
       display: none; position: fixed; inset: 0;
@@ -687,7 +706,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.17b</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.18</div>
     </footer>
 
   </div>
@@ -830,6 +849,7 @@
         }
         document.getElementById('metro-poterie').innerHTML = renderDir(poterie);
         document.getElementById('metro-kennedy').innerHTML = renderDir(kennedy);
+        var _gc = gcOf('metro-poterie'); if (_gc && window._crystalize) window._crystalize(_gc);
       } catch(e) { err('metro-poterie', e.message); err('metro-kennedy', e.message); }
     }
 
@@ -855,6 +875,7 @@
           html += row(nl.label || r.nomcourtligne || '?', nl.cls, r.destination || '—', lbl, cls, false);
         });
         document.getElementById('bus').innerHTML = html;
+        var _gc = gcOf('bus'); if (_gc && window._crystalize) window._crystalize(_gc);
       } catch(e) { err('bus', e.message); }
     }
 
@@ -887,6 +908,9 @@
           '<div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div>',
           '<div class="pbar-lbl">' + tot + ' emplacements · ' + p + '% occupé</div>',
         ].join('');
+        var _gcV = gcOf('velos');
+        if (_gcV && window._crystalize) window._crystalize(_gcV);
+        if (window._animateCounters) window._animateCounters(document.getElementById('velos'));
       } catch(e) { err('velos', e.message); }
     }
 
@@ -912,6 +936,7 @@
             + '<span>' + (ok ? '🟢' : '🟡') + '</span></div>';
         });
         document.getElementById('etat').innerHTML = html;
+        var _gc = gcOf('etat'); if (_gc && window._crystalize) window._crystalize(_gc);
       } catch(e) {
         document.getElementById('etat').innerHTML =
           '<div style="font-size:.78rem;color:var(--green)">🟢 Réseau STAR opérationnel</div>'
@@ -948,6 +973,9 @@
             + '<span class="pk-tag ' + tCls + '">' + tLbl + '</span></div>';
         });
         document.getElementById('parkings').innerHTML = html + '</div>';
+        var _gcP = gcOf('parkings');
+        if (_gcP && window._crystalize) window._crystalize(_gcP);
+        if (window._animateCounters) window._animateCounters(document.getElementById('parkings'));
       } catch(e) { err('parkings', e.message); }
     }
 
@@ -974,6 +1002,7 @@
             + (late ? '<div class="tdel">Retard</div>' : '') + '</div>';
         });
         document.getElementById('trains').innerHTML = html + '</div>';
+        var _gc = gcOf('trains'); if (_gc && window._crystalize) window._crystalize(_gc);
       } catch(e) {
         document.getElementById('trains').innerHTML = [
           '<div class="key-note"><strong>🔑 Clé SNCF manquante</strong>',
@@ -1014,6 +1043,7 @@
           tiles += '<img src="'+base+z+'/'+(ty+dy)+'/'+(tx+dx)+'" width="256" height="256" draggable="false" style="display:block;width:33.333%;height:33.333%;float:left">';
 
         stamp('sat');
+        var _gcSat = gcOf('satellite');
         document.getElementById('satellite').innerHTML = [
           '<div class="sat-wrap">',
             '<div class="sat-img-box" style="position:relative">',
@@ -1032,6 +1062,7 @@
             '</div>',
           '</div>',
         ].join('');
+        if (_gcSat && window._crystalize) window._crystalize(_gcSat);
       } catch(e) { err('satellite', e.message); }
     }
 
@@ -1087,6 +1118,7 @@
           html += '</div></div>';
         });
         document.getElementById('events').innerHTML = html + '</div>';
+        var _gc = gcOf('events'); if (_gc && window._crystalize) window._crystalize(_gc);
       } catch(e) { err('events', e.message); }
     }
 
@@ -1384,6 +1416,7 @@
         status.innerHTML = '';
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
+        var _gcF = gcOf('fuel-status'); if (_gcF && window._crystalize) window._crystalize(_gcF);
 
         if (fuelMap) { fuelMap.remove(); fuelMap = null; }
         fuelMap = new maplibregl.Map({
@@ -1397,26 +1430,23 @@
           zoom: 13
         });
 
-        /* ── Marqueurs ── */
-        var lons = [], lats = [];
+        /* ── Marqueurs (spring stagger + onde d'impact) ── */
+        var lons = [], lats = [], markerQ = [];
         d.results.forEach(function(s) {
-          /* geom = {lon, lat} — les champs latitude/longitude sont des entiers scalés inutilisables */
+          /* geom = {lon, lat} — champs latitude/longitude = entiers scalés, inutilisables */
           var lat = s.geom ? parseFloat(s.geom.lat) : NaN;
           var lon = s.geom ? parseFloat(s.geom.lon) : NaN;
           if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
           var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
           var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
-          var popup = new maplibregl.Popup({ offset: 28 }).setHTML(
+          var popup   = new maplibregl.Popup({ offset: 28 }).setHTML(
             '<div class="fp-addr">' + (s.adresse || 'Station') + '</div>'
             + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
             + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
           );
-          new maplibregl.Marker({ element: pinEl(color), anchor: 'bottom' })
-            .setLngLat([lon, lat])
-            .setPopup(popup)
-            .addTo(fuelMap);
           lons.push(lon); lats.push(lat);
+          markerQ.push({ lon: lon, lat: lat, color: color, popup: popup });
         });
         if (lons.length > 1) {
           fuelMap.fitBounds(
@@ -1424,6 +1454,32 @@
             { padding: 40 }
           );
         }
+        markerQ.forEach(function(item, i) {
+          setTimeout(function() {
+            var el = pinEl(item.color);
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-200px)';
+            el.style.pointerEvents = 'none';
+            new maplibregl.Marker({ element: el, anchor: 'bottom' })
+              .setLngLat([item.lon, item.lat])
+              .setPopup(item.popup)
+              .addTo(fuelMap);
+            if (window.anime) {
+              anime.animate(el, {
+                translateY: [-200, 0],
+                opacity: [0, 1],
+                duration: 520,
+                easing: 'spring(1, 80, 12, 0)',
+                onComplete: function() {
+                  el.style.pointerEvents = '';
+                  if (window._createMapRipple) window._createMapRipple(el, item.color);
+                }
+              });
+            } else {
+              el.style.opacity = '1'; el.style.transform = ''; el.style.pointerEvents = '';
+            }
+          }, i * 80);
+        });
       } catch(e) {
         status.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
       }
@@ -1436,6 +1492,8 @@
       try { var p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch(_) {}
       return raw.split(/[,;|]/).map(function(s){ return s.trim(); }).filter(Boolean);
     }
+
+    function gcOf(id) { var el = document.getElementById(id); return el ? el.closest('.gc') : null; }
 
     /* ═══════════════════════════════════════════════════
        LANCEMENT
@@ -1483,6 +1541,123 @@
 
     /* Carburants : chargement auto Rennes au démarrage */
     loadCarburants();
+
+    /* ═══════════════════════════════════════════════════
+       ANIMATIONS LIQUIDES — anime.js v4
+    ═══════════════════════════════════════════════════ */
+    (function() {
+      if (!window.anime) return;
+      var PRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      /* ── A — Cristallisation : ripple de clarté sur les cartes ── */
+      window._crystalize = function(gcEl) {
+        if (PRM || !gcEl) return;
+        var r = document.createElement('div');
+        r.className = 'crystal-ripple';
+        gcEl.appendChild(r);
+        anime.animate(r, {
+          scale: [0, 2.8],
+          opacity: [1, 0],
+          duration: 750,
+          easing: 'easeOutExpo',
+          onComplete: function() { r.parentNode && r.parentNode.removeChild(r); }
+        });
+      };
+
+      /* ── C — Révélation organique au scroll (IntersectionObserver) ── */
+      if (!PRM) {
+        var io = new IntersectionObserver(function(entries) {
+          entries.forEach(function(e) {
+            if (!e.isIntersecting) return;
+            anime.animate(e.target, {
+              opacity: [0, 1],
+              translateY: [30, 0],
+              scale: [0.96, 1],
+              duration: 950,
+              easing: 'spring(1, 65, 13, 0)',
+              onComplete: function() { e.target.classList.add('revealed'); }
+            });
+            io.unobserve(e.target);
+          });
+        }, { threshold: 0.07, rootMargin: '0px 0px -30px 0px' });
+        document.querySelectorAll('.gc').forEach(function(gc) {
+          gc.style.opacity = '0';
+          io.observe(gc);
+        });
+      }
+
+      /* ── B — Inclinaison selon vélocité scroll ── */
+      /* ── D — Parallax léger sur cartes révélées ── */
+      var lastSY = window.scrollY, scrollTimer = null;
+      var blocs = Array.prototype.slice.call(document.querySelectorAll('.bloc'));
+
+      window.addEventListener('scroll', function() {
+        if (PRM) return;
+        var vel = window.scrollY - lastSY;
+        lastSY = window.scrollY;
+        var tilt = Math.max(-2.2, Math.min(2.2, vel * 0.16));
+
+        /* B — tilt via CSS variable (transition CSS gère le spring retour) */
+        blocs.forEach(function(b) {
+          b.classList.add('tilting');
+          b.style.setProperty('--rx', tilt + 'deg');
+        });
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+          blocs.forEach(function(b) {
+            b.classList.remove('tilting');
+            b.style.setProperty('--rx', '0deg');
+          });
+        }, 90);
+
+        /* D — parallax sur cartes déjà révélées */
+        document.querySelectorAll('.gc.revealed').forEach(function(gc) {
+          var rect = gc.getBoundingClientRect();
+          var prog = (window.innerHeight * 0.5 - (rect.top + rect.height * 0.5)) / window.innerHeight;
+          gc.style.transform = 'translateY(' + (prog * 16).toFixed(1) + 'px)';
+        });
+      }, { passive: true });
+
+      /* ── E — Compteurs spring sur chiffres clés ── */
+      window._animateCounters = function(container) {
+        if (PRM) return;
+        container.querySelectorAll('.vn, .pk-n').forEach(function(el) {
+          var n = parseInt(el.textContent, 10);
+          if (isNaN(n) || n <= 0) return;
+          var obj = { v: 0 };
+          anime.animate(obj, {
+            v: n,
+            duration: 1000,
+            easing: 'spring(1, 75, 12, 5)',
+            onUpdate: function() { el.textContent = Math.round(obj.v); }
+          });
+        });
+      };
+
+      /* ── F — Onde d'impact après atterrissage d'un pin ── */
+      window._createMapRipple = function(markerEl, color) {
+        if (PRM) return;
+        var wrap = document.getElementById('fuel-map-wrap');
+        if (!wrap) return;
+        var wr = wrap.getBoundingClientRect();
+        var mr = markerEl.getBoundingClientRect();
+        var x = mr.left + mr.width / 2 - wr.left;
+        var y = mr.bottom - wr.top;
+        var d = document.createElement('div');
+        d.style.cssText = 'position:absolute;width:6px;height:6px;border-radius:50%;border:2.5px solid '
+          + color + ';left:' + x + 'px;top:' + y + 'px;transform:translate(-50%,-50%);pointer-events:none;z-index:200;';
+        wrap.appendChild(d);
+        anime.animate(d, {
+          width: [6, 72],
+          height: [6, 72],
+          opacity: [0.9, 0],
+          duration: 560,
+          easing: 'easeOutExpo',
+          onComplete: function() { d.parentNode && d.parentNode.removeChild(d); }
+        });
+      };
+
+    })();
   </script>
 </body>
 </html>
