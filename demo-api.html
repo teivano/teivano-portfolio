@@ -548,6 +548,25 @@
       </div>
     </section>
 
+    <!-- ══ BLOC 9 — Fiche Technique Moto ═════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">09 · Fiche Technique Moto</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l"><span class="ch-ico">🏍️</span>
+            <div><div class="ch-ttl">Caractéristiques techniques</div><div class="ch-sub">Marque · Modèle · API-Ninjas Motorcycles</div></div>
+          </div>
+        </div>
+        <div class="auto-form">
+          <input class="auto-in" id="moto-make"  type="text" placeholder="Marque (ex: Kawasaki)">
+          <input class="auto-in" id="moto-model" type="text" placeholder="Modèle (ex: Ninja)">
+          <input class="auto-in sm" id="moto-year" type="number" placeholder="Année" min="1950" max="2025">
+          <button class="auto-btn" id="moto-btn">Rechercher</button>
+        </div>
+        <div id="moto-results"></div>
+      </div>
+    </section>
+
     <!-- ══ BLOC 8 — Prix Carburants ═══════════════════════ -->
     <section class="bloc">
       <div class="bloc-hd">08 · Prix des Carburants</div>
@@ -575,7 +594,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.03</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.04</div>
     </footer>
 
   </div>
@@ -1110,6 +1129,92 @@
     }
 
     /* ═══════════════════════════════════════════════════
+       BLOC 09 — Fiche Technique Moto (API-Ninjas)
+    ═══════════════════════════════════════════════════ */
+    async function loadMoto() {
+      var make  = document.getElementById('moto-make').value.trim();
+      var model = document.getElementById('moto-model').value.trim();
+      var year  = document.getElementById('moto-year').value.trim();
+      var res   = document.getElementById('moto-results');
+      var btn   = document.getElementById('moto-btn');
+
+      if (!make && !model) {
+        res.innerHTML = '<div class="err">⚠ Saisissez au moins une marque ou un modèle.</div>';
+        return;
+      }
+
+      btn.disabled = true;
+      res.innerHTML = '<div class="spin">Recherche en cours…</div>';
+
+      try {
+        var qs = '?limit=10';
+        if (make)  qs += '&make='  + encodeURIComponent(make);
+        if (model) qs += '&model=' + encodeURIComponent(model);
+        if (year)  qs += '&year='  + encodeURIComponent(year);
+
+        var r = await fetch('/api/motorcycles' + qs);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var data = await r.json();
+
+        if (!Array.isArray(data) || !data.length) {
+          res.innerHTML = '<div class="err">Aucun résultat. Essayez en anglais (ex: Kawasaki / Ninja).</div>';
+          btn.disabled = false; return;
+        }
+
+        var m = data[0];
+
+        /* 6 specs primaires */
+        var html = [
+          '<div class="spec-grid">',
+            specCard('⚡', m.power        || '—', 'Puissance'),
+            specCard('🔩', m.engine       || '—', 'Moteur'),
+            specCard('📐', m.displacement || '—', 'Cylindrée'),
+            specCard('⚙️', m.gearbox      || '—', 'Boîte'),
+            specCard('⚖️', m.total_weight || '—', 'Poids total'),
+            specCard('🛢️', m.fuel_capacity|| '—', 'Réservoir'),
+          '</div>',
+        ];
+
+        /* Détails secondaires */
+        var details = [
+          ['Type',          m.type],
+          ['Refroidissement', m.cooling],
+          ['Transmission',  m.transmission],
+          ['Freins avant',  m.front_brakes],
+          ['Freins arrière',m.rear_brakes],
+          ['Hauteur selle', m.seat_height],
+          ['Empattement',   m.wheelbase],
+          ['Pneu avant',    m.front_tire],
+          ['Pneu arrière',  m.rear_tire],
+          ['Démarrage',     m.starter],
+        ].filter(function(row){ return row[1]; });
+
+        if (details.length) {
+          html.push('<div style="margin-top:1rem;display:grid;grid-template-columns:repeat(2,1fr);gap:.35rem .8rem;">');
+          details.forEach(function(row) {
+            html.push(
+              '<div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(0,0,0,.06);padding:.28rem 0;">',
+                '<span style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">' + row[0] + '</span>',
+                '<span style="font-size:.72rem;font-weight:500;text-align:right;max-width:55%">' + row[1] + '</span>',
+              '</div>'
+            );
+          });
+          html.push('</div>');
+        }
+
+        if (data.length > 1) {
+          var years = [...new Set(data.map(function(x){ return x.year; }))].sort();
+          html.push('<div class="spec-note">' + data.length + ' variantes · années : ' + years.join(', ') + ' · affiché : ' + (m.make || '') + ' ' + (m.model || '') + ' ' + (m.year || '') + '</div>');
+        }
+
+        res.innerHTML = html.join('');
+      } catch(e) {
+        res.innerHTML = '<div class="err">⚠ ' + e.message + '</div>';
+      }
+      btn.disabled = false;
+    }
+
+    /* ═══════════════════════════════════════════════════
        BLOC 08 — Prix Carburants (data.economie.gouv.fr)
     ═══════════════════════════════════════════════════ */
     var CARBU = 'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets'
@@ -1219,6 +1324,9 @@
 
     document.getElementById('car-btn').addEventListener('click', loadCars);
     document.getElementById('car-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCars(); });
+
+    document.getElementById('moto-btn').addEventListener('click', loadMoto);
+    document.getElementById('moto-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadMoto(); });
 
     document.getElementById('fuel-btn').addEventListener('click', loadCarburants);
     document.getElementById('fuel-city').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCarburants(); });
