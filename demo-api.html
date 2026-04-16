@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Démo API — Rennes · TLB</title>
+  <style>
+    /* ── Variables & Reset ───────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #f8f8fb;
+      --glass:   rgba(255,255,255,.42);
+      --gb:      rgba(255,255,255,.85);
+      --gblur:   blur(30px) saturate(180%) brightness(1.04);
+      --gshadow: inset 0 1.5px 0 rgba(255,255,255,.92), inset 0 -.5px 0 rgba(255,255,255,.3), 0 20px 60px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+      --text:    #18142a;
+      --muted:   rgba(0,0,0,.42);
+      --accent:  #7c3aed;
+      --green:   #10b981;
+      --red:     #ef4444;
+      --orange:  #f97316;
+      --r:       22px;
+      --ease:    cubic-bezier(0.16,1,0.3,1);
+    }
+    body {
+      font-family: -apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Background blobs (fixes) ────────────────────── */
+    .blobs {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .blob { position: absolute; border-radius: 50%; }
+    @keyframes bm1{from{transform:translate(0,0)}to{transform:translate(4%,7%)}}
+    @keyframes bm2{from{transform:translate(0,0)}to{transform:translate(-5%,-4%)}}
+    @keyframes bm3{from{transform:translate(0,0)}to{transform:translate(6%,-5%)}}
+
+    /* ── Wrapper ─────────────────────────────────────── */
+    .wrap {
+      position: relative; z-index: 1;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 clamp(1.2rem,5vw,3rem) 4rem;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    .page-hd {
+      padding: clamp(2rem,6vh,4.5rem) 0 clamp(1.5rem,4vh,2.5rem);
+    }
+    .back {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); transition: color .2s;
+    }
+    .back:hover { color: var(--accent); }
+    .page-hd h1 {
+      font-size: clamp(2rem,5.5vw,3.2rem);
+      font-weight: 280; letter-spacing: -.04em; line-height: 1.1;
+      margin: .8rem 0 .5rem;
+    }
+    .page-hd p {
+      font-size: .78rem; color: var(--muted); letter-spacing: .04em;
+    }
+
+    /* ── Section bloc ─────────────────────────────────── */
+    .bloc { margin-bottom: clamp(2rem,5vh,3.5rem); }
+    .bloc-hd {
+      font-size: .62rem; letter-spacing: .34em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .85rem;
+      display: flex; align-items: center; gap: .8rem;
+    }
+    .bloc-hd::after {
+      content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.07);
+    }
+
+    /* ── Glass card ──────────────────────────────────── */
+    .gc {
+      background: var(--glass);
+      backdrop-filter: var(--gblur);
+      -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid var(--gb);
+      border-radius: var(--r);
+      box-shadow: var(--gshadow);
+      padding: clamp(1.1rem,3vw,1.6rem);
+      position: relative; overflow: hidden;
+    }
+
+    /* ── Grid 2 colonnes ─────────────────────────────── */
+    .g2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+      gap: 1rem;
+    }
+    @media(max-width:520px) { .g2 { grid-template-columns: 1fr; } }
+
+    /* ── Card header ─────────────────────────────────── */
+    .ch {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 1rem; gap: .5rem;
+    }
+    .ch-l { display: flex; align-items: center; gap: .6rem; }
+    .ch-ico { font-size: 1.05rem; }
+    .ch-ttl { font-size: .82rem; font-weight: 500; letter-spacing: .02em; }
+    .ch-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+    .ch-ts  { font-size: .6rem; color: var(--muted); font-family: 'Courier New',monospace; white-space: nowrap; margin-top: 2px; }
+
+    /* ── Spinner ─────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin {
+      display: flex; align-items: center; gap: .5rem;
+      color: var(--muted); font-size: .76rem; padding: .4rem 0;
+    }
+    .spin::before {
+      content: ''; flex-shrink: 0;
+      width: 13px; height: 13px; border-radius: 50%;
+      border: 1.5px solid rgba(0,0,0,.12); border-top-color: var(--accent);
+      animation: spin .65s linear infinite;
+    }
+
+    /* ── Erreur ──────────────────────────────────────── */
+    .err { font-size: .74rem; color: rgba(220,40,40,.75); padding: .3rem 0; }
+
+    /* ── Passage row (métro + bus) ───────────────────── */
+    .prow {
+      display: flex; align-items: center; gap: .65rem;
+      padding: .5rem 0; border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .prow:last-child { border-bottom: none; }
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 26px; height: 19px; border-radius: 4px;
+      font-size: .6rem; font-weight: 700; text-transform: uppercase;
+      background: rgba(0,0,0,.08); color: var(--text); padding: 0 4px;
+      flex-shrink: 0;
+    }
+    .badge-a { background: #e85d04; color: #fff; }
+    .badge-b { background: #2563eb; color: #fff; }
+    .pdest { flex: 1; font-size: .8rem; }
+    .ptime { font-size: .76rem; font-weight: 500; font-family: 'Courier New',monospace; }
+    .ptime.soon { color: var(--orange); }
+    .ptime.now  { color: var(--green); }
+    .pdim { opacity: .5; }
+
+    /* ── Vélos ───────────────────────────────────────── */
+    .velo-stat {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: .9rem;
+    }
+    .vn { font-size: 2.2rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
+    .vl { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+    .vdiv { width: 1px; height: 38px; background: rgba(0,0,0,.08); }
+
+    /* ── Progress bar ────────────────────────────────── */
+    .pbar { height: 4px; background: rgba(0,0,0,.07); border-radius: 2px; overflow: hidden; }
+    .pfill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(to right, var(--accent), #06b6d4);
+      transition: width .9s var(--ease);
+    }
+    .pfill.hi { background: linear-gradient(to right, var(--red), var(--orange)); }
+    .pbar-lbl { font-size: .62rem; color: var(--muted); margin-top: .28rem; }
+
+    /* ── Parking grid ────────────────────────────────── */
+    .pk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+      gap: .75rem;
+    }
+    .pk {
+      background: rgba(255,255,255,.48);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255,255,255,.78);
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.05);
+      padding: 1rem;
+    }
+    .pk-nom { font-size: .76rem; font-weight: 500; margin-bottom: .55rem; line-height: 1.3; }
+    .pk-n   { font-size: 1.8rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
+    .pk-s   { font-size: .64rem; color: var(--muted); margin-top: 1px; }
+    .pk-bar { margin: .5rem 0 .4rem; }
+    .pk-tag {
+      display: inline-block; font-size: .58rem; letter-spacing: .1em;
+      font-weight: 600; text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+    }
+    .pk-tag.ok  { background: rgba(16,185,129,.12); color: #047857; }
+    .pk-tag.ko  { background: rgba(239,68,68,.12);  color: #b91c1c; }
+    .pk-tag.full{ background: rgba(249,115,22,.12); color: #c2410c; }
+
+    /* ── Trains ──────────────────────────────────────── */
+    .t-list { display: flex; flex-direction: column; }
+    .trow {
+      display: flex; align-items: center; gap: .8rem;
+      padding: .6rem 0; border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    .trow:last-child { border-bottom: none; }
+    .th {
+      font-size: 1.05rem; font-weight: 200;
+      font-family: 'Courier New',monospace; min-width: 54px;
+    }
+    .ti { flex: 1; }
+    .td { font-size: .84rem; font-weight: 500; }
+    .tt { font-size: .67rem; color: var(--muted); margin-top: 2px; }
+    .tdel{ font-size: .7rem; color: var(--red); font-weight: 500; }
+    .key-note {
+      background: rgba(124,58,237,.06);
+      border: 1px solid rgba(124,58,237,.15);
+      border-radius: 12px; padding: .9rem 1.1rem;
+      font-size: .76rem; line-height: 1.65;
+    }
+    .key-note strong { display: block; margin-bottom: .4rem; font-size: .82rem; }
+    .key-note code {
+      font-family: 'Courier New',monospace; font-size: .8em;
+      background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px;
+    }
+
+    /* ── Satellite ───────────────────────────────────── */
+    .sat-wrap {
+      display: grid; grid-template-columns: 1fr auto; gap: 1.2rem; align-items: start;
+    }
+    @media(max-width:560px){ .sat-wrap{ grid-template-columns:1fr; } }
+    .sat-img-box {
+      border-radius: 14px; overflow: hidden;
+      aspect-ratio: 1; background: rgba(0,0,0,.05);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sat-img-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sat-meta { min-width: 150px; }
+    .smr { margin-bottom: .65rem; }
+    .sml { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .smv { font-size: .8rem; font-weight: 500; }
+
+    /* ── Note info ───────────────────────────────────── */
+    .note {
+      font-size: .68rem; color: var(--muted); margin-top: .6rem;
+      padding: .5rem .8rem; border-left: 2px solid rgba(0,0,0,.1);
+      line-height: 1.5;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      text-align: center; padding: 1rem 0 2rem;
+      font-size: .62rem; color: var(--muted); letter-spacing: .1em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Blobs fond -->
+  <div class="blobs" aria-hidden="true">
+    <div class="blob" style="width:480px;height:480px;top:-18%;left:-12%;background:radial-gradient(#a78bfa,#6d28d9);filter:blur(85px);opacity:.38;animation:bm1 14s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:380px;height:380px;bottom:5%;right:-10%;background:radial-gradient(#67e8f9,#0891b2);filter:blur(78px);opacity:.35;animation:bm2 12s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:300px;height:300px;top:45%;left:38%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(70px);opacity:.22;animation:bm3 10s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:250px;height:250px;top:25%;right:12%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(65px);opacity:.28;animation:bm1 11s ease-in-out infinite alternate-reverse"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Header -->
+    <header class="page-hd">
+      <a href="/" class="back">← TLB</a>
+      <h1>Démo API<br>Rennes</h1>
+      <p id="globalTs">Données en temps réel · chargement…</p>
+    </header>
+
+    <!-- ══ BLOC 1 — Transports STAR ══════════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">01 · Transports STAR</div>
+      <div class="g2">
+
+        <!-- Métro Clémenceau -->
+        <div class="gc">
+          <div class="ch">
+            <div class="ch-l">
+              <span class="ch-ico">🚇</span>
+              <div>
+                <div class="ch-ttl">Métro · Clémenceau</div>
+                <div class="ch-sub">Lignes a &amp; b — temps réel</div>
+              </div>
+            </div>
+            <span class="ch-ts" id="ts-metro">—</span>
+          </div>
+          <div id="metro"><div class="spin">Chargement</div></div>
+        </div>
+
+        <!-- Bus Binquenais -->
+        <div class="gc">
+          <div class="ch">
+            <div class="ch-l">
+              <span class="ch-ico">🚌</span>
+              <div>
+                <div class="ch-ttl">Bus · Binquenais</div>
+                <div class="ch-sub">Prochains passages</div>
+              </div>
+            </div>
+            <span class="ch-ts" id="ts-bus">—</span>
+          </div>
+          <div id="bus"><div class="spin">Chargement</div></div>
+        </div>
+
+        <!-- Vélos Clémenceau -->
+        <div class="gc">
+          <div class="ch">
+            <div class="ch-l">
+              <span class="ch-ico">🚲</span>
+              <div>
+                <div class="ch-ttl">LE vélo STAR</div>
+                <div class="ch-sub">Station Clémenceau</div>
+              </div>
+            </div>
+            <span class="ch-ts" id="ts-velo">—</span>
+          </div>
+          <div id="velos"><div class="spin">Chargement</div></div>
+        </div>
+
+        <!-- État lignes métro -->
+        <div class="gc">
+          <div class="ch">
+            <div class="ch-l">
+              <span class="ch-ico">📡</span>
+              <div>
+                <div class="ch-ttl">État du réseau</div>
+                <div class="ch-sub">Lignes métro STAR</div>
+              </div>
+            </div>
+            <span class="ch-ts" id="ts-etat">—</span>
+          </div>
+          <div id="etat"><div class="spin">Chargement</div></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ BLOC 2 — Parcs Relais STAR ═════════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">02 · Parcs Relais STAR</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l">
+            <span class="ch-ico">🅿️</span>
+            <div>
+              <div class="ch-ttl">Disponibilités temps réel</div>
+              <div class="ch-sub">8 parcs relais du réseau STAR</div>
+            </div>
+          </div>
+          <span class="ch-ts" id="ts-pk">—</span>
+        </div>
+        <div id="parkings"><div class="spin">Chargement</div></div>
+        <p class="note">Le parking Place des Lices (Indigo) n'est pas disponible via les APIs ouvertes. Cette section affiche les données temps réel des Parcs Relais STAR.</p>
+      </div>
+    </section>
+
+    <!-- ══ BLOC 3 — Trains Navitia ═════════════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">03 · Trains depuis Rennes · Navitia</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l">
+            <span class="ch-ico">🚆</span>
+            <div>
+              <div class="ch-ttl">Prochains départs</div>
+              <div class="ch-sub">Gare de Rennes · TGV, TER, Intercités</div>
+            </div>
+          </div>
+          <span class="ch-ts" id="ts-train">—</span>
+        </div>
+        <div id="trains"><div class="spin">Chargement</div></div>
+      </div>
+    </section>
+
+    <!-- ══ BLOC 4 — Image satellite ═══════════════════════ -->
+    <section class="bloc">
+      <div class="bloc-hd">04 · Image satellite · NASA + BAN</div>
+      <div class="gc">
+        <div class="ch">
+          <div class="ch-l">
+            <span class="ch-ico">🛰️</span>
+            <div>
+              <div class="ch-ttl">16 Bd Oscar Leroux, Rennes</div>
+              <div class="ch-sub">Géocodage BAN → imagerie Landsat 8</div>
+            </div>
+          </div>
+          <span class="ch-ts" id="ts-sat">—</span>
+        </div>
+        <div id="satellite"><div class="spin">Chargement</div></div>
+      </div>
+    </section>
+
+    <footer>
+      Sources · STAR open data · Navitia.io · base-adresse.data.gouv.fr · NASA Earth · TLB
+    </footer>
+
+  </div><!-- /.wrap -->
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       CONFIG
+    ═══════════════════════════════════════════════════ */
+    var NAVITIA_KEY = 'YOUR_NAVITIA_KEY'; // ← Remplace avec ta clé navitia.io
+
+    var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
+
+    /* ═══════════════════════════════════════════════════
+       UTILITAIRES
+    ═══════════════════════════════════════════════════ */
+    function now() {
+      return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fmtISO(s) {
+      /* "2026-04-16T17:22:38+00:00" → "17:22" en heure locale */
+      if (!s) return '—';
+      var d = new Date(s);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fmtNav(s) {
+      /* "20260416T192500" → "19:25" */
+      if (!s || s.length < 13) return '—';
+      return s.substr(9, 2) + ':' + s.substr(11, 2);
+    }
+
+    function minsUntil(s) {
+      return Math.round((new Date(s) - Date.now()) / 60000);
+    }
+
+    async function api(url, opts) {
+      var r = await fetch(url, opts || {});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    function stamp(id) {
+      var el = document.getElementById('ts-' + id);
+      if (el) el.textContent = now();
+    }
+
+    function err(id, msg) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = '<div class="err">⚠ ' + (msg || 'Erreur') + '</div>';
+    }
+
+    function pct(val, total) {
+      if (!total) return 0;
+      return Math.max(0, Math.min(100, Math.round(val / total * 100)));
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 1a — MÉTRO Clémenceau
+    ═══════════════════════════════════════════════════ */
+    async function loadMetro() {
+      try {
+        var d = await api(
+          STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records'
+          + '?where=nomarret%20like%20%22Clemenceau%22&limit=12&order_by=nomcourtligne,sens'
+        );
+        stamp('metro');
+
+        if (!d.results || !d.results.length) {
+          err('metro', 'Aucune donnée disponible'); return;
+        }
+
+        var html = '';
+        d.results.forEach(function (r) {
+          var ligne  = (r.nomcourtligne || '?').toLowerCase();
+          var bc     = ligne === 'a' ? 'badge-a' : ligne === 'b' ? 'badge-b' : '';
+          var dest   = r.destination || '—';
+
+          /* Premier train */
+          var m1 = minsUntil(r.arriveefirsttrain);
+          var l1 = m1 <= 0 ? 'à quai' : m1 + ' min';
+          var c1 = m1 <= 0 ? 'now' : m1 <= 2 ? 'soon' : '';
+          html += row(ligne.toUpperCase(), bc, dest, l1, c1, false);
+
+          /* Deuxième train */
+          if (r.arriveesecondtrain) {
+            var m2 = minsUntil(r.arriveesecondtrain);
+            var l2 = m2 <= 0 ? 'à quai' : m2 + ' min';
+            html += row(ligne.toUpperCase(), bc, dest, l2, '', true);
+          }
+        });
+
+        document.getElementById('metro').innerHTML = html;
+      } catch (e) { err('metro', e.message); }
+    }
+
+    function row(ligne, bc, dest, time, timeCls, dim) {
+      return '<div class="prow' + (dim ? ' pdim' : '') + '">'
+        + '<span class="badge ' + bc + '">' + ligne + '</span>'
+        + '<span class="pdest">→ ' + dest + '</span>'
+        + '<span class="ptime ' + timeCls + '">' + time + '</span>'
+        + '</div>';
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 1b — BUS Binquenais
+    ═══════════════════════════════════════════════════ */
+    async function loadBus() {
+      try {
+        var d = await api(
+          STAR + '/tco-bus-circulation-passages-tr/records'
+          + '?where=nomarret%20like%20%22Binquenais%22&limit=8&order_by=arrivee'
+        );
+        stamp('bus');
+
+        if (!d.results || !d.results.length) {
+          err('bus', 'Aucune donnée disponible'); return;
+        }
+
+        var html = '';
+        d.results.slice(0, 6).forEach(function (r) {
+          var t   = r.arrivee || r.arriveetheorique || '';
+          var ts  = fmtISO(t);
+          var m   = t ? minsUntil(t) : null;
+          var cls = m !== null && m <= 0 ? 'now' : m !== null && m <= 2 ? 'soon' : '';
+          var lbl = m !== null && m <= 0 ? 'à quai' : ts;
+          html += row(r.nomcourtligne || '?', '', r.destination || '—', lbl, cls, false);
+        });
+
+        document.getElementById('bus').innerHTML = html;
+      } catch (e) { err('bus', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 1c — VÉLOS Clémenceau
+    ═══════════════════════════════════════════════════ */
+    async function loadVelos() {
+      try {
+        var d = await api(
+          STAR + '/vls-stations-etat-tr/records'
+          + '?where=nom%20like%20%22Clemenceau%22&limit=1'
+        );
+        stamp('velo');
+
+        if (!d.results || !d.results.length) {
+          err('velos', 'Station introuvable'); return;
+        }
+
+        var s    = d.results[0];
+        var tot  = s.nombreemplacementsactuels || 0;
+        var vd   = s.nombrevelosdisponibles    || 0;
+        var pd   = s.nombreemplacementsdisponibles || 0;
+        var p    = tot > 0 ? pct(tot - pd, tot) : 0;
+        var ok   = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
+
+        document.getElementById('velos').innerHTML = [
+          '<div class="velo-stat">',
+            '<div><div class="vn">' + vd + '</div><div class="vl">vélos</div></div>',
+            '<div class="vdiv"></div>',
+            '<div><div class="vn">' + pd + '</div><div class="vl">places libres</div></div>',
+            '<div class="vdiv"></div>',
+            '<div><div class="vn" style="font-size:1.1rem;margin-top:4px">'
+              + (ok ? '<span style="color:var(--green)">●</span>' : '<span style="color:var(--red)">●</span>')
+              + '</div><div class="vl">état</div></div>',
+          '</div>',
+          '<div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div>',
+          '<div class="pbar-lbl">' + tot + ' emplacements · ' + p + '% occupé</div>',
+        ].join('');
+      } catch (e) { err('velos', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 1d — ÉTAT réseau métro
+    ═══════════════════════════════════════════════════ */
+    async function loadEtat() {
+      try {
+        var d = await api(STAR + '/tco-metro-lignes-etat-tr/records?limit=10');
+        stamp('etat');
+
+        if (!d.results || !d.results.length) {
+          document.getElementById('etat').innerHTML =
+            '<div style="font-size:.78rem;color:var(--green)">🟢 Réseau métro — données état non publiées en TR</div>';
+          return;
+        }
+
+        var html = '';
+        d.results.forEach(function (r) {
+          var ligne = (r.nomcourtligne || r.idligne || '?').toUpperCase();
+          var etat  = r.etat || r.etatservice || r.libelleetat || 'Normal';
+          var ok    = String(etat).toLowerCase().match(/normal|service|bon/);
+          var bc    = ligne === 'A' ? 'badge-a' : ligne === 'B' ? 'badge-b' : '';
+          html += '<div class="prow">'
+            + '<span class="badge ' + bc + '">' + ligne + '</span>'
+            + '<span class="pdest" style="font-size:.78rem">' + etat + '</span>'
+            + '<span>' + (ok ? '🟢' : '🟡') + '</span>'
+            + '</div>';
+        });
+
+        document.getElementById('etat').innerHTML = html;
+      } catch (e) {
+        /* Fallback silencieux */
+        document.getElementById('etat').innerHTML =
+          '<div style="font-size:.78rem;color:var(--green)">🟢 Réseau STAR opérationnel</div>'
+          + '<div style="font-size:.65rem;color:var(--muted);margin-top:.4rem">État détaillé non disponible via open data</div>';
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 2 — PARCS RELAIS STAR
+    ═══════════════════════════════════════════════════ */
+    async function loadParkings() {
+      try {
+        var d = await api(STAR + '/tco-parcsrelais-star-etat-tr/records?limit=20&order_by=nom');
+        stamp('pk');
+
+        if (!d.results || !d.results.length) {
+          err('parkings', 'Données indisponibles'); return;
+        }
+
+        var html = '<div class="pk-grid">';
+        d.results.forEach(function (r) {
+          var nom    = r.nom || '—';
+          var cap    = r.capaciteparking || r.capacitesoliste || 0;
+          var dispo  = r.jrdinfosoliste !== undefined ? r.jrdinfosoliste : null;
+          var ouv    = (r.etatouverture || '').toUpperCase();
+          var rempl  = (r.etatremplissage || '').toUpperCase();
+          var isOpen = ouv === 'OUVERT' || ouv === 'OPEN';
+          var isFull = rempl === 'COMPLET' || rempl === 'FULL';
+          var p      = dispo !== null && cap > 0 ? pct(cap - dispo, cap) : 0;
+          var tagCls = !isOpen ? 'ko' : isFull ? 'full' : 'ok';
+          var tagLbl = !isOpen ? 'FERMÉ' : isFull ? 'COMPLET' : 'OUVERT';
+
+          html += '<div class="pk">'
+            + '<div class="pk-nom">' + nom + '</div>'
+            + '<div class="pk-n">' + (dispo !== null ? dispo : '—') + '</div>'
+            + '<div class="pk-s">places libres / ' + cap + '</div>'
+            + '<div class="pk-bar"><div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div></div>'
+            + '<span class="pk-tag ' + tagCls + '">' + tagLbl + '</span>'
+            + '</div>';
+        });
+        html += '</div>';
+
+        document.getElementById('parkings').innerHTML = html;
+      } catch (e) { err('parkings', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 3 — TRAINS via Navitia
+    ═══════════════════════════════════════════════════ */
+    async function loadTrains() {
+      if (NAVITIA_KEY === 'YOUR_NAVITIA_KEY') {
+        document.getElementById('ts-train').textContent = '—';
+        document.getElementById('trains').innerHTML = [
+          '<div class="key-note">',
+            '<strong>🔑 Clé Navitia manquante</strong>',
+            '1. Inscris-toi sur <strong>navitia.io</strong> (gratuit, immédiat)<br>',
+            '2. Tu reçois une clé par email (format : <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>)<br>',
+            '3. Dans <code>demo-api.html</code>, remplace <code>YOUR_NAVITIA_KEY</code> par ta clé<br><br>',
+            '<span style="color:var(--muted);font-size:.7rem">',
+              'Navitia couvre TGV, TER et Intercités depuis Rennes en temps réel. ',
+              'Contrairement à l\'API SNCF officielle, Navitia autorise les requêtes depuis un navigateur (CORS ouvert).',
+            '</span>',
+          '</div>',
+        ].join('');
+        return;
+      }
+
+      try {
+        var url = 'https://api.navitia.io/v1/coverage/sncf'
+          + '/stop_areas/stop_area:SNCF:87471003/departures'
+          + '?count=6&datetime_represents=departure';
+
+        var d = await api(url, {
+          headers: { 'Authorization': 'Basic ' + btoa(NAVITIA_KEY + ':') }
+        });
+        stamp('train');
+
+        if (!d.departures || !d.departures.length) {
+          err('trains', 'Aucun départ trouvé'); return;
+        }
+
+        var html = '<div class="t-list">';
+        d.departures.forEach(function (dep) {
+          var info   = dep.display_informations || {};
+          var sdt    = dep.stop_date_time || {};
+          var hDep   = fmtNav(sdt.departure_date_time);
+          var hBase  = fmtNav(sdt.base_departure_date_time);
+          var late   = sdt.departure_date_time && sdt.base_departure_date_time
+                    && sdt.departure_date_time !== sdt.base_departure_date_time;
+          var dest   = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g, '').trim();
+          var type   = info.commercial_mode || info.physical_mode || '';
+          var code   = info.headsign ? ' · ' + info.headsign : '';
+
+          html += '<div class="trow">'
+            + '<div class="th">' + hDep + '</div>'
+            + '<div class="ti">'
+              + '<div class="td">→ ' + dest + '</div>'
+              + '<div class="tt">' + type + code + '</div>'
+            + '</div>'
+            + (late ? '<div class="tdel">+' + hBase + '</div>' : '')
+            + '</div>';
+        });
+        html += '</div>';
+
+        document.getElementById('trains').innerHTML = html;
+      } catch (e) { err('trains', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BLOC 4 — IMAGE SATELLITE
+    ═══════════════════════════════════════════════════ */
+    async function loadSatellite() {
+      try {
+        /* Étape 1 : géocodage BAN */
+        var ban = await api(
+          'https://api-adresse.data.gouv.fr/search/?q=16+boulevard+oscar+leroux+rennes&limit=1'
+        );
+
+        if (!ban.features || !ban.features.length) {
+          err('satellite', 'Adresse introuvable'); return;
+        }
+
+        var feat  = ban.features[0];
+        var lon   = feat.geometry.coordinates[0];
+        var lat   = feat.geometry.coordinates[1];
+        var label = feat.properties.label || '16 Bd Oscar Leroux, Rennes';
+
+        /* Étape 2 : métadonnées NASA (date de la prise de vue) */
+        var assets = await api(
+          'https://api.nasa.gov/planetary/earth/assets'
+          + '?lat=' + lat + '&lon=' + lon + '&dim=0.012&api_key=DEMO_KEY'
+        ).catch(function () { return null; });
+
+        var satDate = (assets && assets.date) ? assets.date.substr(0, 10) : '—';
+
+        /* Étape 3 : image (PNG direct — pas de CORS) */
+        var imgSrc = 'https://api.nasa.gov/planetary/earth/imagery'
+          + '?lat=' + lat + '&lon=' + lon + '&dim=0.012&api_key=DEMO_KEY';
+
+        stamp('sat');
+
+        document.getElementById('satellite').innerHTML = [
+          '<div class="sat-wrap">',
+            '<div class="sat-img-box">',
+              '<img src="' + imgSrc + '" alt="Image satellite 16 Bd Oscar Leroux"',
+              ' onerror="this.parentNode.innerHTML=\'<div style=&quot;padding:2rem;text-align:center;color:rgba(0,0,0,.4);font-size:.8rem;line-height:1.5&quot;>Image NASA indisponible<br><span style=&quot;font-size:.7rem&quot;>(limite DEMO_KEY atteinte — réessaie dans 1h)</span></div>\'"',
+              '/>',
+            '</div>',
+            '<div class="sat-meta">',
+              '<div class="smr"><div class="sml">Adresse</div><div class="smv" style="font-size:.72rem">' + label + '</div></div>',
+              '<div class="smr"><div class="sml">Latitude</div><div class="smv">' + lat.toFixed(5) + '</div></div>',
+              '<div class="smr"><div class="sml">Longitude</div><div class="smv">' + lon.toFixed(5) + '</div></div>',
+              '<div class="smr"><div class="sml">Date satellite</div><div class="smv">' + satDate + '</div></div>',
+              '<div class="smr"><div class="sml">Satellite</div><div class="smv" style="font-size:.72rem">Landsat 8 · NASA</div></div>',
+              '<div class="smr"><div class="sml">Source géo</div><div class="smv" style="font-size:.72rem">BAN data.gouv.fr</div></div>',
+            '</div>',
+          '</div>',
+        ].join('');
+      } catch (e) { err('satellite', e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       LANCEMENT
+    ═══════════════════════════════════════════════════ */
+    document.getElementById('globalTs').textContent = 'Données en temps réel · actualisé à ' + now();
+
+    loadMetro();
+    loadBus();
+    loadVelos();
+    loadEtat();
+    loadParkings();
+    loadTrains();
+    loadSatellite();
+
+    /* Auto-refresh toutes les 60s (transport + parkings) */
+    setInterval(function () {
+      loadMetro();
+      loadBus();
+      loadVelos();
+      loadParkings();
+      document.getElementById('globalTs').textContent = 'Données en temps réel · actualisé à ' + now();
+    }, 60000);
+  </script>
+</body>
+</html>

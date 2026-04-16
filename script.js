@@ -17,6 +17,30 @@
   var isMobile = window.matchMedia('(pointer: coarse)').matches;
 
 
+  /* ═══ HAMBURGER ══════════════════════════════════════════ */
+  var hamBtn     = document.getElementById('hamBtn');
+  var hamMenu    = document.getElementById('hamMenu');
+  var hamOverlay = document.getElementById('hamOverlay');
+
+  function openHam()  {
+    document.body.classList.add('ham-open');
+    hamBtn.setAttribute('aria-expanded','true');
+    hamMenu.setAttribute('aria-hidden','false');
+  }
+  function closeHam() {
+    document.body.classList.remove('ham-open');
+    hamBtn.setAttribute('aria-expanded','false');
+    hamMenu.setAttribute('aria-hidden','true');
+  }
+
+  if (hamBtn) hamBtn.addEventListener('click', function () {
+    document.body.classList.contains('ham-open') ? closeHam() : openHam();
+  });
+  if (hamOverlay) hamOverlay.addEventListener('click', closeHam);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeHam();
+  });
+
   /* ═══ DOM ════════════════════════════════════════════════ */
   var slides     = document.getElementById('slides');
   var dotBtns    = document.querySelectorAll('.dot');

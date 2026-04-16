@@ -535,7 +535,74 @@ body.hov .cur-dot  { background:#8b5cf6;width:7px;height:7px; }
   .gyro-btn    { font-size:.72rem;padding:.45rem 1.1rem; }
 }
 
-/* Accessibilité */
+/* ═══════════════════════════════════════════════════════════
+   HAMBURGER MENU
+═══════════════════════════════════════════════════════════ */
+.ham-btn {
+  position:fixed;top:clamp(1.4rem,4vh,2.2rem);left:clamp(1.2rem,3vw,2.2rem);
+  z-index:500;
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(160,160,180,.12);
+  backdrop-filter:blur(20px) saturate(150%);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);
+  border:1px solid rgba(255,255,255,.3);
+  box-shadow:0 4px 16px rgba(0,0,0,.06);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  cursor:pointer;padding:0;
+  transition:background .2s,box-shadow .2s;
+}
+.ham-btn:hover { background:rgba(160,160,180,.2);box-shadow:0 6px 20px rgba(0,0,0,.1); }
+.hl {
+  width:16px;height:1.5px;border-radius:1px;
+  background:rgba(0,0,0,.65);
+  transition:transform .3s var(--ease),opacity .2s,width .3s;
+}
+body.dark-cur .hl { background:rgba(255,255,255,.75); }
+
+/* Croix quand ouvert */
+body.ham-open .hl:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+body.ham-open .hl:nth-child(2) { opacity:0;width:0; }
+body.ham-open .hl:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+
+/* Menu déroulant */
+.ham-menu {
+  position:fixed;top:0;left:0;z-index:490;
+  width:min(240px,80vw);padding:5rem 1.2rem 1.5rem;
+  background:rgba(255,255,255,.55);
+  backdrop-filter:blur(36px) saturate(180%);
+  -webkit-backdrop-filter:blur(36px) saturate(180%);
+  border-right:1px solid rgba(255,255,255,.7);
+  border-bottom:1px solid rgba(255,255,255,.6);
+  border-bottom-right-radius:24px;
+  box-shadow:4px 0 40px rgba(0,0,0,.06),0 20px 60px rgba(0,0,0,.08);
+  transform:translateX(-105%);
+  transition:transform .5s var(--ease);
+  pointer-events:none;
+}
+body.ham-open .ham-menu { transform:none;pointer-events:auto; }
+
+/* Overlay (fermeture au clic dehors) */
+.ham-overlay {
+  position:fixed;inset:0;z-index:480;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+body.ham-open .ham-overlay { opacity:1;pointer-events:auto; }
+
+/* Liens du menu */
+.ham-link {
+  display:flex;align-items:center;gap:.7rem;
+  padding:.7rem .9rem;border-radius:12px;
+  font-size:.84rem;font-weight:500;letter-spacing:.02em;
+  color:rgba(0,0,0,.75);
+  text-decoration:none;
+  transition:background .18s,color .18s;
+}
+.ham-link:hover { background:rgba(124,58,237,.08);color:#6d28d9; }
+.ham-link-icon { font-size:1rem;opacity:.75; }
+
+/* ═══════════════════════════════════════════════════════════
+   ACCESSIBILITÉ */
 @media (prefers-reduced-motion:reduce) {
   .slides { transition-duration:.01ms !important; }
   *, *::before, *::after {
