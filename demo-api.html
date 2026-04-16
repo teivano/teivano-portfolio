@@ -685,7 +685,7 @@
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
-      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.10</div>
+      <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.16</div>
     </footer>
 
   </div>
@@ -1379,16 +1379,12 @@
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
 
-        if (!fuelMap) {
-          fuelMap = L.map('fuel-map').setView(cityCenter, 13);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap', maxZoom: 18
-          }).addTo(fuelMap);
-        } else {
-          fuelMap.eachLayer(function(l){ if (l instanceof L.Marker) fuelMap.removeLayer(l); });
-          fuelMap.setView(cityCenter, 13);
-        }
-        fuelMap.invalidateSize();
+        /* Détruire l'instance existante — garantit un setView propre */
+        if (fuelMap) { fuelMap.remove(); fuelMap = null; }
+        fuelMap = L.map('fuel-map').setView(cityCenter, 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap', maxZoom: 18
+        }).addTo(fuelMap);
 
         /* ── Marqueurs — bonus si l'API fournit des coords ── */
         var bounds = [];
