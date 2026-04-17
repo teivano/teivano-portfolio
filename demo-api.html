@@ -9,14 +9,20 @@
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/animejs/dist/bundles/anime.umd.min.js"></script>
   <style>
-    /* ── Variables & Reset ───────────────────────────── */
+    @property --iri-angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 120deg;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:      #f8f8fb;
-      --glass:   rgba(255,255,255,.42);
-      --gb:      rgba(255,255,255,.85);
-      --gblur:   blur(30px) saturate(180%) brightness(1.04);
-      --gshadow: inset 0 1.5px 0 rgba(255,255,255,.92), inset 0 -.5px 0 rgba(255,255,255,.3), 0 20px 60px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+      --bg:      #f0f0f8;
+      --glass:   rgba(255,255,255,.38);
+      --gb:      rgba(255,255,255,.82);
+      --gblur:   blur(32px) saturate(190%) brightness(1.06);
+      --gshadow: inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -.5px 0 rgba(255,255,255,.3),
+                 0 24px 64px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
       --text:    #18142a;
       --muted:   rgba(0,0,0,.42);
       --accent:  #7c3aed;
@@ -33,21 +39,21 @@
     }
     a { color: inherit; text-decoration: none; }
 
-    /* ── Background blobs ────────────────────────────── */
+    /* ── Background blobs ── */
     .blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .blob  { position: absolute; border-radius: 50%; }
     @keyframes bm1{from{transform:translate(0,0)}to{transform:translate(4%,7%)}}
     @keyframes bm2{from{transform:translate(0,0)}to{transform:translate(-5%,-4%)}}
     @keyframes bm3{from{transform:translate(0,0)}to{transform:translate(6%,-5%)}}
 
-    /* ── Wrapper ─────────────────────────────────────── */
+    /* ── Wrapper ── */
     .wrap {
       position: relative; z-index: 1;
       max-width: 920px; margin: 0 auto;
       padding: 0 clamp(1.2rem,5vw,3rem) 4rem;
     }
 
-    /* ── Header ──────────────────────────────────────── */
+    /* ── Header ── */
     .page-hd { padding: clamp(2rem,6vh,4.5rem) 0 clamp(1.5rem,4vh,2.5rem); }
     .back {
       display: inline-flex; align-items: center; gap: .4rem;
@@ -61,7 +67,7 @@
       margin: .8rem 0 1rem;
     }
 
-    /* ── Refresh time display ─────────────────────────── */
+    /* ── Refresh clock ── */
     .refresh-block {
       display: inline-flex; align-items: center; gap: 1.1rem;
       background: var(--glass);
@@ -74,14 +80,9 @@
     .rt-colon { animation: colonBlink 1s step-start infinite; margin: 0 1px; }
     @keyframes colonBlink { 0%,100%{opacity:1} 50%{opacity:.15} }
 
-    /* ── Section bloc ─────────────────────────────────── */
-    .bloc {
-      margin-bottom: clamp(2rem,5vh,3.5rem);
-      transform: perspective(1400px) rotateX(var(--rx, 0deg));
-      transition: transform 0.72s cubic-bezier(0.34, 1.56, 0.64, 1);
-      will-change: transform;
-    }
-    .bloc.tilting { transition: transform 0.05s linear; }
+    /* ── Section bloc ── */
+    .bloc { margin-bottom: clamp(2rem,5vh,3.5rem); }
+
     .bloc-hd {
       font-size: .62rem; letter-spacing: .34em; text-transform: uppercase;
       color: var(--muted); margin-bottom: .85rem;
@@ -89,20 +90,66 @@
     }
     .bloc-hd::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.07); }
 
-    /* ── Glass card ──────────────────────────────────── */
+    /* ── Glass card — Liquid Glass ── */
     .gc {
       background: var(--glass);
       backdrop-filter: var(--gblur); -webkit-backdrop-filter: var(--gblur);
       border: 1px solid var(--gb); border-radius: var(--r);
       box-shadow: var(--gshadow); padding: clamp(1.1rem,3vw,1.6rem);
       position: relative; overflow: hidden;
+      transform: perspective(1200px) rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg)) translateY(var(--par,0px));
+      transition: transform .15s ease, filter .3s ease, border-color .8s ease;
+      animation: iri-border 9s ease-in-out infinite;
+      will-change: transform;
     }
 
-    /* ── Grid 2 colonnes ─────────────────────────────── */
+    /* Specular highlight ambiant — toujours visible, top-left */
+    .gc::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 40%; border-radius: var(--r) var(--r) 60% 60%;
+      background: linear-gradient(to bottom, rgba(255,255,255,.18), transparent);
+      pointer-events: none; z-index: 1;
+    }
+
+    @keyframes iri-border {
+      0%,100% { border-color: rgba(255,255,255,.82); }
+      25%     { border-color: rgba(200,182,255,.76); }
+      50%     { border-color: rgba(160,220,255,.76); }
+      75%     { border-color: rgba(220,245,255,.80); }
+    }
+
+    /* Tap — chromatic aberration flash */
+    .gc.ca-flash {
+      filter: drop-shadow(2px 0 0 rgba(255,60,60,.28)) drop-shadow(-2px 0 0 rgba(0,200,255,.28));
+    }
+
+    /* ── Bento grid — Bloc 1 (transports) ── */
+    .bento {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 600px) {
+      .bento { grid-template-columns: 1fr 1fr; }
+      .bento-a { grid-column: 1 / -1; }
+    }
+    @media (min-width: 900px) {
+      .bento {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto auto;
+      }
+      .bento-a { grid-column: 1 / 3; grid-row: 1 / 3; }
+      .bento-b { grid-column: 3 / 4; grid-row: 1 / 2; }
+      .bento-c { grid-column: 3 / 4; grid-row: 2 / 3; }
+      .bento-d { grid-column: 1 / 4; grid-row: 3 / 4; }
+    }
+
+    /* ── Grid 2 colonnes (autres blocs) ── */
     .g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,360px),1fr)); gap: 1rem; }
     @media(max-width:520px) { .g2 { grid-template-columns: 1fr; } }
 
-    /* ── Card header ─────────────────────────────────── */
+    /* ── Card header ── */
     .ch { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; gap: .5rem; }
     .ch-l { display: flex; align-items: center; gap: .6rem; }
     .ch-ico { font-size: 1.05rem; }
@@ -110,15 +157,36 @@
     .ch-sub { font-size: .68rem; color: var(--muted); margin-top: 2px; }
     .ch-ts  { font-size: .6rem; color: var(--muted); font-family: 'Courier New',monospace; white-space: nowrap; margin-top: 2px; }
 
-    /* ── Spinner ─────────────────────────────────────── */
+    /* ── Spinner ── */
     @keyframes spin { to { transform: rotate(360deg); } }
     .spin { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .76rem; padding: .4rem 0; }
     .spin::before { content: ''; flex-shrink: 0; width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,.12); border-top-color: var(--accent); animation: spin .65s linear infinite; }
 
-    /* ── Erreur ──────────────────────────────────────── */
+    /* ── Erreur ── */
     .err { font-size: .74rem; color: rgba(220,40,40,.75); padding: .3rem 0; }
 
-    /* ── Metro SVG train ─────────────────────────────── */
+    /* ── Liquid progress bar ── */
+    .lbar { margin-bottom: .35rem; }
+    .lbar-track {
+      height: 8px; background: rgba(0,0,0,.07); border-radius: 4px;
+      overflow: hidden; position: relative;
+    }
+    .lbar-fill {
+      height: 100%; border-radius: 4px; position: relative; overflow: hidden;
+      transition: width 1s var(--ease);
+      background: linear-gradient(to right, var(--accent), #06b6d4);
+    }
+    .lbar-fill.hi { background: linear-gradient(to right, var(--red), var(--orange)); }
+    .lbar-wave {
+      position: absolute; top: -3px; right: 0;
+      width: 80px; height: 14px; opacity: .5;
+      animation: wave-move 1.4s linear infinite;
+    }
+    @keyframes wave-move { from { transform: translateX(0); } to { transform: translateX(-40px); } }
+    .lbar-wave-path { fill: rgba(255,255,255,.6); }
+    .lbar-lbl { font-size: .62rem; color: var(--muted); margin-top: .28rem; }
+
+    /* ── Metro SVG train ── */
     .metro-train-wrap {
       margin: -.2rem -.2rem .9rem; border-radius: 14px; overflow: hidden;
       background: linear-gradient(135deg,rgba(109,40,217,.06),rgba(8,145,178,.06));
@@ -127,36 +195,36 @@
     .metro-svg { width: 100%; height: auto; display: block; animation: trainIdle 5s ease-in-out infinite; }
     @keyframes trainIdle { 0%,100%{transform:translateX(0)} 40%,60%{transform:translateX(-3px)} }
 
-    /* ── Metro split ──────────────────────────────────── */
+    /* ── Metro split ── */
     .metro-split { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
     @media(max-width:420px) { .metro-split { grid-template-columns: 1fr; } }
     .mdir-hd { font-size: .6rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); padding-bottom: .4rem; margin-bottom: .3rem; border-bottom: 1px solid rgba(0,0,0,.06); }
 
-    /* ── Passage row ─────────────────────────────────── */
+    /* ── Passage row ── */
     .prow { display: flex; align-items: center; gap: .65rem; padding: .5rem 0; border-bottom: 1px solid rgba(0,0,0,.05); }
     .prow:last-child { border-bottom: none; }
     .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 19px; border-radius: 4px; font-size: .6rem; font-weight: 700; text-transform: uppercase; background: rgba(0,0,0,.08); color: var(--text); padding: 0 4px; flex-shrink: 0; }
-    .badge-a { background: #E30613; color: #fff; }  /* STAR ligne A — rouge officiel */
-    .badge-b { background: #0071BB; color: #fff; }  /* STAR ligne B — bleu officiel */
+    .badge-a { background: #E30613; color: #fff; }
+    .badge-b { background: #0071BB; color: #fff; }
     .pdest { flex: 1; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ptime { font-size: .76rem; font-weight: 500; font-family: 'Courier New',monospace; flex-shrink: 0; }
     .ptime.soon { color: var(--orange); }
     .ptime.now  { color: var(--green); }
     .pdim { opacity: .5; }
 
-    /* ── Vélos ───────────────────────────────────────── */
+    /* ── Vélos ── */
     .velo-stat { display: flex; align-items: center; gap: 1rem; margin-bottom: .9rem; }
     .vn { font-size: 2.2rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
     .vl { font-size: .68rem; color: var(--muted); margin-top: 2px; }
     .vdiv { width: 1px; height: 38px; background: rgba(0,0,0,.08); }
 
-    /* ── Progress bar ────────────────────────────────── */
+    /* ── Progress bar (conservé pour compat) ── */
     .pbar { height: 4px; background: rgba(0,0,0,.07); border-radius: 2px; overflow: hidden; }
     .pfill { height: 100%; border-radius: 2px; background: linear-gradient(to right,var(--accent),#06b6d4); transition: width .9s var(--ease); }
     .pfill.hi { background: linear-gradient(to right,var(--red),var(--orange)); }
     .pbar-lbl { font-size: .62rem; color: var(--muted); margin-top: .28rem; }
 
-    /* ── Parking grid ────────────────────────────────── */
+    /* ── Parking grid ── */
     .pk-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,190px),1fr)); gap: .75rem; }
     .pk { background: rgba(255,255,255,.48); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid rgba(255,255,255,.78); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.05); padding: 1rem; }
     .pk-nom { font-size: .76rem; font-weight: 500; margin-bottom: .55rem; line-height: 1.3; }
@@ -168,7 +236,7 @@
     .pk-tag.ko   { background: rgba(239,68,68,.12);  color: #b91c1c; }
     .pk-tag.full { background: rgba(249,115,22,.12); color: #c2410c; }
 
-    /* ── Trains ──────────────────────────────────────── */
+    /* ── Trains ── */
     .t-list { display: flex; flex-direction: column; }
     .trow { display: flex; align-items: center; gap: .8rem; padding: .6rem 0; border-bottom: 1px solid rgba(0,0,0,.05); }
     .trow:last-child { border-bottom: none; }
@@ -181,7 +249,7 @@
     .key-note strong { display: block; margin-bottom: .4rem; font-size: .82rem; }
     .key-note code { font-family: 'Courier New',monospace; font-size: .8em; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 3px; }
 
-    /* ── Satellite ───────────────────────────────────── */
+    /* ── Satellite ── */
     .sat-wrap { display: grid; grid-template-columns: 1fr auto; gap: 1.2rem; align-items: start; }
     @media(max-width:560px){ .sat-wrap{ grid-template-columns:1fr; } }
     .sat-img-box { border-radius: 14px; overflow: hidden; aspect-ratio: 1; background: rgba(0,0,0,.05); display: flex; align-items: center; justify-content: center; }
@@ -191,7 +259,7 @@
     .sml { font-size: .6rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
     .smv { font-size: .8rem; font-weight: 500; }
 
-    /* ── Événements ──────────────────────────────────── */
+    /* ── Événements ── */
     .ev-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)); gap: 1rem; }
     .ev-card { background: rgba(255,255,255,.5); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border: 1px solid rgba(255,255,255,.8); border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.06); overflow: hidden; display: flex; flex-direction: column; }
     .ev-img { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg,rgba(109,40,217,.12),rgba(8,145,178,.12)); overflow: hidden; flex-shrink: 0; }
@@ -202,11 +270,8 @@
     .ev-date { font-size: .68rem; color: var(--muted); }
     .ev-lieu { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ── Calculateur kilométrique ────────────────────── */
-    .kilo-inputs {
-      display: flex; align-items: center; gap: .6rem;
-      flex-wrap: wrap; margin-bottom: 1.2rem;
-    }
+    /* ── Calculateur kilométrique ── */
+    .kilo-inputs { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
     .kilo-in {
       flex: 1; min-width: 180px;
       background: rgba(255,255,255,.62);
@@ -255,11 +320,8 @@
     .palier.active .palier-n   { color: #059669; }
     .palier.active .palier-range { color: #065f46; }
 
-    /* ── Vehicle toggle ──────────────────────────────── */
-    .vt-toggle {
-      display: flex; gap: .35rem; margin-bottom: 1.2rem;
-      background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px;
-    }
+    /* ── Vehicle toggle ── */
+    .vt-toggle { display: flex; gap: .35rem; margin-bottom: 1.2rem; background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px; }
     .vt-btn {
       flex: 1; display: flex; align-items: center; justify-content: center; gap: .45rem;
       padding: .52rem .8rem; border: none; border-radius: 10px;
@@ -270,21 +332,14 @@
     .vt-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
     .vt-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,.1); }
 
-    /* ── Year chips ───────────────────────────────────── */
+    /* ── Year chips ── */
     .year-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
-    .year-chip {
-      font-size: .68rem; padding: 3px 11px; border-radius: 8px;
-      border: 1px solid rgba(0,0,0,.1); background: rgba(255,255,255,.6);
-      cursor: pointer; transition: all .15s;
-    }
+    .year-chip { font-size: .68rem; padding: 3px 11px; border-radius: 8px; border: 1px solid rgba(0,0,0,.1); background: rgba(255,255,255,.6); cursor: pointer; transition: all .15s; }
     .year-chip:hover:not(.active) { background: rgba(255,255,255,.92); }
     .year-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-    /* ── Automobile ──────────────────────────────────── */
-    .auto-form {
-      display: flex; align-items: center; gap: .6rem;
-      flex-wrap: wrap; margin-bottom: 1.2rem;
-    }
+    /* ── Automobile ── */
+    .auto-form { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
     .auto-in, .auto-select {
       flex: 1; min-width: 120px;
       background: rgba(255,255,255,.62);
@@ -295,9 +350,7 @@
       transition: border-color .2s, box-shadow .2s;
     }
     .auto-in::placeholder { color: var(--muted); }
-    .auto-in:focus, .auto-select:focus {
-      border-color: rgba(124,58,237,.4); box-shadow: 0 0 0 3px rgba(124,58,237,.08);
-    }
+    .auto-in:focus, .auto-select:focus { border-color: rgba(124,58,237,.4); box-shadow: 0 0 0 3px rgba(124,58,237,.08); }
     .auto-in.sm { max-width: 90px; }
     .auto-btn {
       background: linear-gradient(135deg,var(--accent),#0891b2);
@@ -311,31 +364,17 @@
     .auto-btn:disabled { opacity: .45; cursor: default; }
 
     /* Fiche technique */
-    .spec-grid {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem;
-    }
+    .spec-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem; }
     @media(max-width:480px) { .spec-grid { grid-template-columns: repeat(2,1fr); } }
-    .spec-card {
-      background: rgba(255,255,255,.45);
-      border: 1px solid rgba(255,255,255,.75); border-radius: 14px;
-      padding: .85rem .7rem; text-align: center;
-    }
+    .spec-card { background: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.75); border-radius: 14px; padding: .85rem .7rem; text-align: center; }
     .spec-ico { font-size: 1.2rem; margin-bottom: .35rem; }
     .spec-val { font-size: 1.15rem; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
     .spec-lbl { font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
     .spec-note { font-size: .68rem; color: var(--muted); margin-top: .9rem; font-style: italic; }
 
-    /* ── Fuel map ─────────────────────────────────────── */
-    .fuel-view-toggle {
-      display: flex; gap: .35rem; margin-bottom: 1rem;
-      background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px;
-    }
-    .fvt-btn {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: .4rem;
-      padding: .5rem .8rem; border: none; border-radius: 10px;
-      font-size: .78rem; font-family: inherit; cursor: pointer;
-      background: transparent; color: var(--muted); transition: all .2s var(--ease);
-    }
+    /* ── Fuel map ── */
+    .fuel-view-toggle { display: flex; gap: .35rem; margin-bottom: 1rem; background: rgba(0,0,0,.045); border-radius: 13px; padding: 3px; }
+    .fvt-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: .4rem; padding: .5rem .8rem; border: none; border-radius: 10px; font-size: .78rem; font-family: inherit; cursor: pointer; background: transparent; color: var(--muted); transition: all .2s var(--ease); }
     .fvt-btn.active { background: #fff; color: var(--text); box-shadow: 0 1px 6px rgba(0,0,0,.1); }
     #fuel-map { height: 400px; border-radius: 14px; overflow: hidden; }
     .maplibregl-popup-content {
@@ -347,13 +386,11 @@
       font-family: -apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif !important;
       padding: 10px 14px !important;
     }
-    .leaflet-popup-tip { background: rgba(255,255,255,.88) !important; }
     .fp-addr  { font-size: .82rem; font-weight: 500; margin-bottom: 2px; }
     .fp-price { font-size: 1.2rem; font-weight: 200; letter-spacing: -.03em; }
     .fp-price small { font-size: .65rem; font-weight: 400; opacity: .65; }
-    .leaflet-control-attribution { font-size: .55rem !important; opacity: .6; }
 
-    /* ── Fuel price bar ──────────────────────────────── */
+    /* ── Fuel price bar ── */
     .fuel-price-col { display: flex; flex-direction: column; align-items: flex-end; min-width: 72px; }
     .fuel-bar-bg { width: 100%; height: 3px; background: rgba(0,0,0,.08); border-radius: 2px; overflow: hidden; margin-top: 5px; }
     .fuel-bar-fill { height: 100%; border-radius: 2px; transition: width .6s var(--ease); }
@@ -361,53 +398,32 @@
     .bar-orange { background: var(--orange); }
     .bar-red    { background: var(--red); }
 
-    /* Prix carburants */
-    .fuel-header {
-      display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.2rem;
-    }
+    .fuel-header { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
     .fuel-list { display: flex; flex-direction: column; gap: .5rem; }
-    .fuel-item {
-      display: flex; align-items: center; gap: .85rem;
-      background: rgba(255,255,255,.45);
-      border: 1px solid rgba(255,255,255,.75); border-radius: 14px;
-      padding: .75rem 1rem;
-    }
+    .fuel-item { display: flex; align-items: center; gap: .85rem; background: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.75); border-radius: 14px; padding: .75rem 1rem; }
     .fuel-rank { font-size: .7rem; font-weight: 600; color: var(--muted); min-width: 18px; text-align: center; }
     .fuel-info { flex: 1; min-width: 0; }
     .fuel-brand { font-size: .78rem; font-weight: 500; }
     .fuel-addr  { font-size: .65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fuel-tags  { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
     .fuel-tag   { font-size: .52rem; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: rgba(0,0,0,.07); color: var(--muted); }
-    .fuel-price {
-      font-size: 1.3rem; font-weight: 200; letter-spacing: -.03em;
-      white-space: nowrap; min-width: 70px; text-align: right;
-    }
+    .fuel-price { font-size: 1.3rem; font-weight: 200; letter-spacing: -.03em; white-space: nowrap; min-width: 70px; text-align: right; }
     .fuel-price small { font-size: .65rem; font-weight: 400; opacity: .65; }
-    .fuel-dot {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-    }
+    .fuel-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .dot-green  { background: var(--green); }
     .dot-orange { background: var(--orange); }
     .dot-red    { background: var(--red); }
 
-    /* ── Animations liquides ─────────────────────────── */
+    /* ── Ripple cristal ── */
     .crystal-ripple {
       position: absolute; inset: 0; border-radius: inherit;
       pointer-events: none; z-index: 10; transform-origin: center;
       background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.9) 0%, rgba(255,255,255,.35) 45%, transparent 70%);
     }
     #fuel-map-wrap { position: relative; overflow: hidden; border-radius: 14px; }
-    @media (prefers-reduced-motion: reduce) {
-      .bloc { transform: none !important; transition: none !important; }
-      .gc   { opacity: 1 !important; transition: none !important; }
-    }
 
-    /* ── Modale "il est bo" ───────────────────────────── */
-    #beau-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(15,10,30,.55); backdrop-filter: blur(4px);
-      z-index: 9999; align-items: center; justify-content: center;
-    }
+    /* ── Modale ── */
+    #beau-overlay { display: none; position: fixed; inset: 0; background: rgba(15,10,30,.55); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center; }
     #beau-overlay.open { display: flex; }
     #beau-dialog {
       background: rgba(255,255,255,.18);
@@ -418,10 +434,7 @@
       box-shadow: 0 12px 48px rgba(0,0,0,.28);
       animation: popIn .22s var(--ease) both;
     }
-    @keyframes popIn {
-      from { transform: scale(.88); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
+    @keyframes popIn { from{transform:scale(.88);opacity:0} to{transform:scale(1);opacity:1} }
     #beau-dialog p { font-size: 1.05rem; line-height: 1.5; margin: 0 0 1.4rem; }
     #beau-ok {
       background: linear-gradient(135deg,#6d28d9,#4f46e5);
@@ -432,8 +445,15 @@
     #beau-ok:hover  { opacity: .88; }
     #beau-ok:active { transform: scale(.96); }
 
-    /* ── Footer ──────────────────────────────────────── */
+    /* ── Footer ── */
     footer { text-align: center; padding: 1rem 0 2rem; font-size: .62rem; color: var(--muted); letter-spacing: .1em; }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      .gc { transform: none !important; transition: none !important; animation: none !important; }
+      .lbar-wave { animation: none !important; }
+      .metro-svg { animation: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -458,12 +478,12 @@
       </div>
     </header>
 
-    <!-- ══ BLOC 1 — Transports STAR ══════════════════════ -->
+    <!-- ══ BLOC 1 — Transports STAR ══ -->
     <section class="bloc">
       <div class="bloc-hd">01 · Transports STAR</div>
-      <div class="g2">
+      <div class="bento">
 
-        <div class="gc">
+        <div class="gc bento-a">
           <div class="ch">
             <div class="ch-l"><span class="ch-ico">🚇</span>
               <div><div class="ch-ttl">Métro · Clémenceau</div><div class="ch-sub">Lignes a &amp; b — temps réel</div></div>
@@ -504,7 +524,7 @@
           </div>
         </div>
 
-        <div class="gc">
+        <div class="gc bento-b">
           <div class="ch">
             <div class="ch-l"><span class="ch-ico">🚌</span>
               <div><div class="ch-ttl">Bus · Binquenais</div><div class="ch-sub">Prochains passages</div></div>
@@ -514,7 +534,7 @@
           <div id="bus"><div class="spin">Chargement</div></div>
         </div>
 
-        <div class="gc">
+        <div class="gc bento-c">
           <div class="ch">
             <div class="ch-l"><span class="ch-ico">🚲</span>
               <div><div class="ch-ttl">LE vélo STAR</div><div class="ch-sub">Station Clémenceau</div></div>
@@ -524,7 +544,7 @@
           <div id="velos"><div class="spin">Chargement</div></div>
         </div>
 
-        <div class="gc">
+        <div class="gc bento-d">
           <div class="ch">
             <div class="ch-l"><span class="ch-ico">📡</span>
               <div><div class="ch-ttl">État du réseau</div><div class="ch-sub">Lignes métro STAR</div></div>
@@ -537,7 +557,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 2 — Parcs Relais ══════════════════════════ -->
+    <!-- ══ BLOC 2 — Parcs Relais ══ -->
     <section class="bloc">
       <div class="bloc-hd">02 · Parcs Relais STAR</div>
       <div class="gc">
@@ -551,7 +571,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 3 — Trains SNCF ════════════════════════════ -->
+    <!-- ══ BLOC 3 — Trains SNCF ══ -->
     <section class="bloc">
       <div class="bloc-hd">03 · Trains depuis Rennes · SNCF</div>
       <div class="gc">
@@ -565,7 +585,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 4 — Image satellite ═══════════════════════ -->
+    <!-- ══ BLOC 4 — Image satellite ══ -->
     <section class="bloc">
       <div class="bloc-hd">04 · Image satellite · Esri + BAN</div>
       <div class="gc">
@@ -579,7 +599,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 5 — Événements ════════════════════════════ -->
+    <!-- ══ BLOC 5 — Événements ══ -->
     <section class="bloc">
       <div class="bloc-hd">05 · Événements à Rennes</div>
       <div class="gc">
@@ -593,7 +613,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 6 — Calculateur kilométrique ══════════════ -->
+    <!-- ══ BLOC 6 — Calculateur kilométrique ══ -->
     <section class="bloc">
       <div class="bloc-hd">06 · Calculateur de frais kilométriques</div>
       <div class="gc">
@@ -612,7 +632,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 7 — Fiche Technique Véhicule ═════════════ -->
+    <!-- ══ BLOC 7 — Fiche Technique Véhicule ══ -->
     <section class="bloc">
       <div class="bloc-hd">07 · Fiche Technique Véhicule</div>
       <div class="gc">
@@ -624,7 +644,6 @@
             </div>
           </div>
         </div>
-        <!-- Toggle auto / moto -->
         <div class="vt-toggle">
           <button class="vt-btn active" id="vt-car" onclick="setVehicleMode('car')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M3 17h4m6 0h4m2 0h1v-4l-2-5H6L4 13v4h1M6 13h12"/></svg>
@@ -635,14 +654,12 @@
             Moto
           </button>
         </div>
-        <!-- Formulaire -->
         <div class="auto-form">
           <input class="auto-in" id="v-make"  type="text" list="car-makes-list" placeholder="Marque (ex: Toyota)" autocomplete="off">
           <input class="auto-in" id="v-model" type="text" placeholder="Modèle (ex: Corolla)" autocomplete="off">
           <input class="auto-in sm" id="v-year" type="number" placeholder="Année" min="1980" max="2025">
           <button class="auto-btn" id="v-btn">Rechercher</button>
         </div>
-        <!-- Datalists -->
         <datalist id="car-makes-list">
           <option>Alfa Romeo</option><option>Audi</option><option>BMW</option>
           <option>Chevrolet</option><option>Citroën</option><option>Dacia</option>
@@ -667,7 +684,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 8 — Prix Carburants ═══════════════════════ -->
+    <!-- ══ BLOC 8 — Prix Carburants ══ -->
     <section class="bloc">
       <div class="bloc-hd">08 · Prix des Carburants</div>
       <div class="gc">
@@ -711,7 +728,7 @@
 
   </div>
 
-  <!-- Modale "il est bo" -->
+  <!-- Modale -->
   <div id="beau-overlay">
     <div id="beau-dialog">
       <p>dis moi kil est pas bo mon calculateur ??</p>
@@ -720,45 +737,40 @@
   </div>
 
   <script>
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        CONFIG
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        UTILITAIRES
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function nowHM() {
       var d = new Date();
       return { h: String(d.getHours()).padStart(2,'0'), m: String(d.getMinutes()).padStart(2,'0') };
     }
-
     function updateRefreshClock() {
       var t = nowHM();
       var hEl = document.getElementById('rt-h'), mEl = document.getElementById('rt-m');
       if (hEl) hEl.textContent = t.h;
       if (mEl) mEl.textContent = t.m;
     }
-
     function fmtISO(s) {
       if (!s) return '—';
       return new Date(s).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
-
     function fmtNav(s) {
       if (!s || s.length < 13) return '—';
       return s.substr(9,2) + ':' + s.substr(11,2);
     }
-
     function minsUntil(s) { return Math.round((new Date(s) - Date.now()) / 60000); }
-
     async function api(url, opts) {
       var r = await fetch(url, opts || {});
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }
 
-    /* Cache localStorage pour STAR (TTL 90s) — évite les 429 sur reload */
+    /* Cache localStorage STAR (TTL 90s) */
     function starApi(key, url) {
       try {
         var raw = localStorage.getItem('star_' + key);
@@ -770,10 +782,7 @@
       return fetch(url)
         .then(function(r) {
           if (r.status === 429) {
-            try {
-              var fallback = JSON.parse(localStorage.getItem('star_' + key));
-              if (fallback) return fallback.data;
-            } catch(_) {}
+            try { var fb = JSON.parse(localStorage.getItem('star_' + key)); if (fb) return fb.data; } catch(_) {}
             throw new Error('Rate limit (429)');
           }
           if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -789,15 +798,26 @@
       var el = document.getElementById('ts-' + id);
       if (el) { var t = nowHM(); el.textContent = t.h + ':' + t.m; }
     }
-
     function err(id, msg) {
       var el = document.getElementById(id);
       if (el) el.innerHTML = '<div class="err">⚠ ' + (msg || 'Erreur') + '</div>';
     }
-
     function pct(val, total) {
       if (!total) return 0;
       return Math.max(0, Math.min(100, Math.round(val / total * 100)));
+    }
+
+    /* ── Liquid progress bar ── */
+    function liquidBar(p, hi, lbl) {
+      return '<div class="lbar">'
+        + '<div class="lbar-track">'
+        + '<div class="lbar-fill' + (hi ? ' hi' : '') + '" style="width:' + p + '%">'
+        + '<svg class="lbar-wave" viewBox="0 0 80 8" preserveAspectRatio="none">'
+        + '<path class="lbar-wave-path" d="M0,4 C5,1 10,7 20,4 C30,1 35,7 40,4 C45,1 55,7 60,4 C65,1 75,7 80,4 L80,8 L0,8 Z"/>'
+        + '</svg>'
+        + '</div></div>'
+        + (lbl ? '<div class="lbar-lbl">' + lbl + '</div>' : '')
+        + '</div>';
     }
 
     function normLigne(val) {
@@ -806,7 +826,6 @@
       if (s === 'b' || s === '1002' || s === '0002') return { label: 'B', cls: 'badge-b' };
       return { label: s.toUpperCase() || '?', cls: '' };
     }
-
     function row(ligne, bc, dest, time, timeCls, dim) {
       return '<div class="prow' + (dim ? ' pdim' : '') + '">'
         + '<span class="badge ' + bc + '">' + ligne + '</span>'
@@ -815,9 +834,9 @@
         + '</div>';
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 1a — MÉTRO Clémenceau
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 1a — MÉTRO
+    ═══════════════════════════════════════ */
     async function loadMetro() {
       try {
         var d = await starApi('metro',
@@ -830,7 +849,6 @@
         }
         var poterie = d.results.filter(function(r){ return r.sens === 0; });
         var kennedy = d.results.filter(function(r){ return r.sens === 1; });
-
         function renderDir(records) {
           if (!records.length) return '<div class="err" style="font-size:.7rem">—</div>';
           var h = '';
@@ -853,9 +871,9 @@
       } catch(e) { err('metro-poterie', e.message); err('metro-kennedy', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 1b — BUS Binquenais
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 1b — BUS
+    ═══════════════════════════════════════ */
     async function loadBus() {
       try {
         var d = await starApi('bus',
@@ -879,9 +897,9 @@
       } catch(e) { err('bus', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 1c — VÉLOS Clémenceau
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 1c — VÉLOS
+    ═══════════════════════════════════════ */
     async function loadVelos() {
       try {
         var d = await starApi('velos',
@@ -905,8 +923,7 @@
               + (ok ? '<span style="color:var(--green)">●</span>' : '<span style="color:var(--red)">●</span>')
               + '</div><div class="vl">état</div></div>',
           '</div>',
-          '<div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div>',
-          '<div class="pbar-lbl">' + tot + ' emplacements · ' + p + '% occupé</div>',
+          liquidBar(p, p > 85, tot + ' emplacements · ' + p + '% occupé'),
         ].join('');
         var _gcV = gcOf('velos');
         if (_gcV && window._crystalize) window._crystalize(_gcV);
@@ -914,9 +931,9 @@
       } catch(e) { err('velos', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 1d — ÉTAT réseau métro
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 1d — ÉTAT réseau
+    ═══════════════════════════════════════ */
     async function loadEtat() {
       try {
         var d = await starApi('etat', STAR + '/tco-metro-lignes-etat-tr/records?limit=10');
@@ -944,9 +961,9 @@
       }
     }
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        BLOC 2 — PARCS RELAIS
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     async function loadParkings() {
       try {
         var d = await starApi('parkings',
@@ -969,7 +986,7 @@
           html += '<div class="pk"><div class="pk-nom">' + nom + '</div>'
             + '<div class="pk-n">' + (dispo !== null ? dispo : '—') + '</div>'
             + '<div class="pk-s">places libres / ' + cap + '</div>'
-            + '<div class="pk-bar"><div class="pbar"><div class="pfill' + (p > 85 ? ' hi' : '') + '" style="width:' + p + '%"></div></div></div>'
+            + '<div class="pk-bar">' + liquidBar(p, p > 85) + '</div>'
             + '<span class="pk-tag ' + tCls + '">' + tLbl + '</span></div>';
         });
         document.getElementById('parkings').innerHTML = html + '</div>';
@@ -979,9 +996,9 @@
       } catch(e) { err('parkings', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        BLOC 3 — TRAINS SNCF
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     async function loadTrains() {
       try {
         var d = await api('/api/trains');
@@ -1015,9 +1032,9 @@
       }
     }
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        BLOC 4 — SATELLITE
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     async function loadSatellite() {
       try {
         var ban = await api('https://api-adresse.data.gouv.fr/search/?q=16+boulevard+oscar+leroux+rennes&limit=1');
@@ -1026,13 +1043,11 @@
         var lon   = feat.geometry.coordinates[0];
         var lat   = feat.geometry.coordinates[1];
         var label = feat.properties.label || '16 Bd Oscar Leroux, Rennes';
-
         var satDate = null;
         try {
           var nasa = await api('https://api.nasa.gov/planetary/earth/assets?lat=' + lat + '&lon=' + lon + '&dim=0.025&api_key=DEMO_KEY');
           if (nasa && nasa.date) satDate = new Date(nasa.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
         } catch(_) {}
-
         var z = 17, n = Math.pow(2,z);
         var tx = Math.floor((lon+180)/360*n);
         var lr = lat*Math.PI/180;
@@ -1041,7 +1056,6 @@
         var tiles = '';
         for (var dy=-1;dy<=1;dy++) for (var dx=-1;dx<=1;dx++)
           tiles += '<img src="'+base+z+'/'+(ty+dy)+'/'+(tx+dx)+'" width="256" height="256" draggable="false" style="display:block;width:33.333%;height:33.333%;float:left">';
-
         stamp('sat');
         var _gcSat = gcOf('satellite');
         document.getElementById('satellite').innerHTML = [
@@ -1066,9 +1080,9 @@
       } catch(e) { err('satellite', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        BLOC 5 — ÉVÉNEMENTS
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function fmtEvDate(s) {
       if (!s) return '—';
       return new Date(s).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
@@ -1122,17 +1136,16 @@
       } catch(e) { err('events', e.message); }
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 6 — CALCULATEUR KILOMÉTRIQUE
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 6 — CALCULATEUR
+    ═══════════════════════════════════════ */
     async function geocodeAddr(addr) {
       var r = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(addr) + '&limit=1');
       if (!r.ok) throw new Error('Géocodage impossible');
       var d = await r.json();
       if (!d.features || !d.features.length) throw new Error('Adresse introuvable : ' + addr);
-      return d.features[0].geometry.coordinates; /* [lon, lat] */
+      return d.features[0].geometry.coordinates;
     }
-
     function palierCard(n, range, amt, active) {
       return '<div class="palier' + (n === active ? ' active' : '') + '">'
         + '<div class="palier-n">Palier ' + n + '</div>'
@@ -1140,21 +1153,17 @@
         + '<div class="palier-range">' + range + '</div>'
         + '</div>';
     }
-
     async function calculerTrajet() {
       var startVal = document.getElementById('kilo-start').value.trim();
       var endVal   = document.getElementById('kilo-end').value.trim();
       if (!startVal || !endVal) return;
-
       var btn = document.getElementById('kilo-btn');
       var res = document.getElementById('kilo-results');
       btn.disabled = true;
       res.innerHTML = '<div class="spin">Calcul en cours…</div>';
-
       try {
         var start = await geocodeAddr(startVal);
         var end   = await geocodeAddr(endVal);
-
         var ign = await fetch(
           'https://data.geopf.fr/navigation/itineraire'
           + '?resource=bdtopo-osrm'
@@ -1164,18 +1173,15 @@
         );
         if (!ign.ok) throw new Error('Calcul d\'itinéraire impossible (HTTP ' + ign.status + ')');
         var route = await ign.json();
-
         var distKm   = route.distance / 1000;
         var tempsMin = Math.round(route.duration / 60);
         var palier   = distKm <= 20 ? 1 : distKm <= 50 ? 2 : distKm <= 150 ? 3 : 4;
         var montants = [0, 40, 80, 150, 250];
-
         function fmtDuration(min) {
           if (min < 60) return min + ' <span style="font-size:.85rem">min</span>';
           var h = Math.floor(min / 60), m = min % 60;
           return h + 'h' + String(m).padStart(2,'0');
         }
-
         res.innerHTML = [
           '<div class="kilo-stats">',
             '<div class="kilo-stat"><div class="ks-val">' + distKm.toFixed(1) + ' <span style="font-size:.85rem">km</span></div><div class="ks-lbl">Distance</div></div>',
@@ -1196,21 +1202,18 @@
       btn.disabled = false;
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 07 — Fiche Technique Véhicule (unifié)
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 7 — VÉHICULE
+    ═══════════════════════════════════════ */
     var vehicleMode = 'car';
     var vehicleData = [];
-
     function mpgToL100(mpg) { return mpg > 0 ? (235.21 / mpg).toFixed(1) : '—'; }
     function driveLabel(d)  { return { fwd:'Traction', rwd:'Propulsion', awd:'Intégrale', '4wd':'4x4' }[d] || d || '—'; }
     function fuelLabel(f)   { return { gasoline:'Essence', diesel:'Diesel', electric:'Électrique', hybrid:'Hybride' }[f] || f || '—'; }
     function transLabel(t)  { return { manual:'Manuelle', automatic:'Automatique' }[t] || t || '—'; }
-
     function specCard(ico, val, lbl) {
       return '<div class="spec-card"><div class="spec-ico">' + ico + '</div><div class="spec-val">' + val + '</div><div class="spec-lbl">' + lbl + '</div></div>';
     }
-
     function setVehicleMode(mode) {
       vehicleMode = mode;
       vehicleData = [];
@@ -1227,31 +1230,25 @@
       document.getElementById('v-year').min = mode === 'car' ? '1980' : '1950';
       document.getElementById('vehicle-results').innerHTML = '';
     }
-
     async function loadVehicle() {
       var make  = document.getElementById('v-make').value.trim();
       var model = document.getElementById('v-model').value.trim();
       var year  = document.getElementById('v-year').value.trim();
       var res   = document.getElementById('vehicle-results');
       var btn   = document.getElementById('v-btn');
-
       if (vehicleMode === 'car'  && (!make || !model)) { res.innerHTML = '<div class="err">⚠ Saisissez une marque et un modèle.</div>'; return; }
       if (vehicleMode === 'moto' && !make && !model)   { res.innerHTML = '<div class="err">⚠ Saisissez au moins une marque ou un modèle.</div>'; return; }
-
       btn.disabled = true;
       res.innerHTML = '<div class="spin">Recherche en cours…</div>';
-
       try {
         var endpoint = vehicleMode === 'car' ? '/api/cars' : '/api/motorcycles';
         var qs = '?';
         if (make)  qs += 'make='  + encodeURIComponent(make) + '&';
         if (model) qs += 'model=' + encodeURIComponent(model) + '&';
         if (year)  qs += 'year='  + encodeURIComponent(year);
-
         var r = await fetch(endpoint + qs);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         vehicleData = await r.json();
-
         if (!Array.isArray(vehicleData) || !vehicleData.length) {
           res.innerHTML = '<div class="err">Aucun résultat. Vérifiez la marque et le modèle (en anglais).</div>';
           btn.disabled = false; return;
@@ -1262,11 +1259,9 @@
       }
       btn.disabled = false;
     }
-
     function renderVehicle(idx) {
       var v    = vehicleData[idx];
       var html = [];
-
       if (vehicleMode === 'car') {
         html = [
           '<div class="spec-grid">',
@@ -1303,8 +1298,6 @@
           html.push('</div>');
         }
       }
-
-      /* Chips années */
       if (vehicleData.length > 1) {
         html.push('<div class="year-chips">');
         vehicleData.forEach(function(item, i) {
@@ -1314,13 +1307,12 @@
         });
         html.push('</div>');
       }
-
       document.getElementById('vehicle-results').innerHTML = html.join('');
     }
 
-    /* ═══════════════════════════════════════════════════
-       BLOC 08 — Prix Carburants (data.economie.gouv.fr)
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       BLOC 8 — CARBURANTS
+    ═══════════════════════════════════════ */
     var CARBU = 'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets'
               + '/prix-des-carburants-en-france-flux-instantane-v2/records';
     var fuelMap = null;
@@ -1335,53 +1327,44 @@
       el.style.cursor = 'pointer';
       return el;
     }
-
     function setFuelView(view) {
       document.getElementById('fvt-map').classList.toggle('active',  view === 'map');
       document.getElementById('fvt-list').classList.toggle('active', view === 'list');
       document.getElementById('fuel-map-wrap').style.display  = view === 'map'  ? 'block' : 'none';
       document.getElementById('fuel-list-wrap').style.display = view === 'list' ? 'block' : 'none';
     }
-
     async function loadCarburants() {
       var city   = document.getElementById('fuel-city').value.trim() || 'Rennes';
       var type   = document.getElementById('fuel-type').value;
       var status = document.getElementById('fuel-status');
       var btn    = document.getElementById('fuel-btn');
-
       btn.disabled = true;
       document.getElementById('fuel-view-toggle').style.display = 'none';
       document.getElementById('fuel-map-wrap').style.display    = 'none';
       document.getElementById('fuel-list-wrap').style.display   = 'none';
       status.innerHTML = '<div class="spin">Recherche en cours…</div>';
-
       try {
         var field = type + '_prix';
         var where = encodeURIComponent('ville like "%' + city.toUpperCase() + '%" and ' + field + ' is not null');
         var url   = CARBU + '?where=' + where + '&order_by=' + field + '%20asc&limit=20';
-
         var r = await fetch(url);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         var d = await r.json();
-
         if (!d.results || !d.results.length) {
           status.innerHTML = '<div class="err">Aucune station trouvée pour "' + city + '".</div>';
           btn.disabled = false; return;
         }
-
         var prices = d.results.map(function(s){ return parseFloat(s[field]); }).filter(Boolean);
         var minP   = Math.min.apply(null, prices);
         var maxP   = Math.max.apply(null, prices);
         var range  = maxP - minP > 0 ? maxP - minP : 0.01;
-
-        /* ── Liste ── */
         var listHtml = ['<div class="fuel-list">'];
         d.results.forEach(function(s, i) {
           var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
           var dot  = isCheap ? 'dot-green'  : isMid ? 'dot-orange'  : 'dot-red';
           var bar  = isCheap ? 'bar-green'  : isMid ? 'bar-orange'  : 'bar-red';
-          var pct  = Math.round((price - minP) / range * 100);
+          var pct2 = Math.round((price - minP) / range * 100);
           var svcs = parseSvcs(s.services_service);
           var tags = svcs.slice(0,4).map(function(sv){ return '<span class="fuel-tag">' + sv + '</span>'; }).join('');
           listHtml.push(
@@ -1395,7 +1378,7 @@
               '</div>',
               '<div class="fuel-price-col">',
                 '<div class="fuel-price">' + price.toFixed(3) + '<small> €/L</small></div>',
-                '<div class="fuel-bar-bg"><div class="fuel-bar-fill ' + bar + '" style="width:' + pct + '%"></div></div>',
+                '<div class="fuel-bar-bg"><div class="fuel-bar-fill ' + bar + '" style="width:' + pct2 + '%"></div></div>',
               '</div>',
             '</div>'
           );
@@ -1403,21 +1386,12 @@
         listHtml.push('</div>');
         listHtml.push('<div class="spec-note">Min ' + minP.toFixed(3) + ' € · Max ' + maxP.toFixed(3) + ' € · ' + d.results.length + ' stations</div>');
         document.getElementById('fuel-list-wrap').innerHTML = listHtml.join('');
-
-        /* ── Géocode la ville EN PREMIER (await) — centre garanti ── */
-        /* MapLibre : ordre [lon, lat] */
-        var cityCenter = [-1.677, 48.117]; /* fallback Rennes */
-        try {
-          var geo = await geocodeAddr(city);
-          cityCenter = [geo[0], geo[1]];
-        } catch(_) {}
-
-        /* ── Container visible, PUIS init MapLibre ── */
+        var cityCenter = [-1.677, 48.117];
+        try { var geo = await geocodeAddr(city); cityCenter = [geo[0], geo[1]]; } catch(_) {}
         status.innerHTML = '';
         document.getElementById('fuel-view-toggle').style.display = 'flex';
         setFuelView('map');
         var _gcF = gcOf('fuel-status'); if (_gcF && window._crystalize) window._crystalize(_gcF);
-
         if (fuelMap) { fuelMap.remove(); fuelMap = null; }
         fuelMap = new maplibregl.Map({
           container: 'fuel-map',
@@ -1429,14 +1403,11 @@
           center: cityCenter,
           zoom: 13
         });
-
-        /* ── Marqueurs (spring stagger + onde d'impact) ── */
         var lons = [], lats = [], markerQ = [];
         d.results.forEach(function(s) {
-          /* geom = {lon, lat} — champs latitude/longitude = entiers scalés, inutilisables */
-          var lat = s.geom ? parseFloat(s.geom.lat) : NaN;
-          var lon = s.geom ? parseFloat(s.geom.lon) : NaN;
-          if (!lat || !lon || isNaN(lat) || isNaN(lon)) return;
+          var lat2 = s.geom ? parseFloat(s.geom.lat) : NaN;
+          var lon2 = s.geom ? parseFloat(s.geom.lon) : NaN;
+          if (!lat2 || !lon2 || isNaN(lat2) || isNaN(lon2)) return;
           var price   = parseFloat(s[field]);
           var isCheap = price <= minP + 0.02, isMid = price <= minP + 0.05;
           var color   = isCheap ? '#22c55e' : isMid ? '#f97316' : '#ef4444';
@@ -1445,8 +1416,8 @@
             + '<div style="font-size:.68rem;color:#666;margin-bottom:6px">' + (s.ville || '') + (s.cp ? ' · ' + s.cp : '') + '</div>'
             + '<div class="fp-price">' + price.toFixed(3) + '<small> €/L</small></div>'
           );
-          lons.push(lon); lats.push(lat);
-          markerQ.push({ lon: lon, lat: lat, color: color, popup: popup });
+          lons.push(lon2); lats.push(lat2);
+          markerQ.push({ lon: lon2, lat: lat2, color: color, popup: popup });
         });
         if (lons.length > 1) {
           fuelMap.fitBounds(
@@ -1495,13 +1466,10 @@
 
     function gcOf(id) { var el = document.getElementById(id); return el ? el.closest('.gc') : null; }
 
-    /* ═══════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        LANCEMENT
-    ═══════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     updateRefreshClock();
-
-    /* STAR : fetch direct depuis browser + localStorage cache 90s
-       Espacés 2000ms pour ne pas déclencher le rate-limit sur premiere visite */
     loadMetro();
     setTimeout(loadBus,       2000);
     setTimeout(loadVelos,     4000);
@@ -1511,7 +1479,6 @@
     loadTrains();
     loadSatellite();
 
-    /* Auto-refresh 5 min — stagger identique */
     setInterval(function() {
       loadMetro();
       setTimeout(loadBus,       2000);
@@ -1521,7 +1488,6 @@
       updateRefreshClock();
     }, 300000);
 
-    /* Calculateur — déclenchement bouton ou Enter */
     document.getElementById('kilo-btn').addEventListener('click', function() {
       document.getElementById('beau-overlay').classList.add('open');
     });
@@ -1531,25 +1497,21 @@
     });
     document.getElementById('kilo-end').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
     document.getElementById('kilo-start').addEventListener('keydown', function(e){ if(e.key==='Enter') calculerTrajet(); });
-
     document.getElementById('v-btn').addEventListener('click', loadVehicle);
     document.getElementById('v-model').addEventListener('keydown', function(e){ if(e.key==='Enter') loadVehicle(); });
     document.getElementById('v-make').addEventListener('keydown',  function(e){ if(e.key==='Enter') loadVehicle(); });
-
     document.getElementById('fuel-btn').addEventListener('click', loadCarburants);
     document.getElementById('fuel-city').addEventListener('keydown', function(e){ if(e.key==='Enter') loadCarburants(); });
-
-    /* Carburants : chargement auto Rennes au démarrage */
     loadCarburants();
 
-    /* ═══════════════════════════════════════════════════
-       ANIMATIONS LIQUIDES — anime.js v4
-    ═══════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       ANIMATIONS — anime.js v4
+    ═══════════════════════════════════════ */
     (function() {
       if (!window.anime) return;
       var PRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      /* ── A — Cristallisation : ripple de clarté sur les cartes ── */
+      /* ── A — Cristallisation ripple ── */
       window._crystalize = function(gcEl) {
         if (PRM || !gcEl) return;
         var r = document.createElement('div');
@@ -1564,7 +1526,7 @@
         });
       };
 
-      /* ── C — Révélation organique au scroll (IntersectionObserver) ── */
+      /* ── C — Reveal organique au scroll ── */
       if (!PRM) {
         var io = new IntersectionObserver(function(entries) {
           entries.forEach(function(e) {
@@ -1586,39 +1548,19 @@
         });
       }
 
-      /* ── B — Inclinaison selon vélocité scroll ── */
-      /* ── D — Parallax léger sur cartes révélées ── */
-      var lastSY = window.scrollY, scrollTimer = null;
-      var blocs = Array.prototype.slice.call(document.querySelectorAll('.bloc'));
-
+      /* ── D — Parallax via CSS var --par (no transform override) ── */
+      var lastSY = window.scrollY;
       window.addEventListener('scroll', function() {
         if (PRM) return;
-        var vel = window.scrollY - lastSY;
         lastSY = window.scrollY;
-        var tilt = Math.max(-2.2, Math.min(2.2, vel * 0.16));
-
-        /* B — tilt via CSS variable (transition CSS gère le spring retour) */
-        blocs.forEach(function(b) {
-          b.classList.add('tilting');
-          b.style.setProperty('--rx', tilt + 'deg');
-        });
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(function() {
-          blocs.forEach(function(b) {
-            b.classList.remove('tilting');
-            b.style.setProperty('--rx', '0deg');
-          });
-        }, 90);
-
-        /* D — parallax sur cartes déjà révélées */
         document.querySelectorAll('.gc.revealed').forEach(function(gc) {
           var rect = gc.getBoundingClientRect();
           var prog = (window.innerHeight * 0.5 - (rect.top + rect.height * 0.5)) / window.innerHeight;
-          gc.style.transform = 'translateY(' + (prog * 16).toFixed(1) + 'px)';
+          gc.style.setProperty('--par', (prog * 14).toFixed(1) + 'px');
         });
       }, { passive: true });
 
-      /* ── E — Compteurs spring sur chiffres clés ── */
+      /* ── E — Compteurs spring ── */
       window._animateCounters = function(container) {
         if (PRM) return;
         container.querySelectorAll('.vn, .pk-n').forEach(function(el) {
@@ -1634,7 +1576,7 @@
         });
       };
 
-      /* ── F — Onde d'impact après atterrissage d'un pin ── */
+      /* ── F — Onde d'impact pins carburants ── */
       window._createMapRipple = function(markerEl, color) {
         if (PRM) return;
         var wrap = document.getElementById('fuel-map-wrap');
@@ -1656,6 +1598,44 @@
           onComplete: function() { d.parentNode && d.parentNode.removeChild(d); }
         });
       };
+
+      /* ── C — Gyroscope (mobile) · DeviceOrientation ── */
+      if (!PRM && typeof DeviceOrientationEvent !== 'undefined') {
+        function attachGyro() {
+          var bx = null, by = null;
+          var allGc = document.querySelectorAll('.gc');
+          window.addEventListener('deviceorientation', function(e) {
+            if (bx === null) { bx = e.beta; by = e.gamma; return; }
+            var dx = Math.max(-8, Math.min(8, ((e.beta  || 0) - bx) * 0.35));
+            var dy = Math.max(-8, Math.min(8, ((e.gamma || 0) - by) * 0.35));
+            allGc.forEach(function(gc) {
+              gc.style.setProperty('--tx', dx + 'deg');
+              gc.style.setProperty('--ty', dy + 'deg');
+            });
+          }, { passive: true });
+        }
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          /* iOS 13+ — déclenche sur premier touchstart */
+          document.body.addEventListener('touchstart', function onFirstTouch() {
+            DeviceOrientationEvent.requestPermission()
+              .then(function(s) { if (s === 'granted') attachGyro(); })
+              .catch(function(){});
+            document.body.removeEventListener('touchstart', onFirstTouch);
+          }, { once: true, passive: true });
+        } else {
+          attachGyro();
+        }
+      }
+
+      /* ── C — Tap chromatic aberration flash ── */
+      if (!PRM) {
+        document.addEventListener('touchstart', function(e) {
+          var gc = e.target.closest('.gc');
+          if (!gc) return;
+          gc.classList.add('ca-flash');
+          setTimeout(function() { gc.classList.remove('ca-flash'); }, 280);
+        }, { passive: true });
+      }
 
     })();
   </script>
