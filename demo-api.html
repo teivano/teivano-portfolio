@@ -17,13 +17,13 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:      #eaeaf5;
-      --glass:   rgba(255,255,255,.13);
-      --gb:      rgba(255,255,255,.72);
-      --gblur:   blur(48px) saturate(220%) brightness(1.07);
-      --gshadow: inset 0 2px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(255,255,255,.18),
-                 inset 1px 0 0 rgba(255,255,255,.55), inset -1px 0 0 rgba(255,255,255,.18),
-                 0 32px 80px rgba(0,0,0,.1), 0 8px 24px rgba(0,0,0,.05);
+      --bg:      #e4e4f0;
+      --glass:   rgba(255,255,255,.05);
+      --gb:      rgba(255,255,255,.65);
+      --gblur:   blur(52px) saturate(240%) brightness(1.08);
+      --gshadow: inset 0 2px 0 rgba(255,255,255,.88), inset 0 -1px 0 rgba(255,255,255,.15),
+                 inset 1px 0 0 rgba(255,255,255,.5), inset -1px 0 0 rgba(255,255,255,.15),
+                 0 36px 90px rgba(0,0,0,.12), 0 8px 28px rgba(0,0,0,.06);
       --text:    #18142a;
       --muted:   rgba(0,0,0,.42);
       --accent:  #7c3aed;
@@ -104,14 +104,16 @@
       will-change: transform;
     }
 
-    /* Refraction texture interne */
+    /* Effet lentille — focus center + ombre de bord */
     .gc::before {
       content: '';
       position: absolute; inset: 0; border-radius: inherit;
       background:
-        radial-gradient(ellipse at 25% 18%, rgba(255,255,255,.12) 0%, transparent 55%),
-        radial-gradient(ellipse at 78% 82%, rgba(180,210,255,.08) 0%, transparent 55%);
-      filter: url('#glass-distort');
+        radial-gradient(ellipse at 50% 38%, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 45%, transparent 72%),
+        radial-gradient(ellipse at 18% 14%, rgba(255,255,255,.20) 0%, transparent 40%),
+        radial-gradient(ellipse at 82% 88%, rgba(180,210,255,.10) 0%, transparent 42%),
+        radial-gradient(ellipse at 50% 108%, rgba(0,0,0,.06) 0%, transparent 55%);
+      filter: url('#glass-lens');
       pointer-events: none; z-index: 0;
     }
 
@@ -119,10 +121,10 @@
     .gc::after {
       content: '';
       position: absolute; top: 0; left: 0; right: 0;
-      height: 55%; border-radius: var(--r) var(--r) 60% 60%;
+      height: 60%; border-radius: var(--r) var(--r) 60% 60%;
       background: linear-gradient(to bottom,
-        rgba(255,255,255,.32) 0%,
-        rgba(255,255,255,.1)  50%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.12) 45%,
         transparent           100%);
       pointer-events: none; z-index: 1;
     }
@@ -242,7 +244,7 @@
 
     /* ── Parking grid ── */
     .pk-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,190px),1fr)); gap: .75rem; }
-    .pk { background: rgba(255,255,255,.48); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid rgba(255,255,255,.78); border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,.05); padding: 1rem; }
+    .pk { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.55); border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 4px 14px rgba(0,0,0,.05); padding: 1rem; }
     .pk-nom { font-size: .76rem; font-weight: 500; margin-bottom: .55rem; line-height: 1.3; }
     .pk-n   { font-size: 1.8rem; font-weight: 200; letter-spacing: -.04em; line-height: 1; }
     .pk-s   { font-size: .64rem; color: var(--muted); margin-top: 1px; }
@@ -277,7 +279,7 @@
 
     /* ── Événements ── */
     .ev-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)); gap: 1rem; }
-    .ev-card { background: rgba(255,255,255,.5); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border: 1px solid rgba(255,255,255,.8); border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.06); overflow: hidden; display: flex; flex-direction: column; }
+    .ev-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.55); border-radius: 18px; box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 6px 20px rgba(0,0,0,.05); overflow: hidden; display: flex; flex-direction: column; }
     .ev-img { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg,rgba(109,40,217,.12),rgba(8,145,178,.12)); overflow: hidden; flex-shrink: 0; }
     .ev-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .ev-body { padding: .85rem 1rem 1rem; flex: 1; display: flex; flex-direction: column; gap: .35rem; }
@@ -318,9 +320,10 @@
     .bareme { display: grid; grid-template-columns: repeat(4,1fr); gap: .55rem; }
     @media(max-width:480px) { .bareme { grid-template-columns: repeat(2,1fr); } }
     .palier {
-      background: rgba(255,255,255,.45);
-      border: 1px solid rgba(255,255,255,.75);
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.55);
       border-radius: 14px; padding: .85rem .7rem; text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
       transition: all .35s var(--ease);
     }
     .palier-n   { font-size: .55rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
@@ -382,7 +385,7 @@
     /* Fiche technique */
     .spec-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .55rem; }
     @media(max-width:480px) { .spec-grid { grid-template-columns: repeat(2,1fr); } }
-    .spec-card { background: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.75); border-radius: 14px; padding: .85rem .7rem; text-align: center; }
+    .spec-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.55); border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.65); padding: .85rem .7rem; text-align: center; }
     .spec-ico { font-size: 1.2rem; margin-bottom: .35rem; }
     .spec-val { font-size: 1.15rem; font-weight: 300; letter-spacing: -.02em; line-height: 1; }
     .spec-lbl { font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
@@ -416,7 +419,7 @@
 
     .fuel-header { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
     .fuel-list { display: flex; flex-direction: column; gap: .5rem; }
-    .fuel-item { display: flex; align-items: center; gap: .85rem; background: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.75); border-radius: 14px; padding: .75rem 1rem; }
+    .fuel-item { display: flex; align-items: center; gap: .85rem; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.55); border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.65); padding: .75rem 1rem; }
     .fuel-rank { font-size: .7rem; font-weight: 600; color: var(--muted); min-width: 18px; text-align: center; }
     .fuel-info { flex: 1; min-width: 0; }
     .fuel-brand { font-size: .78rem; font-weight: 500; }
@@ -478,9 +481,10 @@
     }
     .nav-pill {
       display: flex; align-items: center; gap: .15rem;
-      background: rgba(255,255,255,.15);
-      backdrop-filter: blur(48px) saturate(220%) brightness(1.08);
-      -webkit-backdrop-filter: blur(48px) saturate(220%) brightness(1.08);
+      position: relative;
+      background: rgba(255,255,255,.12);
+      backdrop-filter: blur(52px) saturate(240%) brightness(1.08);
+      -webkit-backdrop-filter: blur(52px) saturate(240%) brightness(1.08);
       border: 1px solid rgba(255,255,255,.72);
       border-radius: 50px;
       box-shadow: inset 0 2px 0 rgba(255,255,255,.88),
@@ -491,21 +495,28 @@
       padding: .38rem .42rem;
       animation: iri-border 9s ease-in-out infinite;
     }
+    /* Bulle glissante */
+    .nav-bubble {
+      position: absolute;
+      top: .38rem;
+      height: calc(100% - .76rem);
+      background: rgba(255,255,255,.82);
+      border-radius: 40px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 10px rgba(0,0,0,.1);
+      pointer-events: none; z-index: 0;
+      will-change: left, width;
+    }
     .nav-btn {
       display: flex; flex-direction: column; align-items: center; gap: .22rem;
       padding: .52rem .9rem; border: none; border-radius: 40px;
-      background: transparent; cursor: pointer;
-      transition: background .2s cubic-bezier(0.16,1,0.3,1), color .2s, transform .15s;
+      background: transparent; cursor: pointer; position: relative; z-index: 1;
+      transition: color .2s cubic-bezier(0.16,1,0.3,1), transform .15s;
       color: var(--muted); text-decoration: none;
       -webkit-tap-highlight-color: transparent;
     }
     .nav-btn svg { width: 19px; height: 19px; flex-shrink: 0; transition: transform .25s cubic-bezier(0.16,1,0.3,1); }
     .nav-btn span { font-size: .56rem; letter-spacing: .07em; font-weight: 500; line-height: 1; }
-    .nav-btn.active {
-      background: rgba(255,255,255,.72);
-      color: var(--accent);
-      box-shadow: 0 2px 10px rgba(0,0,0,.09);
-    }
+    .nav-btn.active { color: var(--accent); }
     .nav-btn.active svg { transform: scale(1.12); }
     .nav-btn:active { transform: scale(.9); }
 
@@ -524,18 +535,19 @@
   <!-- SVG filters Liquid Glass -->
   <svg id="glass-filters" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
     <defs>
-      <filter id="glass-distort" x="-5%" y="-5%" width="110%" height="110%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.85 0.8" numOctaves="1" seed="5" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G"/>
+      <!-- Distorsion lentille : grandes vagues basses fréquence = effet loupe sur les bords -->
+      <filter id="glass-lens" x="-8%" y="-8%" width="116%" height="116%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.018 0.022" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
     </defs>
   </svg>
 
   <div class="blobs" aria-hidden="true">
-    <div class="blob" style="width:480px;height:480px;top:-18%;left:-12%;background:radial-gradient(#a78bfa,#6d28d9);filter:blur(85px);opacity:.38;animation:bm1 14s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:380px;height:380px;bottom:5%;right:-10%;background:radial-gradient(#67e8f9,#0891b2);filter:blur(78px);opacity:.35;animation:bm2 12s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:300px;height:300px;top:45%;left:38%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(70px);opacity:.22;animation:bm3 10s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:250px;height:250px;top:25%;right:12%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(65px);opacity:.28;animation:bm1 11s ease-in-out infinite alternate-reverse"></div>
+    <div class="blob" style="width:520px;height:520px;top:-16%;left:-14%;background:radial-gradient(#b89dff,#6d28d9);filter:blur(55px);opacity:.58;animation:bm1 14s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:420px;height:420px;bottom:4%;right:-12%;background:radial-gradient(#7de8f9,#0891b2);filter:blur(50px);opacity:.52;animation:bm2 12s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:320px;height:320px;top:44%;left:36%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(52px);opacity:.34;animation:bm3 10s ease-in-out infinite alternate"></div>
+    <div class="blob" style="width:280px;height:280px;top:22%;right:10%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(48px);opacity:.42;animation:bm1 11s ease-in-out infinite alternate-reverse"></div>
   </div>
 
   <div class="wrap">
@@ -796,6 +808,7 @@
 
     <nav id="island-nav" aria-label="Navigation rapide">
       <div class="nav-pill">
+        <div id="nav-bubble" class="nav-bubble"></div>
         <a class="nav-btn active" href="#s-transport" id="nav-transport">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span>Rennes</span>
@@ -1733,8 +1746,51 @@
 
     })();
 
-    /* ── Island nav — active state au scroll ── */
+    /* ── Island nav — bulle glissante + active state au scroll ── */
     (function() {
+      var bubble = document.getElementById('nav-bubble');
+      var pill   = document.querySelector('.nav-pill');
+
+      function moveBubbleTo(btn) {
+        if (!bubble || !pill || !btn) return;
+        var pR = pill.getBoundingClientRect();
+        var bR = btn.getBoundingClientRect();
+        var toLeft  = bR.left - pR.left;
+        var toWidth = bR.width;
+        if (!window.anime) {
+          bubble.style.left  = toLeft  + 'px';
+          bubble.style.width = toWidth + 'px';
+          return;
+        }
+        anime.animate(bubble, {
+          left:  toLeft,
+          width: toWidth,
+          duration: 500,
+          easing: 'spring(1, 68, 10, 8)'
+        });
+      }
+
+      /* Position initiale */
+      requestAnimationFrame(function() {
+        var first = document.querySelector('.nav-btn.active');
+        if (first && bubble && pill) {
+          var pR = pill.getBoundingClientRect();
+          var bR = first.getBoundingClientRect();
+          bubble.style.left  = (bR.left - pR.left) + 'px';
+          bubble.style.width = bR.width + 'px';
+        }
+      });
+
+      /* Click direct */
+      document.querySelectorAll('.nav-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+          moveBubbleTo(btn);
+        });
+      });
+
+      /* Scroll auto-highlight */
       var sMap = {
         's-transport': 'nav-transport',
         's-trains':    'nav-trains',
@@ -1748,6 +1804,7 @@
           if (!btn) return;
           document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
           btn.classList.add('active');
+          moveBubbleTo(btn);
         });
       }, { threshold: 0.35 });
       Object.keys(sMap).forEach(function(id) {
