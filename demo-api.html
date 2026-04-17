@@ -17,12 +17,13 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:      #f0f0f8;
-      --glass:   rgba(255,255,255,.38);
-      --gb:      rgba(255,255,255,.82);
-      --gblur:   blur(32px) saturate(190%) brightness(1.06);
-      --gshadow: inset 0 1.5px 0 rgba(255,255,255,.95), inset 0 -.5px 0 rgba(255,255,255,.3),
-                 0 24px 64px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
+      --bg:      #eaeaf5;
+      --glass:   rgba(255,255,255,.13);
+      --gb:      rgba(255,255,255,.72);
+      --gblur:   blur(48px) saturate(220%) brightness(1.07);
+      --gshadow: inset 0 2px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(255,255,255,.18),
+                 inset 1px 0 0 rgba(255,255,255,.55), inset -1px 0 0 rgba(255,255,255,.18),
+                 0 32px 80px rgba(0,0,0,.1), 0 8px 24px rgba(0,0,0,.05);
       --text:    #18142a;
       --muted:   rgba(0,0,0,.42);
       --accent:  #7c3aed;
@@ -50,7 +51,7 @@
     .wrap {
       position: relative; z-index: 1;
       max-width: 920px; margin: 0 auto;
-      padding: 0 clamp(1.2rem,5vw,3rem) 4rem;
+      padding: 0 clamp(1.2rem,5vw,3rem) calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     /* ── Header ── */
@@ -103,20 +104,35 @@
       will-change: transform;
     }
 
-    /* Specular highlight ambiant — toujours visible, top-left */
+    /* Refraction texture interne */
+    .gc::before {
+      content: '';
+      position: absolute; inset: 0; border-radius: inherit;
+      background:
+        radial-gradient(ellipse at 25% 18%, rgba(255,255,255,.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 78% 82%, rgba(180,210,255,.08) 0%, transparent 55%);
+      filter: url('#glass-distort');
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Specular edge — top bright, sides & bottom subtils */
     .gc::after {
       content: '';
       position: absolute; top: 0; left: 0; right: 0;
-      height: 40%; border-radius: var(--r) var(--r) 60% 60%;
-      background: linear-gradient(to bottom, rgba(255,255,255,.18), transparent);
+      height: 55%; border-radius: var(--r) var(--r) 60% 60%;
+      background: linear-gradient(to bottom,
+        rgba(255,255,255,.32) 0%,
+        rgba(255,255,255,.1)  50%,
+        transparent           100%);
       pointer-events: none; z-index: 1;
     }
 
     @keyframes iri-border {
-      0%,100% { border-color: rgba(255,255,255,.82); }
-      25%     { border-color: rgba(200,182,255,.76); }
-      50%     { border-color: rgba(160,220,255,.76); }
-      75%     { border-color: rgba(220,245,255,.80); }
+      0%,100% { border-color: rgba(255,255,255,.72); }
+      20%     { border-color: rgba(220,195,255,.84); }
+      40%     { border-color: rgba(155,225,255,.84); }
+      60%     { border-color: rgba(185,255,230,.80); }
+      80%     { border-color: rgba(255,220,195,.80); }
     }
 
     /* Tap — chromatic aberration flash */
@@ -448,15 +464,72 @@
     /* ── Footer ── */
     footer { text-align: center; padding: 1rem 0 2rem; font-size: .62rem; color: var(--muted); letter-spacing: .1em; }
 
+    /* ── Dynamic Island nav ── */
+    #island-nav {
+      position: fixed;
+      bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+      left: 50%; transform: translateX(-50%);
+      z-index: 500;
+      animation: island-appear .7s cubic-bezier(0.16,1,0.3,1) .4s both;
+    }
+    @keyframes island-appear {
+      from { transform: translateX(-50%) translateY(90px); opacity: 0; }
+      to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+    }
+    .nav-pill {
+      display: flex; align-items: center; gap: .15rem;
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(48px) saturate(220%) brightness(1.08);
+      -webkit-backdrop-filter: blur(48px) saturate(220%) brightness(1.08);
+      border: 1px solid rgba(255,255,255,.72);
+      border-radius: 50px;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.88),
+                  inset 0 -1px 0 rgba(255,255,255,.18),
+                  inset 1px 0 0 rgba(255,255,255,.55),
+                  inset -1px 0 0 rgba(255,255,255,.18),
+                  0 20px 56px rgba(0,0,0,.18), 0 4px 14px rgba(0,0,0,.1);
+      padding: .38rem .42rem;
+      animation: iri-border 9s ease-in-out infinite;
+    }
+    .nav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: .22rem;
+      padding: .52rem .9rem; border: none; border-radius: 40px;
+      background: transparent; cursor: pointer;
+      transition: background .2s cubic-bezier(0.16,1,0.3,1), color .2s, transform .15s;
+      color: var(--muted); text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn svg { width: 19px; height: 19px; flex-shrink: 0; transition: transform .25s cubic-bezier(0.16,1,0.3,1); }
+    .nav-btn span { font-size: .56rem; letter-spacing: .07em; font-weight: 500; line-height: 1; }
+    .nav-btn.active {
+      background: rgba(255,255,255,.72);
+      color: var(--accent);
+      box-shadow: 0 2px 10px rgba(0,0,0,.09);
+    }
+    .nav-btn.active svg { transform: scale(1.12); }
+    .nav-btn:active { transform: scale(.9); }
+
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
       .gc { transform: none !important; transition: none !important; animation: none !important; }
       .lbar-wave { animation: none !important; }
       .metro-svg { animation: none !important; }
+      #island-nav { animation: none !important; }
+      .nav-pill   { animation: none !important; }
     }
   </style>
 </head>
 <body>
+
+  <!-- SVG filters Liquid Glass -->
+  <svg id="glass-filters" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <filter id="glass-distort" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85 0.8" numOctaves="1" seed="5" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
 
   <div class="blobs" aria-hidden="true">
     <div class="blob" style="width:480px;height:480px;top:-18%;left:-12%;background:radial-gradient(#a78bfa,#6d28d9);filter:blur(85px);opacity:.38;animation:bm1 14s ease-in-out infinite alternate"></div>
@@ -479,7 +552,7 @@
     </header>
 
     <!-- ══ BLOC 1 — Transports STAR ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-transport">
       <div class="bloc-hd">01 · Transports STAR</div>
       <div class="bento">
 
@@ -558,7 +631,7 @@
     </section>
 
     <!-- ══ BLOC 2 — Parcs Relais ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-parking">
       <div class="bloc-hd">02 · Parcs Relais STAR</div>
       <div class="gc">
         <div class="ch">
@@ -572,7 +645,7 @@
     </section>
 
     <!-- ══ BLOC 3 — Trains SNCF ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-trains">
       <div class="bloc-hd">03 · Trains depuis Rennes · SNCF</div>
       <div class="gc">
         <div class="ch">
@@ -586,7 +659,7 @@
     </section>
 
     <!-- ══ BLOC 4 — Image satellite ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-satellite">
       <div class="bloc-hd">04 · Image satellite · Esri + BAN</div>
       <div class="gc">
         <div class="ch">
@@ -600,7 +673,7 @@
     </section>
 
     <!-- ══ BLOC 5 — Événements ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-events">
       <div class="bloc-hd">05 · Événements à Rennes</div>
       <div class="gc">
         <div class="ch">
@@ -614,7 +687,7 @@
     </section>
 
     <!-- ══ BLOC 6 — Calculateur kilométrique ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-kilo">
       <div class="bloc-hd">06 · Calculateur de frais kilométriques</div>
       <div class="gc">
         <div class="ch">
@@ -633,7 +706,7 @@
     </section>
 
     <!-- ══ BLOC 7 — Fiche Technique Véhicule ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-vehicle">
       <div class="bloc-hd">07 · Fiche Technique Véhicule</div>
       <div class="gc">
         <div class="ch">
@@ -685,7 +758,7 @@
     </section>
 
     <!-- ══ BLOC 8 — Prix Carburants ══ -->
-    <section class="bloc">
+    <section class="bloc" id="s-carbu">
       <div class="bloc-hd">08 · Prix des Carburants</div>
       <div class="gc">
         <div class="ch">
@@ -720,6 +793,27 @@
         <div id="fuel-list-wrap" style="display:none"></div>
       </div>
     </section>
+
+    <nav id="island-nav" aria-label="Navigation rapide">
+      <div class="nav-pill">
+        <a class="nav-btn active" href="#s-transport" id="nav-transport">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Rennes</span>
+        </a>
+        <a class="nav-btn" href="#s-trains" id="nav-trains">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16M12 3v8M8 19l-2 3M16 19l2 3"/></svg>
+          <span>Trains</span>
+        </a>
+        <a class="nav-btn" href="#s-vehicle" id="nav-vehicle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M3 17h4m6 0h4m2 0h1v-4l-2-5H6L4 13v4h1M6 13h12"/></svg>
+          <span>Auto</span>
+        </a>
+        <a class="nav-btn" href="#s-carbu" id="nav-carbu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l3-5h12l3 5v14H3z"/><path d="M3 13h18M10 8v5M14 8v5"/></svg>
+          <span>Carbu</span>
+        </a>
+      </div>
+    </nav>
 
     <footer>
       Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
@@ -1637,6 +1731,29 @@
         }, { passive: true });
       }
 
+    })();
+
+    /* ── Island nav — active state au scroll ── */
+    (function() {
+      var sMap = {
+        's-transport': 'nav-transport',
+        's-trains':    'nav-trains',
+        's-vehicle':   'nav-vehicle',
+        's-carbu':     'nav-carbu'
+      };
+      var navIO = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (!e.isIntersecting) return;
+          var btn = document.getElementById(sMap[e.target.id]);
+          if (!btn) return;
+          document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+        });
+      }, { threshold: 0.35 });
+      Object.keys(sMap).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) navIO.observe(el);
+      });
     })();
   </script>
 </body>
