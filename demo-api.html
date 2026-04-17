@@ -948,19 +948,20 @@
     }
 
     /* Cache localStorage STAR (TTL 90s) */
-    function starApi(key, url) {
+    function starApi(key, url, ttl) {
+      ttl = ttl || 90000;
       try {
         var raw = localStorage.getItem('star_' + key);
         if (raw) {
           var obj = JSON.parse(raw);
-          if (Date.now() - obj.ts < 90000) return Promise.resolve(obj.data);
+          if (Date.now() - obj.ts < ttl) return Promise.resolve(obj.data);
         }
       } catch(_) {}
       return fetch(url)
         .then(function(r) {
           if (r.status === 429) {
-            try { var fb = JSON.parse(localStorage.getItem('star_' + key)); if (fb) return fb.data; } catch(_) {}
-            throw new Error('Rate limit (429)');
+            try { var fb = JSON.parse(localStorage.getItem('star_' + key)); if (fb && fb.data) return fb.data; } catch(_) {}
+            throw new Error('429');
           }
           if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
@@ -1280,7 +1281,8 @@
       try {
         var d = await starApi('events',
           STAR + '/evenements-rennes-en-temps-reel/records'
-          + '?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut'
+          + '?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut',
+          300000  /* TTL 5 min — événements changent rarement */
         );
         stamp('ev');
         if (!d.results || !d.results.length) {
@@ -1310,7 +1312,17 @@
         });
         document.getElementById('events').innerHTML = html + '</div>';
         var _gc = gcOf('events'); if (_gc && window._crystalize) window._crystalize(_gc);
-      } catch(e) { err('events', e.message); }
+      } catch(e) {
+        var evEl = document.getElementById('events');
+        if (e.message === '429') {
+          evEl.innerHTML = '<div style="font-size:.76rem;color:var(--muted)">'
+            + 'Quota API temporairement atteint. '
+            + '<span style="cursor:pointer;color:var(--accent);text-decoration:underline" onclick="loadEvents()">Réessayer</span>'
+            + '</div>';
+        } else {
+          err('events', e.message);
+        }
+      }
     }
 
     /* ═══════════════════════════════════════
