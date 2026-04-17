@@ -42,6 +42,7 @@
 
     /* ── Background blobs ── */
     .blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .blob-layer { position: absolute; }
     .blob  { position: absolute; border-radius: 50%; }
     @keyframes bm1{from{transform:translate(0,0)}to{transform:translate(4%,7%)}}
     @keyframes bm2{from{transform:translate(0,0)}to{transform:translate(-5%,-4%)}}
@@ -210,8 +211,12 @@
       background: linear-gradient(135deg,rgba(109,40,217,.06),rgba(8,145,178,.06));
       padding: .6rem .4rem .2rem;
     }
-    .metro-svg { width: 100%; height: auto; display: block; animation: trainIdle 5s ease-in-out infinite; }
-    @keyframes trainIdle { 0%,100%{transform:translateX(0)} 40%,60%{transform:translateX(-3px)} }
+    .metro-svg { width: 100%; height: auto; display: block; }
+    @keyframes trainPass {
+      from { transform: translateX(812px); }
+      to   { transform: translateX(-572px); }
+    }
+    #metro-train-group { animation: trainPass 11s linear infinite; }
 
     /* ── Metro split ── */
     .metro-split { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
@@ -525,6 +530,7 @@
       .gc { transform: none !important; transition: none !important; animation: none !important; }
       .lbar-wave { animation: none !important; }
       .metro-svg { animation: none !important; }
+      #metro-train-group { animation: none !important; transform: translateX(60px) !important; }
       #island-nav { animation: none !important; }
       .nav-pill   { animation: none !important; }
     }
@@ -544,10 +550,18 @@
   </svg>
 
   <div class="blobs" aria-hidden="true">
-    <div class="blob" style="width:520px;height:520px;top:-16%;left:-14%;background:radial-gradient(#b89dff,#6d28d9);filter:blur(55px);opacity:.58;animation:bm1 14s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:420px;height:420px;bottom:4%;right:-12%;background:radial-gradient(#7de8f9,#0891b2);filter:blur(50px);opacity:.52;animation:bm2 12s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:320px;height:320px;top:44%;left:36%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(52px);opacity:.34;animation:bm3 10s ease-in-out infinite alternate"></div>
-    <div class="blob" style="width:280px;height:280px;top:22%;right:10%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(48px);opacity:.42;animation:bm1 11s ease-in-out infinite alternate-reverse"></div>
+    <div class="blob-layer" data-speed="0.06" style="top:-16%;left:-14%">
+      <div class="blob" style="width:520px;height:520px;background:radial-gradient(#b89dff,#6d28d9);filter:blur(55px);opacity:.58;animation:bm1 14s ease-in-out infinite alternate"></div>
+    </div>
+    <div class="blob-layer" data-speed="-0.04" style="bottom:4%;right:-12%">
+      <div class="blob" style="width:420px;height:420px;background:radial-gradient(#7de8f9,#0891b2);filter:blur(50px);opacity:.52;animation:bm2 12s ease-in-out infinite alternate"></div>
+    </div>
+    <div class="blob-layer" data-speed="0.09" style="top:52%;right:2%">
+      <div class="blob" style="width:300px;height:300px;background:radial-gradient(#818cf8,#4338ca);filter:blur(52px);opacity:.46;animation:bm3 10s ease-in-out infinite alternate"></div>
+    </div>
+    <div class="blob-layer" data-speed="-0.05" style="top:22%;right:10%">
+      <div class="blob" style="width:280px;height:280px;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(48px);opacity:.42;animation:bm1 11s ease-in-out infinite alternate-reverse"></div>
+    </div>
   </div>
 
   <div class="wrap">
@@ -576,31 +590,87 @@
             <span class="ch-ts" id="ts-metro">—</span>
           </div>
           <div class="metro-train-wrap" aria-hidden="true">
-            <svg class="metro-svg" viewBox="0 0 290 70" xmlns="http://www.w3.org/2000/svg">
+            <svg class="metro-svg" viewBox="0 0 800 88" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="mg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#6d28d9"/><stop offset="100%" stop-color="#0891b2"/>
+                  <stop offset="0%" stop-color="#5b21b6"/><stop offset="100%" stop-color="#0e7490"/>
+                </linearGradient>
+                <linearGradient id="mgt" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(255,255,255,.22)"/><stop offset="100%" stop-color="transparent"/>
                 </linearGradient>
                 <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(220,245,255,.92)"/><stop offset="100%" stop-color="rgba(165,215,240,.72)"/>
+                  <stop offset="0%" stop-color="rgba(210,240,255,.92)"/><stop offset="100%" stop-color="rgba(150,210,240,.70)"/>
                 </linearGradient>
               </defs>
-              <rect x="0" y="67" width="290" height="2" rx="1" fill="rgba(0,0,0,.1)"/>
-              <path d="M38,7 L264,7 Q278,7 278,20 L278,53 Q278,65 264,65 L38,65 Q22,65 14,56 L6,36 L14,17 Q22,7 38,7 Z" fill="url(#mg)"/>
-              <path d="M38,7 L264,7 Q278,7 278,20 L278,26 L14,20 L16,13 Q24,7 38,7 Z" fill="rgba(255,255,255,.18)"/>
-              <rect x="46" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
-              <rect x="94" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
-              <rect x="142" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
-              <rect x="190" y="12" width="40" height="20" rx="4" fill="url(#wg)"/>
-              <rect x="238" y="12" width="32" height="20" rx="4" fill="url(#wg)"/>
-              <line x1="91"  y1="36" x2="91"  y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
-              <line x1="139" y1="36" x2="139" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
-              <line x1="187" y1="36" x2="187" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
-              <line x1="235" y1="36" x2="235" y2="65" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
-              <ellipse cx="9" cy="36" rx="4" ry="6" fill="rgba(255,235,130,.9)"/>
-              <ellipse cx="75"  cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
-              <ellipse cx="163" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
-              <ellipse cx="251" cy="65" rx="6" ry="4" fill="rgba(40,20,70,.4)"/>
+              <!-- Rails -->
+              <rect x="0" y="80" width="800" height="2.5" rx="1.25" fill="rgba(0,0,0,.15)"/>
+              <rect x="0" y="84" width="800" height="1.5" rx=".75" fill="rgba(0,0,0,.08)"/>
+              <!-- Train — 3 rames -->
+              <g id="metro-train-group">
+                <!-- RAME 3 arrière -->
+                <rect x="382" y="14" width="168" height="58" rx="9" fill="url(#mg)"/>
+                <rect x="382" y="14" width="168" height="20" rx="9" fill="url(#mgt)"/>
+                <rect x="397" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="440" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="483" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="526" y="23" width="16" height="22" rx="4" fill="url(#wg)"/>
+                <line x1="471" y1="34" x2="471" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+                <rect x="396" y="48" width="150" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
+                <rect x="404" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="508" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="416" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="430" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="520" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="534" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <!-- Soufflet 3→2 -->
+                <rect x="363" y="24" width="21" height="36" rx="3" fill="rgba(55,18,110,.7)"/>
+                <line x1="366" y1="30" x2="382" y2="30" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="366" y1="36" x2="382" y2="36" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="366" y1="42" x2="382" y2="42" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="366" y1="48" x2="382" y2="48" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="366" y1="54" x2="382" y2="54" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <!-- RAME 2 milieu -->
+                <rect x="190" y="14" width="175" height="58" rx="9" fill="url(#mg)"/>
+                <rect x="190" y="14" width="175" height="20" rx="9" fill="url(#mgt)"/>
+                <rect x="205" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="248" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="291" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="334" y="23" width="23" height="22" rx="4" fill="url(#wg)"/>
+                <line x1="280" y1="34" x2="280" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+                <rect x="204" y="48" width="157" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
+                <rect x="212" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="315" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="224" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="238" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="327" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="341" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <!-- Soufflet 2→1 -->
+                <rect x="171" y="24" width="21" height="36" rx="3" fill="rgba(55,18,110,.7)"/>
+                <line x1="174" y1="30" x2="190" y2="30" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="174" y1="36" x2="190" y2="36" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="174" y1="42" x2="190" y2="42" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="174" y1="48" x2="190" y2="48" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <line x1="174" y1="54" x2="190" y2="54" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+                <!-- RAME 1 avant — nez biseauté -->
+                <path d="M26,14 L163,14 Q172,14 172,23 L172,63 Q172,72 163,72 L42,72 Q30,72 22,63 L10,43 Q6,39 10,33 L22,23 Q30,14 42,14 Z" fill="url(#mg)"/>
+                <path d="M42,14 L163,14 Q172,14 172,23 L172,34 L26,32 L22,27 Q30,14 42,14 Z" fill="rgba(255,255,255,.2)"/>
+                <!-- Phare avant -->
+                <ellipse cx="11" cy="38" rx="4" ry="6.5" fill="rgba(255,242,130,.95)"/>
+                <ellipse cx="11" cy="38" rx="2" ry="3" fill="rgba(255,255,200,.98)"/>
+                <!-- Fenêtres rame 1 -->
+                <rect x="38" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="78" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
+                <rect x="118" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
+                <line x1="157" y1="32" x2="157" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+                <rect x="26" y="48" width="146" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
+                <!-- Bogies rame 1 -->
+                <rect x="42" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="122" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
+                <rect x="54" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="68" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="134" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+                <rect x="148" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+              </g>
             </svg>
           </div>
           <div class="metro-split">
@@ -1655,15 +1725,19 @@
         });
       }
 
-      /* ── D — Parallax via CSS var --par (no transform override) ── */
-      var lastSY = window.scrollY;
+      /* ── D — Parallax cards + blobs ── */
+      var blobLayers = document.querySelectorAll('.blob-layer');
       window.addEventListener('scroll', function() {
         if (PRM) return;
-        lastSY = window.scrollY;
+        var sy = window.scrollY;
         document.querySelectorAll('.gc.revealed').forEach(function(gc) {
           var rect = gc.getBoundingClientRect();
           var prog = (window.innerHeight * 0.5 - (rect.top + rect.height * 0.5)) / window.innerHeight;
           gc.style.setProperty('--par', (prog * 14).toFixed(1) + 'px');
+        });
+        blobLayers.forEach(function(layer) {
+          var speed = parseFloat(layer.dataset.speed) || 0.05;
+          layer.style.transform = 'translateY(' + (sy * speed).toFixed(1) + 'px)';
         });
       }, { passive: true });
 
