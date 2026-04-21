@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transports · Rennes — TLB</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%237c3aed'><animate attributeName='fill' values='%237c3aed;%232563eb;%23059669;%23dc2626;%237c3aed' dur='4s' repeatCount='indefinite'/></rect><text x='32' y='46' font-family='system-ui,Arial Black,sans-serif' font-size='28' font-weight='900' fill='white' text-anchor='middle' letter-spacing='-1'>TLB</text></svg>">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --a:      #E87722;
+      --b:      #0065BD;
+      --glass:  rgba(255,255,255,.12);
+      --gblur:  blur(28px) saturate(200%) brightness(1.08);
+      --gshadow: inset 0 2px 0 rgba(255,255,255,.85), inset 0 -1px 0 rgba(255,255,255,.12),
+                 inset 1px 0 0 rgba(255,255,255,.45), inset -1px 0 0 rgba(255,255,255,.12),
+                 0 8px 32px rgba(0,0,0,.13), 0 2px 10px rgba(0,0,0,.07);
+      --r: 18px;
+    }
+
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+      background: #d8d8ea;
+    }
+
+    /* ── Map ── */
+    #map {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    /* ── Header ── */
+    .t-header {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      display: flex; align-items: center; gap: .75rem;
+      padding: .55rem 1.1rem;
+      background: var(--glass);
+      backdrop-filter: var(--gblur);
+      -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 50px;
+      box-shadow: var(--gshadow);
+      white-space: nowrap;
+    }
+    .t-back {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .75rem; font-weight: 600;
+      color: rgba(30,20,50,.65);
+      text-decoration: none;
+      padding: .2rem .5rem;
+      border-radius: 20px;
+      transition: background .15s, color .15s;
+    }
+    .t-back:hover { background: rgba(0,0,0,.06); color: rgba(30,20,50,.9); }
+    .t-back svg { flex-shrink: 0; }
+    .t-sep { width: 1px; height: 18px; background: rgba(0,0,0,.12); }
+    .t-title {
+      font-size: .82rem; font-weight: 700;
+      color: rgba(20,10,40,.8);
+      letter-spacing: -.01em;
+    }
+    .t-badge {
+      font-size: .65rem; font-weight: 600; letter-spacing: .04em;
+      padding: .18rem .55rem; border-radius: 20px;
+      color: #fff;
+    }
+    .t-badge.a { background: var(--a); }
+    .t-badge.b { background: var(--b); }
+
+    /* ── Legend / status panel ── */
+    .t-panel {
+      position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      display: flex; flex-direction: column; gap: .55rem;
+      padding: .9rem 1.2rem;
+      background: var(--glass);
+      backdrop-filter: var(--gblur);
+      -webkit-backdrop-filter: var(--gblur);
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: var(--r);
+      box-shadow: var(--gshadow);
+      min-width: 240px; max-width: 92vw;
+    }
+    .t-panel-row {
+      display: flex; align-items: center; gap: .65rem;
+    }
+    .t-line-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .t-line-label {
+      font-size: .72rem; font-weight: 600; color: rgba(20,10,40,.75);
+      flex: 1;
+    }
+    .t-train-count {
+      font-size: .7rem; color: rgba(20,10,40,.45);
+      background: rgba(0,0,0,.06); border-radius: 20px;
+      padding: .1rem .45rem;
+    }
+    .t-status {
+      font-size: .65rem; color: rgba(20,10,40,.45);
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .t-status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #10b981; flex-shrink: 0;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    .t-status-dot.error { background: #ef4444; animation: none; }
+    .t-status-dot.loading { background: #f59e0b; }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(.75); }
+    }
+
+    /* ── Train markers ── */
+    .train-marker {
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+      transition: filter .2s;
+    }
+    .train-marker:hover {
+      filter: drop-shadow(0 3px 10px rgba(0,0,0,.5));
+    }
+    .train-marker svg { display: block; }
+
+    /* ── Station labels (popup) ── */
+    .maplibregl-popup-content {
+      background: rgba(255,255,255,.85) !important;
+      backdrop-filter: blur(20px) !important;
+      -webkit-backdrop-filter: blur(20px) !important;
+      border-radius: 12px !important;
+      border: 1px solid rgba(255,255,255,.6) !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,.15) !important;
+      padding: .55rem .85rem !important;
+      font-family: system-ui, sans-serif;
+      font-size: .72rem; font-weight: 600;
+      color: rgba(20,10,40,.8);
+    }
+    .maplibregl-popup-tip { display: none !important; }
+    .maplibregl-popup-close-button { font-size: .85rem; top: 4px; right: 6px; color: rgba(0,0,0,.4); }
+    .popup-line { font-size: .62rem; font-weight: 400; color: rgba(20,10,40,.45); margin-top: 2px; }
+
+    @media (max-width: 440px) {
+      .t-header { top: .75rem; padding: .45rem .85rem; gap: .5rem; }
+      .t-title { font-size: .75rem; }
+      .t-panel { bottom: .75rem; padding: .75rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Header -->
+  <header class="t-header" role="banner">
+    <a class="t-back" href="/index.html">
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13L5 8l5-5"/>
+      </svg>
+      Accueil
+    </a>
+    <div class="t-sep" aria-hidden="true"></div>
+    <span class="t-title">🚇 Transports · Rennes</span>
+    <span class="t-badge a" title="Ligne A">A</span>
+    <span class="t-badge b" title="Ligne B">B</span>
+  </header>
+
+  <!-- Legend / Status -->
+  <aside class="t-panel" aria-label="Légende et statut">
+    <div class="t-panel-row">
+      <div class="t-line-dot" style="background:var(--a)"></div>
+      <span class="t-line-label">Ligne A · La Poterie ↔ Kennedy</span>
+      <span class="t-train-count" id="count-a">—</span>
+    </div>
+    <div class="t-panel-row">
+      <div class="t-line-dot" style="background:var(--b)"></div>
+      <span class="t-line-label">Ligne B · Saint-Jacques ↔ Cesson</span>
+      <span class="t-train-count" id="count-b">—</span>
+    </div>
+    <div class="t-status">
+      <div class="t-status-dot loading" id="status-dot"></div>
+      <span id="status-txt">Chargement…</span>
+    </div>
+  </aside>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
+    var COLOR_A = '#E87722';
+    var COLOR_B = '#0065BD';
+    var POLL_MS = 30000; // 30s
+
+    // State
+    var topology = {}; // {line: {stopName: {lng, lat, rang}}}
+    var schedule = {}; // {tripId: {line, stops:[{name,ts,lng,lat}]}}
+    var markers  = {}; // {tripId: maplibregl.Marker}
+    var map, rafId;
+
+    /* ─── Map init ─── */
+    map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          carto: {
+            type: 'raster',
+            tiles: ['https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                    'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                    'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'],
+            tileSize: 256,
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>'
+          }
+        },
+        layers: [{ id: 'carto', type: 'raster', source: 'carto' }]
+      },
+      center: [-1.6778, 48.1173],
+      zoom: 13,
+      minZoom: 11,
+      maxZoom: 18
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    /* ─── Helpers ─── */
+    function getCoords(raw) {
+      if (!raw) return null;
+      if (typeof raw.lon === 'number' && typeof raw.lat === 'number') return { lng: raw.lon, lat: raw.lat };
+      if (raw.coordinates && raw.coordinates.length === 2) return { lng: raw.coordinates[0], lat: raw.coordinates[1] };
+      return null;
+    }
+
+    function normLine(s) { return (s || '').toLowerCase().trim(); }
+
+    function setStatus(msg, state) {
+      document.getElementById('status-txt').textContent = msg;
+      var dot = document.getElementById('status-dot');
+      dot.className = 't-status-dot' + (state ? ' ' + state : '');
+    }
+
+    function updateCounts() {
+      var ca = 0, cb = 0;
+      Object.values(schedule).forEach(function(trip) {
+        var pos = tripPosition(trip);
+        if (!pos) return;
+        if (trip.line === 'a') ca++;
+        else if (trip.line === 'b') cb++;
+      });
+      document.getElementById('count-a').textContent = ca + ' métro' + (ca > 1 ? 's' : '');
+      document.getElementById('count-b').textContent = cb + ' métro' + (cb > 1 ? 's' : '');
+    }
+
+    /* ─── Topology fetch ─── */
+    function fetchTopology() {
+      return fetch(STAR + '/tco-metro-topologie-stations-td/records?limit=100&order_by=rang')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          (d.results || []).forEach(function(rec) {
+            var line = normLine(rec.nomcourtligne);
+            var name = rec.nomarret;
+            var rang = parseInt(rec.rang, 10);
+            var coords = getCoords(rec.coordonnees);
+            if (!line || !name || !coords || isNaN(rang)) return;
+            if (!topology[line]) topology[line] = {};
+            topology[line][name] = { lng: coords.lng, lat: coords.lat, rang: rang };
+          });
+        });
+    }
+
+    /* ─── Draw metro lines on map ─── */
+    function drawLines() {
+      ['a', 'b'].forEach(function(line) {
+        var stops = Object.values(topology[line] || {}).sort(function(a,b){ return a.rang - b.rang; });
+        if (stops.length < 2) return;
+
+        var color = line === 'a' ? COLOR_A : COLOR_B;
+        var sourceId = 'line-' + line;
+        var layerId  = 'layer-line-' + line;
+        var casingId = 'layer-casing-' + line;
+
+        var geojson = {
+          type: 'Feature',
+          geometry: { type: 'LineString', coordinates: stops.map(function(s){ return [s.lng, s.lat]; }) }
+        };
+
+        if (map.getSource(sourceId)) {
+          map.getSource(sourceId).setData(geojson);
+        } else {
+          map.addSource(sourceId, { type: 'geojson', data: geojson });
+          // White casing
+          map.addLayer({ id: casingId, type: 'line', source: sourceId,
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#fff', 'line-width': 7, 'line-opacity': .9 }
+          });
+          // Colored line
+          map.addLayer({ id: layerId, type: 'line', source: sourceId,
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': color, 'line-width': 4.5, 'line-opacity': 1 }
+          });
+        }
+
+        // Station dots
+        stops.forEach(function(s, i) {
+          var markerId = 'station-' + line + '-' + i;
+          if (document.getElementById(markerId)) return;
+          var el = document.createElement('div');
+          el.id = markerId;
+          el.style.cssText = 'width:10px;height:10px;border-radius:50%;'
+            + 'background:#fff;border:3px solid ' + color + ';'
+            + 'box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;';
+
+          var stopName = Object.keys(topology[line]).find(function(k){ return topology[line][k] === s; }) || '';
+          var popup = new maplibregl.Popup({ offset: 14, closeButton: true })
+            .setHTML('<div>' + stopName + '</div><div class="popup-line">Ligne ' + line.toUpperCase() + ' · station ' + (i+1) + '/' + stops.length + '</div>');
+
+          new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([s.lng, s.lat])
+            .setPopup(popup)
+            .addTo(map);
+        });
+      });
+    }
+
+    /* ─── Passages fetch ─── */
+    function fetchPassages() {
+      var since = new Date(Date.now() - 4 * 60000).toISOString();
+      var until = new Date(Date.now() + 30 * 60000).toISOString();
+      var url = STAR + '/tco-metro-circulation-prochains-passages-tr/records'
+        + '?limit=200&order_by=depart'
+        + '&where=depart%3E%22' + encodeURIComponent(since) + '%22'
+        + '%20AND%20depart%3C%22' + encodeURIComponent(until) + '%22';
+
+      return fetch(url)
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function(d) {
+          var newSchedule = {};
+          (d.results || []).forEach(function(rec) {
+            var tripId = rec.idcourse;
+            if (!tripId) return;
+            var line = normLine(rec.nomcourtligne);
+            var stopName = rec.nomarret;
+            var depart = rec.depart ? new Date(rec.depart).getTime() : 0;
+            if (!depart) return;
+            var stopData = (topology[line] || {})[stopName];
+            if (!stopData) return;
+            if (!newSchedule[tripId]) newSchedule[tripId] = { line: line, stops: [] };
+            newSchedule[tripId].stops.push({ name: stopName, ts: depart, lng: stopData.lng, lat: stopData.lat });
+          });
+          Object.values(newSchedule).forEach(function(trip) {
+            trip.stops.sort(function(a,b){ return a.ts - b.ts; });
+          });
+          schedule = newSchedule;
+          updateCounts();
+          var now = new Date();
+          setStatus('Mis à jour à ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0'), '');
+        });
+    }
+
+    /* ─── Position interpolation ─── */
+    function tripPosition(trip) {
+      var now = Date.now();
+      var stops = trip.stops;
+      if (!stops || stops.length === 0) return null;
+
+      // Find segment where now is between two stops
+      for (var i = 0; i < stops.length - 1; i++) {
+        if (now >= stops[i].ts && now <= stops[i+1].ts) {
+          var dt = stops[i+1].ts - stops[i].ts;
+          var t  = dt > 0 ? (now - stops[i].ts) / dt : 0;
+          t = Math.max(0, Math.min(1, t));
+          return {
+            lng: stops[i].lng + (stops[i+1].lng - stops[i].lng) * t,
+            lat: stops[i].lat + (stops[i+1].lat - stops[i].lat) * t,
+            line: trip.line,
+            nextStop: stops[i+1].name,
+            prevStop: stops[i].name,
+            bearing: Math.atan2(stops[i+1].lng - stops[i].lng, stops[i+1].lat - stops[i].lat) * 180 / Math.PI
+          };
+        }
+      }
+      // All upcoming: position at first stop
+      if (now < stops[0].ts) {
+        return { lng: stops[0].lng, lat: stops[0].lat, line: trip.line, nextStop: stops[0].name, prevStop: null, bearing: 0 };
+      }
+      return null;
+    }
+
+    /* ─── Train SVG marker ─── */
+    function createTrainEl(line, bearing) {
+      var color = line === 'a' ? COLOR_A : COLOR_B;
+      var flip  = bearing < 0 ? 'transform:scaleX(-1)' : '';
+      var el = document.createElement('div');
+      el.className = 'train-marker';
+      // Small metro car: body + 3 windows + headlight + bogies
+      el.innerHTML =
+        '<svg viewBox="0 0 52 22" width="52" height="22" xmlns="http://www.w3.org/2000/svg" style="' + flip + '">'
+          // Shadow/glow
+          + '<rect x="3" y="5" width="46" height="13" rx="4" fill="rgba(0,0,0,.2)" transform="translate(0,2)"/>'
+          // Body
+          + '<rect x="1" y="3" width="50" height="14" rx="4.5" fill="' + color + '"/>'
+          // Roof highlight
+          + '<rect x="3" y="3" width="46" height="5" rx="3.5" fill="rgba(255,255,255,.22)"/>'
+          // Windows
+          + '<rect x="5"  y="6" width="9" height="7" rx="2" fill="rgba(255,255,255,.8)"/>'
+          + '<rect x="17" y="6" width="9" height="7" rx="2" fill="rgba(255,255,255,.8)"/>'
+          + '<rect x="29" y="6" width="9" height="7" rx="2" fill="rgba(255,255,255,.8)"/>'
+          // Front cab window (right side = front)
+          + '<rect x="40" y="5" width="8" height="9" rx="2.5" fill="rgba(255,255,255,.75)"/>'
+          // Headlight
+          + '<circle cx="49" cy="10" r="2.2" fill="rgba(255,248,180,.95)"/>'
+          // Bogies
+          + '<rect x="5"  y="16" width="10" height="4" rx="2" fill="rgba(0,0,0,.32)"/>'
+          + '<rect x="37" y="16" width="10" height="4" rx="2" fill="rgba(0,0,0,.32)"/>'
+          // Line letter badge
+          + '<rect x="3" y="3" width="11" height="7" rx="2.5" fill="rgba(0,0,0,.25)"/>'
+          + '<text x="8.5" y="9" text-anchor="middle" font-family="system-ui,sans-serif" font-size="5.5" font-weight="800" fill="white">' + line.toUpperCase() + '</text>'
+        + '</svg>';
+      return el;
+    }
+
+    /* ─── Animation loop ─── */
+    function animationLoop() {
+      var activeTrips = new Set();
+
+      Object.keys(schedule).forEach(function(tripId) {
+        var trip = schedule[tripId];
+        var pos  = tripPosition(trip);
+        if (!pos) {
+          if (markers[tripId]) { markers[tripId].remove(); delete markers[tripId]; }
+          return;
+        }
+        activeTrips.add(tripId);
+
+        if (!markers[tripId]) {
+          var el = createTrainEl(pos.line, pos.bearing);
+          var popup = new maplibregl.Popup({ offset: 18, closeButton: false })
+            .setHTML('<div>' + (pos.nextStop || '—') + '</div>'
+              + '<div class="popup-line">→ prochaine station · Ligne ' + pos.line.toUpperCase() + '</div>');
+          markers[tripId] = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([pos.lng, pos.lat])
+            .setPopup(popup)
+            .addTo(map);
+        } else {
+          markers[tripId].setLngLat([pos.lng, pos.lat]);
+          // Update popup content
+          var popup = markers[tripId].getPopup();
+          if (popup) {
+            popup.setHTML('<div>' + (pos.nextStop || '—') + '</div>'
+              + '<div class="popup-line">→ prochaine station · Ligne ' + pos.line.toUpperCase() + '</div>');
+          }
+        }
+      });
+
+      // Remove stale markers
+      Object.keys(markers).forEach(function(tripId) {
+        if (!activeTrips.has(tripId)) { markers[tripId].remove(); delete markers[tripId]; }
+      });
+
+      rafId = requestAnimationFrame(animationLoop);
+    }
+
+    /* ─── Polling ─── */
+    function poll() {
+      setStatus('Actualisation…', 'loading');
+      fetchPassages()
+        .catch(function(err) {
+          var msg = err && err.message && err.message.indexOf('429') >= 0
+            ? 'Quota API atteint — réessai dans 30s'
+            : 'Erreur réseau — réessai dans 30s';
+          setStatus(msg, 'error');
+        });
+    }
+
+    /* ─── Boot ─── */
+    map.on('load', function() {
+      setStatus('Chargement topologie…', 'loading');
+      fetchTopology()
+        .then(function() {
+          drawLines();
+          poll();
+          setInterval(poll, POLL_MS);
+          animationLoop();
+        })
+        .catch(function(err) {
+          setStatus('Erreur chargement carte : ' + (err && err.message || 'inconnue'), 'error');
+        });
+    });
+
+  })();
+  </script>
+</body>
+</html>
