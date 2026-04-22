@@ -4,214 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TLB</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='a' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%238b5cf6'/><stop offset='1' stop-color='%2306b6d4'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='%230a0a12'/><text x='50' y='66' font-family='-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif' font-weight='900' font-size='37' fill='url(%23a)' text-anchor='middle' letter-spacing='-2'>TLB</text><rect x='26' y='74' width='48' height='3' rx='1.5' fill='url(%23a)'/></svg>">
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%236B1A1A' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
 
-  <!-- Filtres SVG globaux -->
-  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
-    <defs>
-      <!-- Chromatic aberration -->
-      <filter id="chroma" x="-15%" y="-15%" width="130%" height="130%">
-        <feColorMatrix in="SourceGraphic" type="matrix"
-          values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-        <feColorMatrix in="SourceGraphic" type="matrix"
-          values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-        <feColorMatrix in="SourceGraphic" type="matrix"
-          values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-        <feOffset in="r" dx="5"  dy="1" result="rr"/>
-        <feOffset in="b" dx="-5" dy="-1" result="bb"/>
-        <feMerge><feMergeNode in="rr"/><feMergeNode in="g"/><feMergeNode in="bb"/></feMerge>
-      </filter>
-      <!-- Distorsion légère (pond) -->
-      <filter id="pondDisp" x="-5%" y="-5%" width="110%" height="110%">
-        <feTurbulence id="pondTurb" type="fractalNoise" baseFrequency="0.018 0.012"
-          numOctaves="3" seed="9" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"
-          xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-    </defs>
-  </svg>
+    .main {
+      position: relative; z-index: 1;
+      height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+
+    .tlb-logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(7rem, 22vw, 18rem);
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -.04em;
+      line-height: .85;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) .7s both;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity .2s;
+    }
+    .tlb-logo:hover { opacity: .75; }
+
+    .tlb-sub {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(.62rem, 1.4vw, .78rem);
+      font-weight: 300;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      margin-top: 1.8rem;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) .95s both;
+    }
+
+    .tlb-hint {
+      position: fixed; bottom: 2.2rem; left: 50%; transform: translateX(-50%);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .6rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2); z-index: 2;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1.3s both;
+      cursor: pointer; border: none; background: none; padding: .5rem;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .tlb-hint:hover { opacity: .6; }
+  </style>
 </head>
 <body>
 
-  <!-- Hamburger menu -->
-  <button class="ham-btn" id="hamBtn" aria-label="Menu" aria-expanded="false">
-    <span class="hl"></span><span class="hl"></span><span class="hl"></span>
-  </button>
-  <div class="ham-menu" id="hamMenu" aria-hidden="true">
-    <a class="ham-link" href="/demo-api.html">
-      <span class="ham-link-icon">⚡</span>Démo API
-    </a>
-    <a class="ham-link" href="/transports.html">
-      <span class="ham-link-icon">🚇</span>Transports
-    </a>
+  <!-- Palette (aléatoire au chargement) -->
+  <script>
+    (function(){
+      var P=[
+        {s:'#B8C9E8',b:'#F5F0E8',i:'#6B1A1A',i2:'rgba(107,26,26,.45)'},
+        {s:'#A8D5C5',b:'#F2F7F5',i:'#961E50',i2:'rgba(150,30,80,.45)'},
+        {s:'#F5C9A8',b:'#FDF8F3',i:'#0A3868',i2:'rgba(10,56,104,.45)'},
+        {s:'#C8D4B0',b:'#F5F7EF',i:'#2D0A65',i2:'rgba(45,10,101,.45)'}
+      ];
+      var p=P[Math.floor(Math.random()*P.length)];
+      var r=document.documentElement.style;
+      r.setProperty('--stripe',p.s);
+      r.setProperty('--bg',p.b);
+      r.setProperty('--ink',p.i);
+      r.setProperty('--ink2',p.i2);
+      document.body.style.background=p.b;
+      var svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='72' font-family='Georgia,serif' font-weight='300' font-size='52' fill='"+p.i+"' text-anchor='middle' letter-spacing='-3'>TLB</text></svg>";
+      document.getElementById('favicon').href='data:image/svg+xml,'+encodeURIComponent(svg);
+    })();
+  </script>
+
+  <!-- Stripes -->
+  <div class="page-stripes" id="stripes" aria-hidden="true"></div>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="tlb-logo" onclick="openNav()" role="button" tabindex="0"
+         aria-label="Ouvrir la navigation" onkeydown="if(event.key==='Enter')openNav()">TLB</div>
+    <p class="tlb-sub">Thibault Le Bouëdec · Développeur</p>
+  </main>
+
+  <!-- Nav hint -->
+  <button class="tlb-hint" onclick="openNav()">Explorer les projets ↗</button>
+
+  <!-- Overlay nav -->
+  <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+    <button class="tlb-overlay-close" onclick="closeNav()">Fermer ×</button>
+    <a class="tlb-overlay-link" href="/transports.html">Transports</a>
+    <a class="tlb-overlay-link" href="/demo-api.html">Démo API</a>
   </div>
-  <div class="ham-overlay" id="hamOverlay"></div>
 
-  <!-- Curseur custom (desktop) -->
-  <div id="cursor" aria-hidden="true">
-    <div class="cur-dot"></div>
-    <div class="cur-ring"></div>
-  </div>
+  <script>
+    // Stripes
+    (function(){
+      var el=document.getElementById('stripes');
+      var N=8;
+      for(var i=0;i<N*2-1;i++){
+        var s=document.createElement('div');
+        var isStripe=i%2===0;
+        s.className='page-stripe'+(isStripe?'':' gap');
+        if(isStripe){
+          s.style.background='var(--stripe)';
+          var dur=(0.45+Math.random()*0.55).toFixed(2);
+          var del=(Math.floor(i/2)*0.06+Math.random()*0.1).toFixed(2);
+          s.style.animation='stripeDrop '+dur+'s cubic-bezier(.16,1,.3,1) '+del+'s both';
+        }
+        el.appendChild(s);
+      }
+    })();
 
-  <!-- Bouton permission gyroscope (iOS 13+) -->
-  <button class="gyro-btn" id="gyroBtn">Activer le mouvement</button>
+    // Nav overlay
+    var overlay=document.getElementById('tlbOverlay');
+    function openNav(){ overlay.classList.add('open'); }
+    function closeNav(){ overlay.classList.remove('open'); }
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeNav(); });
+  </script>
 
-  <!-- Slides -->
-  <div class="slides" id="slides">
-
-    <!-- ══ S1 · Verre — fond blanc, glass card ══════════════ -->
-    <section class="scene s-light" id="s1" data-index="01">
-      <!-- Blobs colorés visibles à travers le verre -->
-      <div class="blobs" aria-hidden="true">
-        <div class="blob" style="width:340px;height:340px;top:-12%;left:-8%;background:radial-gradient(#a78bfa,#7c3aed);filter:blur(72px);opacity:.52;animation:bm1 12s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:280px;height:280px;bottom:-8%;right:-4%;background:radial-gradient(#5eead4,#0891b2);filter:blur(65px);opacity:.48;animation:bm2 14s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:220px;height:220px;top:35%;left:58%;background:radial-gradient(#f9a8d4,#ec4899);filter:blur(55px);opacity:.42;animation:bm3 10s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:180px;height:180px;top:10%;right:30%;background:radial-gradient(#fde68a,#f59e0b);filter:blur(50px);opacity:.38;animation:bm1 9s ease-in-out infinite alternate-reverse"></div>
-      </div>
-      <div class="stage">
-        <div class="glass-card" id="glassCard">
-          <!-- Reflet spéculaire (suit la souris / gyro) -->
-          <div class="gc-spec" id="gcSpec"></div>
-          <!-- Bord supérieur brillant -->
-          <div class="gc-top-edge"></div>
-          <!-- Aberration chromatique bords -->
-          <div class="gc-chroma"></div>
-          <!-- Encoche style visionOS -->
-          <div class="gc-notch"></div>
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">backdrop-filter · @property</span>
-        <span class="lbl-name">Verre</span>
-      </div>
-    </section>
-
-    <!-- ══ S2 · Liquide — gyroscope, fond noir ══════════════ -->
-    <section class="scene s-dark" id="s2" data-index="02">
-      <div class="stage">
-        <div class="liquid-wrap" id="liquidWrap">
-          <!-- Conteneur verre -->
-          <div class="liquid-container">
-            <!-- SVG : liquide physique -->
-            <svg class="liquid-svg" id="liquidSvg"
-              viewBox="0 0 260 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <clipPath id="liqClip">
-                  <path id="liqPath" d="M0,180 L260,180 L260,360 L0,360 Z"/>
-                </clipPath>
-                <linearGradient id="liqGrad" x1="0" y1="0" x2="0.3" y2="1">
-                  <stop offset="0%"   stop-color="#22d3ee" stop-opacity=".95"/>
-                  <stop offset="60%"  stop-color="#818cf8" stop-opacity=".90"/>
-                  <stop offset="100%" stop-color="#6d28d9" stop-opacity=".85"/>
-                </linearGradient>
-                <linearGradient id="surfGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
-                  <stop offset="35%"  stop-color="rgba(255,255,255,.35)"/>
-                  <stop offset="65%"  stop-color="rgba(255,255,255,.18)"/>
-                  <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                </linearGradient>
-              </defs>
-              <!-- Corps du liquide -->
-              <rect x="0" y="0" width="260" height="360"
-                fill="url(#liqGrad)" clip-path="url(#liqClip)"/>
-              <!-- Reflet de surface (bande lumineuse) -->
-              <path id="surfPath" d="" fill="url(#surfGrad)" clip-path="url(#liqClip)"/>
-              <!-- Lueur interne du liquide -->
-              <ellipse cx="130" cy="270" rx="90" ry="40"
-                fill="rgba(34,211,238,.18)" clip-path="url(#liqClip)"/>
-            </svg>
-            <!-- Surcouche verre (reflets du container) -->
-            <div class="liq-glass"></div>
-          </div>
-          <!-- Ombre portée sous le container -->
-          <div class="liq-shadow"></div>
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">DeviceOrientation · SVG physics</span>
-        <span class="lbl-name">Liquide</span>
-      </div>
-    </section>
-
-    <!-- ══ S3 · Prisme — fond noir, mix-blend screen ════════ -->
-    <section class="scene s-dark" id="s3" data-index="03">
-      <div class="stage">
-        <div class="prism-scene" id="prismScene">
-          <!-- Rayons lumineux (screen sur fond noir = addition) -->
-          <div class="p-ray pr-r" id="prR"></div>
-          <div class="p-ray pr-g" id="prG"></div>
-          <div class="p-ray pr-b" id="prB"></div>
-          <!-- Corps du prisme (verre) -->
-          <div class="prism-body" id="prismBody">
-            <div class="prism-spec"></div>
-            <div class="prism-edge-l"></div>
-            <div class="prism-edge-r"></div>
-          </div>
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">mix-blend-mode · clip-path</span>
-        <span class="lbl-name">Prisme</span>
-      </div>
-    </section>
-
-    <!-- ══ S4 · Bulle — fond blanc, sphère réflective ═══════ -->
-    <section class="scene s-light" id="s4" data-index="04">
-      <div class="blobs" aria-hidden="true">
-        <div class="blob" style="width:300px;height:300px;top:-5%;left:5%;background:radial-gradient(#c4b5fd,#8b5cf6);filter:blur(70px);opacity:.45;animation:bm2 11s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:260px;height:260px;bottom:-10%;right:0;background:radial-gradient(#67e8f9,#0891b2);filter:blur(65px);opacity:.42;animation:bm1 13s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:200px;height:200px;top:20%;right:15%;background:radial-gradient(#fcd34d,#f59e0b);filter:blur(55px);opacity:.35;animation:bm3 8s ease-in-out infinite alternate"></div>
-      </div>
-      <div class="stage">
-        <div class="bubble" id="bubble">
-          <!-- Reflet principal (suit souris/gyro) -->
-          <div class="b-spec" id="bSpec"></div>
-          <!-- Reflets secondaires fixes -->
-          <div class="b-spec2"></div>
-          <div class="b-spec3"></div>
-          <!-- Caustic interne -->
-          <div class="b-caustic"></div>
-          <!-- Aberration chromatique bord -->
-          <div class="b-chroma"></div>
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">backdrop-filter · gyroscope</span>
-        <span class="lbl-name">Bulle</span>
-      </div>
-    </section>
-
-    <!-- ══ S5 · Onde — fond blanc, ripples sur verre ════════ -->
-    <section class="scene s-light" id="s5" data-index="05">
-      <div class="blobs" aria-hidden="true">
-        <div class="blob" style="width:350px;height:350px;top:-15%;left:-12%;background:radial-gradient(#a5f3fc,#06b6d4);filter:blur(75px);opacity:.40;animation:bm3 15s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:280px;height:280px;bottom:-12%;right:-8%;background:radial-gradient(#ddd6fe,#7c3aed);filter:blur(68px);opacity:.38;animation:bm1 11s ease-in-out infinite alternate"></div>
-        <div class="blob" style="width:200px;height:200px;top:30%;left:55%;background:radial-gradient(#bbf7d0,#10b981);filter:blur(55px);opacity:.35;animation:bm2 9s ease-in-out infinite alternate"></div>
-      </div>
-      <div class="stage">
-        <div class="pond" id="pond">
-          <div class="pond-glass"></div>
-          <!-- Ripples injectées par JS -->
-        </div>
-      </div>
-      <div class="scene-label">
-        <span class="lbl-feat">touch · feTurbulence · Vibration API</span>
-        <span class="lbl-name">Onde</span>
-      </div>
-    </section>
-
-  </div><!-- /.slides -->
-
-  <!-- Navigation dots -->
-  <nav class="dots" id="dotsNav" aria-label="Navigation">
-    <button class="dot active" data-to="0" aria-label="Verre"></button>
-    <button class="dot" data-to="1" aria-label="Liquide"></button>
-    <button class="dot" data-to="2" aria-label="Prisme"></button>
-    <button class="dot" data-to="3" aria-label="Bulle"></button>
-    <button class="dot" data-to="4" aria-label="Onde"></button>
-  </nav>
-
-  <script src="script.js"></script>
 </body>
 </html>
