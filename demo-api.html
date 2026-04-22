@@ -193,7 +193,9 @@
       transition: width 1s var(--ease);
       background: linear-gradient(to right, var(--accent), #06b6d4);
     }
-    .lbar-fill.hi { background: linear-gradient(to right, var(--red), var(--orange)); }
+    .lbar-fill.hi   { background: linear-gradient(to right, var(--red), var(--orange)); }
+    .lbar-fill.warn { background: linear-gradient(to right, var(--orange), #f59e0b); }
+    .lbar-fill.crit { background: linear-gradient(to right, var(--red), #dc2626); }
     .lbar-wave {
       position: absolute; top: -3px; right: 0;
       width: 80px; height: 14px; opacity: .5;
@@ -206,15 +208,16 @@
     /* ── Metro SVG train ── */
     .metro-train-wrap {
       margin: -.2rem -.2rem .9rem; border-radius: 14px; overflow: hidden;
-      background: linear-gradient(135deg,rgba(109,40,217,.06),rgba(8,145,178,.06));
-      padding: .6rem .4rem .2rem;
+      background: linear-gradient(135deg,rgba(20,20,40,.55),rgba(10,10,30,.45));
+      padding: .5rem .4rem .15rem;
     }
     .metro-svg { width: 100%; height: auto; display: block; }
     @keyframes trainPass {
-      from { transform: translateX(812px); }
-      to   { transform: translateX(-572px); }
+      from { transform: translateX(810px); }
+      to   { transform: translateX(-490px); }
     }
-    #metro-train-group { animation: trainPass 11s linear infinite; }
+    #metro-train-a { animation: trainPass 10s linear infinite; }
+    #metro-train-b { animation: trainPass 10s linear infinite -5s; }
 
     /* ── Metro split ── */
     .metro-split { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
@@ -580,86 +583,158 @@
             <span class="ch-ts" id="ts-metro">—</span>
           </div>
           <div class="metro-train-wrap" aria-hidden="true">
-            <svg class="metro-svg" viewBox="0 0 800 88" xmlns="http://www.w3.org/2000/svg">
+            <svg class="metro-svg" viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="mg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#5b21b6"/><stop offset="100%" stop-color="#0e7490"/>
+                <!-- Carrosserie gradient (reflet lumière haut) -->
+                <linearGradient id="val-car" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="#F2F2F2"/>
+                  <stop offset="48%"  stop-color="#E6E6E6"/>
+                  <stop offset="100%" stop-color="#CACACA"/>
                 </linearGradient>
-                <linearGradient id="mgt" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(255,255,255,.22)"/><stop offset="100%" stop-color="transparent"/>
+                <!-- Fenêtres gradient bleu-ciel -->
+                <linearGradient id="val-win" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(190,228,255,.92)"/>
+                  <stop offset="100%" stop-color="rgba(135,198,248,.80)"/>
                 </linearGradient>
-                <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(210,240,255,.92)"/><stop offset="100%" stop-color="rgba(150,210,240,.70)"/>
+                <!-- Reflet toiture -->
+                <linearGradient id="val-top" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="rgba(255,255,255,.52)"/>
+                  <stop offset="100%" stop-color="rgba(255,255,255,.0)"/>
+                </linearGradient>
+                <!-- Sol de la station (gradient) -->
+                <linearGradient id="val-floor" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="#2a2a3a"/>
+                  <stop offset="100%" stop-color="#1a1a28"/>
                 </linearGradient>
               </defs>
-              <!-- Rails -->
-              <rect x="0" y="80" width="800" height="2.5" rx="1.25" fill="rgba(0,0,0,.15)"/>
-              <rect x="0" y="84" width="800" height="1.5" rx=".75" fill="rgba(0,0,0,.08)"/>
-              <!-- Train — 3 rames -->
-              <g id="metro-train-group">
-                <!-- RAME 3 arrière -->
-                <rect x="382" y="14" width="168" height="58" rx="9" fill="url(#mg)"/>
-                <rect x="382" y="14" width="168" height="20" rx="9" fill="url(#mgt)"/>
-                <rect x="397" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="440" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="483" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="526" y="23" width="16" height="22" rx="4" fill="url(#wg)"/>
-                <line x1="471" y1="34" x2="471" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
-                <rect x="396" y="48" width="150" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
-                <rect x="404" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="508" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="416" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="430" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="520" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="534" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <!-- Soufflet 3→2 -->
-                <rect x="363" y="24" width="21" height="36" rx="3" fill="rgba(55,18,110,.7)"/>
-                <line x1="366" y1="30" x2="382" y2="30" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="366" y1="36" x2="382" y2="36" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="366" y1="42" x2="382" y2="42" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="366" y1="48" x2="382" y2="48" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="366" y1="54" x2="382" y2="54" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <!-- RAME 2 milieu -->
-                <rect x="190" y="14" width="175" height="58" rx="9" fill="url(#mg)"/>
-                <rect x="190" y="14" width="175" height="20" rx="9" fill="url(#mgt)"/>
-                <rect x="205" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="248" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="291" y="23" width="33" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="334" y="23" width="23" height="22" rx="4" fill="url(#wg)"/>
-                <line x1="280" y1="34" x2="280" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
-                <rect x="204" y="48" width="157" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
-                <rect x="212" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="315" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="224" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="238" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="327" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="341" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <!-- Soufflet 2→1 -->
-                <rect x="171" y="24" width="21" height="36" rx="3" fill="rgba(55,18,110,.7)"/>
-                <line x1="174" y1="30" x2="190" y2="30" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="174" y1="36" x2="190" y2="36" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="174" y1="42" x2="190" y2="42" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="174" y1="48" x2="190" y2="48" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <line x1="174" y1="54" x2="190" y2="54" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
-                <!-- RAME 1 avant — nez biseauté -->
-                <path d="M26,14 L163,14 Q172,14 172,23 L172,63 Q172,72 163,72 L42,72 Q30,72 22,63 L10,43 Q6,39 10,33 L22,23 Q30,14 42,14 Z" fill="url(#mg)"/>
-                <path d="M42,14 L163,14 Q172,14 172,23 L172,34 L26,32 L22,27 Q30,14 42,14 Z" fill="rgba(255,255,255,.2)"/>
-                <!-- Phare avant -->
-                <ellipse cx="11" cy="38" rx="4" ry="6.5" fill="rgba(255,242,130,.95)"/>
-                <ellipse cx="11" cy="38" rx="2" ry="3" fill="rgba(255,255,200,.98)"/>
-                <!-- Fenêtres rame 1 -->
-                <rect x="38" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="78" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
-                <rect x="118" y="22" width="30" height="22" rx="4" fill="url(#wg)"/>
-                <line x1="157" y1="32" x2="157" y2="72" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
-                <rect x="26" y="48" width="146" height="3" rx="1.5" fill="rgba(255,255,255,.22)"/>
-                <!-- Bogies rame 1 -->
-                <rect x="42" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="122" y="70" width="38" height="7" rx="3.5" fill="rgba(12,6,30,.55)"/>
-                <rect x="54" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="68" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="134" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
-                <rect x="148" y="72" width="2.5" height="11" rx="1.25" fill="rgba(0,0,0,.28)"/>
+
+              <!-- Sol / quai -->
+              <rect x="0" y="88" width="800" height="12" fill="url(#val-floor)"/>
+              <!-- Rail 1 (acier) -->
+              <rect x="0" y="83" width="800" height="4"   rx="2"   fill="#888"/>
+              <!-- Rail 2 (reflet) -->
+              <rect x="0" y="87" width="800" height="1.5" rx=".75" fill="#bbb"/>
+              <!-- Traverses -->
+              <rect x="30"  y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="90"  y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="150" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="210" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="270" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="330" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="390" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="450" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="510" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="570" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="630" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="690" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+              <rect x="750" y="82" width="6" height="7" rx="1" fill="#5a4a3a" opacity=".7"/>
+
+              <!-- ═══ RAME A — Ligne A (rouge #E30613) ═══ -->
+              <g id="metro-train-a">
+                <!-- ── Voiture 1 — nez VAL arrondi (face gauche) ── -->
+                <!-- Corps voiture 1 avec nez caractéristique VAL -->
+                <path d="M 48,10 L 238,10 L 238,82 L 48,82 Q 14,82 8,66 L 8,26 Q 14,10 48,10 Z" fill="url(#val-car)"/>
+                <!-- Nez cabine conducteur (zone avant teintée) -->
+                <path d="M 8,26 Q 14,10 48,10 L 60,10 L 60,82 L 48,82 Q 14,82 8,66 Z" fill="#D8D8D8"/>
+                <!-- Grande vitre frontale (caractéristique VAL, quasi toute la hauteur du nez) -->
+                <path d="M 13,30 Q 12,54 13,70 L 56,70 L 56,30 Z" fill="url(#val-win)" rx="3"/>
+                <!-- Phare avant (LED circulaire) -->
+                <circle cx="13" cy="75" r="5"   fill="rgba(255,248,180,.95)"/>
+                <circle cx="13" cy="75" r="2.5" fill="rgba(255,255,220,1)"/>
+                <!-- Bande couleur ligne A (rouge) sur toute la longueur -->
+                <rect x="8"   y="53" width="230" height="14" fill="#E30613"/>
+                <!-- Liseré noir sous la bande -->
+                <rect x="8"   y="67" width="230" height="1.5" fill="rgba(0,0,0,.25)"/>
+                <!-- Fenêtres voiture 1 (3 baies) -->
+                <rect x="64"  y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="114" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="164" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="214" y="17" width="20" height="27" rx="3.5" fill="url(#val-win)"/>
+                <!-- Reflet toiture voiture 1 -->
+                <path d="M 48,10 L 238,10 L 238,22 L 60,22 Q 30,20 13,30 Q 14,10 48,10 Z" fill="url(#val-top)"/>
+                <!-- Bas de caisse (jupe sombre) -->
+                <path d="M 8,66 L 238,68 L 238,82 L 48,82 Q 14,82 8,66 Z" fill="#1c1c1c"/>
+                <!-- Bogie 1 (avant) -->
+                <rect x="32"  y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="44"  cy="86" r="5" fill="#2a2a2a"/><circle cx="71"  cy="86" r="5" fill="#2a2a2a"/>
+                <!-- Bogie 2 (arrière voiture 1) -->
+                <rect x="168" y="76" width="52" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="180" cy="86" r="5" fill="#2a2a2a"/><circle cx="208" cy="86" r="5" fill="#2a2a2a"/>
+
+                <!-- ── Soufflet d'intercirculation ── -->
+                <rect x="238" y="14" width="18" height="60" rx="3" fill="#7a7a7a"/>
+                <line x1="241" y1="22" x2="253" y2="22" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="29" x2="253" y2="29" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="36" x2="253" y2="36" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="43" x2="253" y2="43" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="50" x2="253" y2="50" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="57" x2="253" y2="57" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="64" x2="253" y2="64" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+
+                <!-- ── Voiture 2 — queue (extrémité arrondie côté droit) ── -->
+                <rect x="256" y="10" width="218" height="72" rx="8" fill="url(#val-car)"/>
+                <!-- Bande couleur voiture 2 -->
+                <rect x="256" y="53" width="218" height="14" fill="#E30613"/>
+                <rect x="256" y="67" width="218" height="1.5" fill="rgba(0,0,0,.25)"/>
+                <!-- Fenêtres voiture 2 (4 baies) -->
+                <rect x="262" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="312" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="362" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="412" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <!-- Reflet toiture voiture 2 -->
+                <rect x="256" y="10" width="218" height="12" rx="8" fill="url(#val-top)"/>
+                <!-- Bas de caisse voiture 2 -->
+                <rect x="256" y="68" width="218" height="14" rx="0 0 8 8" fill="#1c1c1c"/>
+                <!-- Bogie 3 (avant voiture 2) -->
+                <rect x="278" y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="290" cy="86" r="5" fill="#2a2a2a"/><circle cx="317" cy="86" r="5" fill="#2a2a2a"/>
+                <!-- Bogie 4 (arrière voiture 2) -->
+                <rect x="396" y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="408" cy="86" r="5" fill="#2a2a2a"/><circle cx="435" cy="86" r="5" fill="#2a2a2a"/>
+              </g>
+
+              <!-- ═══ RAME B — Ligne B (bleue #0071BB) ═══ (décalage -5s) ═══ -->
+              <g id="metro-train-b">
+                <path d="M 48,10 L 238,10 L 238,82 L 48,82 Q 14,82 8,66 L 8,26 Q 14,10 48,10 Z" fill="url(#val-car)"/>
+                <path d="M 8,26 Q 14,10 48,10 L 60,10 L 60,82 L 48,82 Q 14,82 8,66 Z" fill="#D8D8D8"/>
+                <path d="M 13,30 Q 12,54 13,70 L 56,70 L 56,30 Z" fill="url(#val-win)" rx="3"/>
+                <circle cx="13" cy="75" r="5"   fill="rgba(255,248,180,.95)"/>
+                <circle cx="13" cy="75" r="2.5" fill="rgba(255,255,220,1)"/>
+                <!-- Bande couleur ligne B (bleue) -->
+                <rect x="8"   y="53" width="230" height="14" fill="#0071BB"/>
+                <rect x="8"   y="67" width="230" height="1.5" fill="rgba(0,0,0,.25)"/>
+                <rect x="64"  y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="114" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="164" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="214" y="17" width="20" height="27" rx="3.5" fill="url(#val-win)"/>
+                <path d="M 48,10 L 238,10 L 238,22 L 60,22 Q 30,20 13,30 Q 14,10 48,10 Z" fill="url(#val-top)"/>
+                <path d="M 8,66 L 238,68 L 238,82 L 48,82 Q 14,82 8,66 Z" fill="#1c1c1c"/>
+                <rect x="32"  y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="44"  cy="86" r="5" fill="#2a2a2a"/><circle cx="71"  cy="86" r="5" fill="#2a2a2a"/>
+                <rect x="168" y="76" width="52" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="180" cy="86" r="5" fill="#2a2a2a"/><circle cx="208" cy="86" r="5" fill="#2a2a2a"/>
+                <rect x="238" y="14" width="18" height="60" rx="3" fill="#7a7a7a"/>
+                <line x1="241" y1="22" x2="253" y2="22" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="29" x2="253" y2="29" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="36" x2="253" y2="36" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="43" x2="253" y2="43" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="50" x2="253" y2="50" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="57" x2="253" y2="57" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <line x1="241" y1="64" x2="253" y2="64" stroke="rgba(0,0,0,.22)" stroke-width="1.2"/>
+                <!-- Voiture 2 ligne B -->
+                <rect x="256" y="10" width="218" height="72" rx="8" fill="url(#val-car)"/>
+                <rect x="256" y="53" width="218" height="14" fill="#0071BB"/>
+                <rect x="256" y="67" width="218" height="1.5" fill="rgba(0,0,0,.25)"/>
+                <rect x="262" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="312" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="362" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="412" y="17" width="44" height="27" rx="3.5" fill="url(#val-win)"/>
+                <rect x="256" y="10" width="218" height="12" rx="8" fill="url(#val-top)"/>
+                <rect x="256" y="68" width="218" height="14" rx="0 0 8 8" fill="#1c1c1c"/>
+                <rect x="278" y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="290" cy="86" r="5" fill="#2a2a2a"/><circle cx="317" cy="86" r="5" fill="#2a2a2a"/>
+                <rect x="396" y="76" width="50" height="9" rx="4" fill="#0d0d0d"/>
+                <circle cx="408" cy="86" r="5" fill="#2a2a2a"/><circle cx="435" cy="86" r="5" fill="#2a2a2a"/>
               </g>
             </svg>
           </div>
@@ -716,23 +791,9 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 3 — Trains SNCF ══ -->
-    <section class="bloc" id="s-trains">
-      <div class="bloc-hd">03 · Trains depuis Rennes · SNCF</div>
-      <div class="gc">
-        <div class="ch">
-          <div class="ch-l"><span class="ch-ico">🚆</span>
-            <div><div class="ch-ttl">Prochains départs</div><div class="ch-sub">Gare de Rennes · TGV, TER, Intercités</div></div>
-          </div>
-          <span class="ch-ts" id="ts-train">—</span>
-        </div>
-        <div id="trains"><div class="spin">Chargement</div></div>
-      </div>
-    </section>
-
-    <!-- ══ BLOC 4 — Image satellite ══ -->
+    <!-- ══ BLOC 3 — Image satellite ══ -->
     <section class="bloc" id="s-satellite">
-      <div class="bloc-hd">04 · Image satellite · Esri + BAN</div>
+      <div class="bloc-hd">03 · Image satellite · Esri + BAN</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l"><span class="ch-ico">🛰️</span>
@@ -746,7 +807,7 @@
 
     <!-- ══ BLOC 5 — Événements ══ -->
     <section class="bloc" id="s-events">
-      <div class="bloc-hd">05 · Événements à Rennes</div>
+      <div class="bloc-hd">04 · Événements à Rennes</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l"><span class="ch-ico">🎭</span>
@@ -760,7 +821,7 @@
 
     <!-- ══ BLOC 6 — Calculateur kilométrique ══ -->
     <section class="bloc" id="s-kilo">
-      <div class="bloc-hd">06 · Calculateur de frais kilométriques</div>
+      <div class="bloc-hd">05 · Calculateur de frais kilométriques</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l"><span class="ch-ico">🚗</span>
@@ -779,7 +840,7 @@
 
     <!-- ══ BLOC 7 — Fiche Technique Véhicule ══ -->
     <section class="bloc" id="s-vehicle">
-      <div class="bloc-hd">07 · Fiche Technique Véhicule</div>
+      <div class="bloc-hd">06 · Fiche Technique Véhicule</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l"><span class="ch-ico" id="vehicle-ico">🔧</span>
@@ -831,7 +892,7 @@
 
     <!-- ══ BLOC 8 — Prix Carburants ══ -->
     <section class="bloc" id="s-carbu">
-      <div class="bloc-hd">08 · Prix des Carburants</div>
+      <div class="bloc-hd">07 · Prix des Carburants</div>
       <div class="gc">
         <div class="ch">
           <div class="ch-l"><span class="ch-ico">⛽</span>
@@ -873,11 +934,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span>Rennes</span>
         </a>
-        <a class="nav-btn" href="#s-trains" id="nav-trains">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16M12 3v8M8 19l-2 3M16 19l2 3"/></svg>
-          <span>Trains</span>
-        </a>
-        <a class="nav-btn" href="#s-vehicle" id="nav-vehicle">
+<a class="nav-btn" href="#s-vehicle" id="nav-vehicle">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M3 17h4m6 0h4m2 0h1v-4l-2-5H6L4 13v4h1M6 13h12"/></svg>
           <span>Auto</span>
         </a>
@@ -889,7 +946,7 @@
     </nav>
 
     <footer>
-      Sources · STAR open data · SNCF API · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
+      Sources · STAR open data · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
       <div style="margin-top:.5rem;font-family:'Courier New',monospace;letter-spacing:.08em;opacity:.55">v2026.04.18</div>
     </footer>
 
@@ -976,10 +1033,11 @@
     }
 
     /* ── Liquid progress bar ── */
-    function liquidBar(p, hi, lbl) {
+    function liquidBar(p, hi, lbl, extraCls) {
+      var cls = extraCls !== undefined ? extraCls : (hi ? ' hi' : '');
       return '<div class="lbar">'
         + '<div class="lbar-track">'
-        + '<div class="lbar-fill' + (hi ? ' hi' : '') + '" style="width:' + p + '%">'
+        + '<div class="lbar-fill' + cls + '" style="width:' + p + '%">'
         + '<svg class="lbar-wave" viewBox="0 0 80 8" preserveAspectRatio="none">'
         + '<path class="lbar-wave-path" d="M0,4 C5,1 10,7 20,4 C30,1 35,7 40,4 C45,1 55,7 60,4 C65,1 75,7 80,4 L80,8 L0,8 Z"/>'
         + '</svg>'
@@ -1049,7 +1107,15 @@
           + '?where=nomarret%20like%20%22%25Binquenais%25%22&limit=8&order_by=arrivee'
         );
         stamp('bus');
-        if (!d.results || !d.results.length) { err('bus','Aucune donnée disponible'); return; }
+        if (!d.results || !d.results.length) {
+          var h = new Date().getHours();
+          var nobus = (h >= 21 || h < 6)
+            ? 'Service terminé pour ce soir · Reprise demain matin'
+            : 'Aucun passage prévu dans les prochaines minutes';
+          document.getElementById('bus').innerHTML =
+            '<div style="font-size:.78rem;color:var(--muted);padding:.4rem 0">' + nobus + '</div>';
+          return;
+        }
         var html = '';
         d.results.slice(0,6).forEach(function(r) {
           var t   = r.arrivee || r.arriveetheorique || '';
@@ -1075,15 +1141,16 @@
         );
         stamp('velo');
         if (!d.results || !d.results.length) { err('velos','Station introuvable'); return; }
-        var s   = d.results[0];
-        var tot = s.nombreemplacementsactuels || 0;
-        var vd  = s.nombrevelosdisponibles || 0;
-        var pd  = s.nombreemplacementsdisponibles || 0;
-        var p   = tot > 0 ? pct(tot - pd, tot) : 0;
-        var ok  = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
+        var s      = d.results[0];
+        var tot    = s.nombreemplacementsactuels || 0;
+        var vd     = s.nombrevelosdisponibles || 0;
+        var pd     = s.nombreemplacementsdisponibles || 0;
+        var pVelos = tot > 0 ? pct(vd, tot) : 0;
+        var barCls = pVelos < 10 ? ' crit' : pVelos < 30 ? ' warn' : '';
+        var ok     = (s.etat || []).join('').toLowerCase().indexOf('fonctionnement') !== -1;
         document.getElementById('velos').innerHTML = [
           '<div class="velo-stat">',
-            '<div><div class="vn">' + vd + '</div><div class="vl">vélos</div></div>',
+            '<div><div class="vn">' + vd + '</div><div class="vl">vélos dispo</div></div>',
             '<div class="vdiv"></div>',
             '<div><div class="vn">' + pd + '</div><div class="vl">places libres</div></div>',
             '<div class="vdiv"></div>',
@@ -1091,7 +1158,7 @@
               + (ok ? '<span style="color:var(--green)">●</span>' : '<span style="color:var(--red)">●</span>')
               + '</div><div class="vl">état</div></div>',
           '</div>',
-          liquidBar(p, p > 85, tot + ' emplacements · ' + p + '% occupé'),
+          liquidBar(pVelos, false, vd + ' / ' + tot + ' vélos · ' + pVelos + '% de la capacité', barCls),
         ].join('');
         var _gcV = gcOf('velos');
         if (_gcV && window._crystalize) window._crystalize(_gcV);
@@ -1165,43 +1232,7 @@
     }
 
     /* ═══════════════════════════════════════
-       BLOC 3 — TRAINS SNCF
-    ═══════════════════════════════════════ */
-    async function loadTrains() {
-      try {
-        var d = await api('/api/trains');
-        stamp('train');
-        if (!d.departures || !d.departures.length) { err('trains','Aucun départ trouvé'); return; }
-        var html = '<div class="t-list">';
-        d.departures.forEach(function(dep) {
-          var info = dep.display_informations || {};
-          var sdt  = dep.stop_date_time || {};
-          var hDep = fmtNav(sdt.departure_date_time);
-          var late = sdt.departure_date_time && sdt.base_departure_date_time
-                  && sdt.departure_date_time !== sdt.base_departure_date_time;
-          var dest = (info.direction || info.headsign || '—').replace(/\s*\(\d{8,}\)/g,'').trim();
-          var type = info.commercial_mode || info.physical_mode || '';
-          var code = info.headsign ? ' · ' + info.headsign : '';
-          html += '<div class="trow"><div class="th">' + hDep + '</div>'
-            + '<div class="ti"><div class="td">→ ' + dest + '</div><div class="tt">' + type + code + '</div></div>'
-            + (late ? '<div class="tdel">Retard</div>' : '') + '</div>';
-        });
-        document.getElementById('trains').innerHTML = html + '</div>';
-        var _gc = gcOf('trains'); if (_gc && window._crystalize) window._crystalize(_gc);
-      } catch(e) {
-        document.getElementById('trains').innerHTML = [
-          '<div class="key-note"><strong>🔑 Clé SNCF manquante</strong>',
-          '1. Clé gratuite sur <strong>numerique.sncf.com/startup/api</strong><br>',
-          '2. Vercel → Project Settings → Environment Variables<br>',
-          '&nbsp;&nbsp;&nbsp;→ Ajoute <code>SNCF_KEY</code> = ta clé<br>',
-          '3. Redéploie (ou push automatique)<br><br>',
-          '<span style="color:var(--muted);font-size:.7rem">La fonction <code>/api/trains</code> appelle l\'API SNCF côté serveur.</span></div>',
-        ].join('');
-      }
-    }
-
-    /* ═══════════════════════════════════════
-       BLOC 4 — SATELLITE
+       BLOC 3 — SATELLITE
     ═══════════════════════════════════════ */
     async function loadSatellite() {
       try {
@@ -1270,7 +1301,7 @@
     async function loadEvents() {
       try {
         var d = await starApi('events',
-          STAR + '/evenements-rennes-en-temps-reel/records'
+          'https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/evenements-rennes-en-temps-reel/records'
           + '?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut',
           300000  /* TTL 5 min — événements changent rarement */
         );
@@ -1655,7 +1686,6 @@
     setTimeout(loadEtat,      6000);
     setTimeout(loadParkings,  8000);
     setTimeout(loadEvents,   10000);
-    loadTrains();
     loadSatellite();
 
     setInterval(function() {
@@ -1869,7 +1899,6 @@
       /* Scroll auto-highlight */
       var sMap = {
         's-transport': 'nav-transport',
-        's-trains':    'nav-trains',
         's-vehicle':   'nav-vehicle',
         's-carbu':     'nav-carbu'
       };
