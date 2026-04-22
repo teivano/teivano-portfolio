@@ -1,5 +1,4 @@
 /* style.css — TLB Portfolio · Design System partagé */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap');
 
 :root {
   --stripe: #B8C9E8;
@@ -17,7 +16,7 @@
   overflow: hidden;
 }
 .page-stripe { flex: 1; }
-.page-stripe.gap { background: transparent; }
+.page-stripe.gap { background: transparent; flex: 0.5; }
 
 @keyframes stripeDrop {
   from { transform: translateY(-108vh); }
