@@ -22,33 +22,32 @@
 
     .tlb-svg { overflow: visible; width: clamp(260px, 65vw, 640px); }
 
-    /* ── Animations ── */
     @keyframes strokeDraw { from { stroke-dashoffset: 6000; } to { stroke-dashoffset: 0; } }
-    @keyframes sweepFill  { from { width: 0; }                to { width: 520px; } }
 
-    /* Stroke layer */
-    .t-stroke {
-      font-family: 'Great Vibes', cursive;
-      fill: none;
-      stroke: var(--ink); stroke-width: 1.2;
-      stroke-linecap: round; stroke-linejoin: round;
-      stroke-dasharray: 6000; stroke-dashoffset: 6000;
-    }
-    .t-stroke.go {
-      animation: strokeDraw 5s cubic-bezier(.4,0,.2,1) .3s forwards;
-    }
-
-    /* Fill layer (clip-path sweep) */
+    /* Stroke épais (pseudo-fill) — clippé à l'intérieur des lettres */
     .t-fill {
       font-family: 'Great Vibes', cursive;
-      fill: var(--ink);
-      stroke: none;
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 200;       /* déborde largement, clipPath le contient */
+      stroke-linecap: round;
+      stroke-dasharray: 6000;
+      stroke-dashoffset: 6000;
+    }
+    /* Stroke fin (contour) */
+    .t-outline {
+      font-family: 'Great Vibes', cursive;
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 6000;
+      stroke-dashoffset: 6000;
     }
 
-    /* Sweep rect (controlled via JS width) */
-    #fillRect { transition: none; }
-    #fillRect.go {
-      animation: sweepFill 5s linear .3s forwards;
+    .t-fill.go, .t-outline.go {
+      animation: strokeDraw 5s cubic-bezier(.4,0,.2,1) .3s forwards;
     }
 
     /* ── Controls ── */
@@ -95,30 +94,34 @@
   </script>
 
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
-
-  <p class="mode-label" id="modeLabel">Stroke + Fill simultané</p>
+  <p class="mode-label" id="modeLabel">Fill suit le stroke</p>
 
   <div class="scene">
     <svg class="tlb-svg" viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <clipPath id="fillClip">
-          <!-- x fixe à -10, width animé de 0 → 520 -->
-          <rect id="fillRect" x="-10" y="-20" width="0" height="200"/>
+        <!--
+          Le clipPath contient le texte en silhouette (fill blanc = opaque).
+          Le stroke épais (.t-fill) est clippé dedans → seul l'intérieur
+          des lettres est peint, et il suit le tracé du stroke-dashoffset.
+        -->
+        <clipPath id="letterClip">
+          <text x="250" y="132" text-anchor="middle" font-size="148"
+                font-family="'Great Vibes', cursive">TLB</text>
         </clipPath>
       </defs>
 
-      <!-- Layer fill (révélé par sweep horizontal) -->
+      <!-- Layer 1 : stroke épais clippé → fill qui suit le tracé -->
       <text class="t-fill" id="tFill"
             x="250" y="132" text-anchor="middle" font-size="148"
-            clip-path="url(#fillClip)">TLB</text>
+            clip-path="url(#letterClip)">TLB</text>
 
-      <!-- Layer stroke (dashoffset) -->
-      <text class="t-stroke" id="tStroke"
+      <!-- Layer 2 : stroke fin → contour -->
+      <text class="t-outline" id="tOutline"
             x="250" y="132" text-anchor="middle" font-size="148">TLB</text>
     </svg>
 
     <div class="controls">
-      <button class="btn active" id="btnFill">Stroke + Fill</button>
+      <button class="btn active" id="btnFill">Fill + Stroke</button>
       <button class="btn" id="btnStroke">Stroke seul</button>
       <button class="btn" id="btnReplay">↺ Rejouer</button>
     </div>
@@ -140,31 +143,29 @@
       }
     })();
 
-    var tStroke  = document.getElementById('tStroke');
-    var fillRect = document.getElementById('fillRect');
+    var tFill    = document.getElementById('tFill');
+    var tOutline = document.getElementById('tOutline');
     var label    = document.getElementById('modeLabel');
     var btnF     = document.getElementById('btnFill');
     var btnS     = document.getElementById('btnStroke');
     var mode     = 'fill';
 
     function reset() {
-      tStroke.classList.remove('go');
-      fillRect.classList.remove('go');
-      fillRect.setAttribute('width','0');
-      void tStroke.offsetWidth;
-      void fillRect.offsetWidth;
+      tFill.classList.remove('go');
+      tOutline.classList.remove('go');
+      void tFill.offsetWidth;
     }
 
     function play() {
       reset();
-      tStroke.classList.add('go');
-      if (mode === 'fill') fillRect.classList.add('go');
+      tOutline.classList.add('go');
+      if (mode === 'fill') tFill.classList.add('go');
     }
 
     function setMode(m) {
       mode = m;
       if (m === 'fill') {
-        label.textContent = 'Stroke + Fill simultané';
+        label.textContent = 'Fill suit le stroke';
         btnF.classList.add('active'); btnS.classList.remove('active');
       } else {
         label.textContent = 'Stroke seul';
