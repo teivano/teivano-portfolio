@@ -208,15 +208,14 @@
     // Horloge
     (function(){
       var el=document.getElementById('tlbClock');
+      var MOIS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
       function tick(){
         var d=new Date();
         var h=String(d.getHours()).padStart(2,'0');
         var m=String(d.getMinutes()).padStart(2,'0');
         var s=String(d.getSeconds()).padStart(2,'0');
         var dd=String(d.getDate()).padStart(2,'0');
-        var mo=String(d.getMonth()+1).padStart(2,'0');
-        var yy=d.getFullYear();
-        el.innerHTML=h+':'+m+':'+s+'<br>'+dd+mo+yy;
+        el.textContent=h+':'+m+':'+s+' · '+dd+' '+MOIS[d.getMonth()];
       }
       tick(); setInterval(tick,1000);
     })();
