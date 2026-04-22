@@ -20,8 +20,6 @@
       display: flex; flex-direction: column;
       align-items: center;
       padding-top: clamp(5rem, 20vh, 14rem);
-      /* Animation ici plutôt que sur le SVG : le layer GPU est 100vw,
-         le débordement du B de Great Vibes n'est jamais clippé. */
       animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) .5s both;
     }
 
@@ -169,10 +167,19 @@
   </div>
 
   <script>
-    // Stripes
+    // Stripes + fan de divergence en bas
     (function(){
-      var el=document.getElementById('stripes');
-      var N=8;
+      var NS  = 'http://www.w3.org/2000/svg';
+      var el  = document.getElementById('stripes');
+      var N   = 8;
+      var FAN = 38;          // hauteur du fan en px (≈ 1 cm)
+      var TOT = N+(N-1)*0.5; // 11.5 flex units
+      var W   = window.innerWidth;
+      var MAX = 20;          // décalage max aux extrêmes en px (angle constant ≈ 28°)
+
+      // Clip les stripes principales pour laisser place au fan
+      el.style.clipPath = 'inset(0 0 '+FAN+'px 0)';
+
       for(var i=0;i<N*2-1;i++){
         var s=document.createElement('div');
         var isStripe=i%2===0;
@@ -185,6 +192,28 @@
         }
         el.appendChild(s);
       }
+
+      // SVG fan : polygones qui continuent les stripes en divergeant vers l'extérieur
+      var sw  = W / TOT; // largeur d'un flex-unit en px
+      var fan = document.createElementNS(NS, 'svg');
+      fan.setAttribute('viewBox', '0 0 '+W+' '+FAN);
+      fan.style.cssText = 'position:fixed;bottom:0;left:0;width:100%;height:'+FAN+'px;pointer-events:none;z-index:0;opacity:0;transition:opacity .4s';
+
+      for(var k=0;k<N;k++){
+        var lT = sw*1.5*k;
+        var rT = sw*(1.5*k+1);
+        // Décalage proportionnel à la position relative au centre de l'écran
+        var lB = lT + (lT/W - 0.5)*2*MAX;
+        var rB = rT + (rT/W - 0.5)*2*MAX;
+        var poly = document.createElementNS(NS, 'polygon');
+        poly.setAttribute('points', lT.toFixed(1)+',0 '+rT.toFixed(1)+',0 '+rB.toFixed(1)+','+FAN+' '+lB.toFixed(1)+','+FAN);
+        poly.style.fill = 'var(--stripe)';
+        fan.appendChild(poly);
+      }
+
+      document.body.appendChild(fan);
+      // Apparaît après que les stripes ont fini de tomber (~1.5s)
+      setTimeout(function(){ fan.style.opacity = '1'; }, 1500);
     })();
 
     // Nav overlay
