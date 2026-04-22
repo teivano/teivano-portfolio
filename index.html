@@ -155,33 +155,20 @@
       éviter tout clipping des ascendants/descendants de Great Vibes.
       Le texte est centré en x=250, baseline y=140.
     -->
-    <svg class="tlb-svg" viewBox="-60 -80 620 300"
+    <svg class="tlb-svg" viewBox="-100 -80 800 300"
          fill="none" aria-label="TLB" role="img"
          xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- Silhouette des lettres → définit la forme de clip -->
         <clipPath id="letterClip">
-          <text x="250" y="140" text-anchor="middle" font-size="148"
+          <text x="260" y="140" text-anchor="middle" font-size="148"
                 font-family="'Great Vibes', cursive">TLB</text>
         </clipPath>
-        <!-- Cercles bloom (générés par JS) -->
-        <!--
-          Mask bloom : cercles blancs générés par JS.
-          Blanc = visible, noir/absent = caché.
-          maskUnits userSpaceOnUse pour que les cx/cy soient en coords viewBox.
-        -->
-        <mask id="bloomMask" x="-80" y="-80" width="660" height="360"
+        <mask id="bloomMask" x="-110" y="-90" width="820" height="320"
               maskUnits="userSpaceOnUse">
-          <!-- JS append white circles here -->
         </mask>
       </defs>
 
-      <!--
-        clip-path  → restreint au contour des lettres (silhouette)
-        mask       → révèle progressivement via les cercles bloom
-        Les deux s'appliquent indépendamment sur le même élément : bien supporté.
-      -->
-      <text x="250" y="140" text-anchor="middle" font-size="148"
+      <text x="260" y="140" text-anchor="middle" font-size="148"
             font-family="'Great Vibes', cursive"
             fill="var(--ink)"
             clip-path="url(#letterClip)"
