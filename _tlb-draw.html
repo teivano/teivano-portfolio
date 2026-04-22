@@ -22,31 +22,33 @@
 
     .tlb-svg { overflow: visible; width: clamp(260px, 65vw, 640px); }
 
-    @keyframes strokeDraw  { from { stroke-dashoffset: 6000; } to { stroke-dashoffset: 0; } }
-    @keyframes fillAppear  { from { fill-opacity: 0; }          to { fill-opacity: 1; } }
-    @keyframes strokeFade  { to   { stroke-opacity: 0; } }
+    /* ── Animations ── */
+    @keyframes strokeDraw { from { stroke-dashoffset: 6000; } to { stroke-dashoffset: 0; } }
+    @keyframes sweepFill  { from { width: 0; }                to { width: 520px; } }
 
-    .tlb-text {
+    /* Stroke layer */
+    .t-stroke {
       font-family: 'Great Vibes', cursive;
-      fill: var(--ink); fill-opacity: 0;
+      fill: none;
       stroke: var(--ink); stroke-width: 1.2;
       stroke-linecap: round; stroke-linejoin: round;
       stroke-dasharray: 6000; stroke-dashoffset: 6000;
-      stroke-opacity: 1;
+    }
+    .t-stroke.go {
+      animation: strokeDraw 5s cubic-bezier(.4,0,.2,1) .3s forwards;
     }
 
-    /* Mode A : stroke qui se dessine puis fill apparaît */
-    .tlb-text.draw-fill {
-      animation:
-        strokeDraw  2.8s cubic-bezier(.4,0,.2,1)  .3s forwards,
-        fillAppear   .7s ease                      3.3s forwards,
-        strokeFade   .6s ease                      3.3s forwards;
+    /* Fill layer (clip-path sweep) */
+    .t-fill {
+      font-family: 'Great Vibes', cursive;
+      fill: var(--ink);
+      stroke: none;
     }
 
-    /* Mode B : stroke seul, pas de fill */
-    .tlb-text.draw-stroke {
-      fill-opacity: 0;
-      animation: strokeDraw 2.8s cubic-bezier(.4,0,.2,1) .3s forwards;
+    /* Sweep rect (controlled via JS width) */
+    #fillRect { transition: none; }
+    #fillRect.go {
+      animation: sweepFill 5s linear .3s forwards;
     }
 
     /* ── Controls ── */
@@ -94,16 +96,29 @@
 
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
-  <p class="mode-label" id="modeLabel">Stroke → Fill</p>
+  <p class="mode-label" id="modeLabel">Stroke + Fill simultané</p>
 
   <div class="scene">
     <svg class="tlb-svg" viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
-      <text class="tlb-text" id="tlbText"
+      <defs>
+        <clipPath id="fillClip">
+          <!-- x fixe à -10, width animé de 0 → 520 -->
+          <rect id="fillRect" x="-10" y="-20" width="0" height="200"/>
+        </clipPath>
+      </defs>
+
+      <!-- Layer fill (révélé par sweep horizontal) -->
+      <text class="t-fill" id="tFill"
+            x="250" y="132" text-anchor="middle" font-size="148"
+            clip-path="url(#fillClip)">TLB</text>
+
+      <!-- Layer stroke (dashoffset) -->
+      <text class="t-stroke" id="tStroke"
             x="250" y="132" text-anchor="middle" font-size="148">TLB</text>
     </svg>
 
     <div class="controls">
-      <button class="btn active" id="btnFill">Stroke → Fill</button>
+      <button class="btn active" id="btnFill">Stroke + Fill</button>
       <button class="btn" id="btnStroke">Stroke seul</button>
       <button class="btn" id="btnReplay">↺ Rejouer</button>
     </div>
@@ -125,28 +140,35 @@
       }
     })();
 
-    var text  = document.getElementById('tlbText');
-    var label = document.getElementById('modeLabel');
-    var btnF  = document.getElementById('btnFill');
-    var btnS  = document.getElementById('btnStroke');
-    var mode  = 'fill'; // 'fill' | 'stroke'
+    var tStroke  = document.getElementById('tStroke');
+    var fillRect = document.getElementById('fillRect');
+    var label    = document.getElementById('modeLabel');
+    var btnF     = document.getElementById('btnFill');
+    var btnS     = document.getElementById('btnStroke');
+    var mode     = 'fill';
+
+    function reset() {
+      tStroke.classList.remove('go');
+      fillRect.classList.remove('go');
+      fillRect.setAttribute('width','0');
+      void tStroke.offsetWidth;
+      void fillRect.offsetWidth;
+    }
 
     function play() {
-      text.classList.remove('draw-fill','draw-stroke');
-      void text.offsetWidth;
-      text.classList.add(mode === 'fill' ? 'draw-fill' : 'draw-stroke');
+      reset();
+      tStroke.classList.add('go');
+      if (mode === 'fill') fillRect.classList.add('go');
     }
 
     function setMode(m) {
       mode = m;
       if (m === 'fill') {
-        label.textContent = 'Stroke → Fill';
-        btnF.classList.add('active');
-        btnS.classList.remove('active');
+        label.textContent = 'Stroke + Fill simultané';
+        btnF.classList.add('active'); btnS.classList.remove('active');
       } else {
         label.textContent = 'Stroke seul';
-        btnS.classList.add('active');
-        btnF.classList.remove('active');
+        btnS.classList.add('active'); btnF.classList.remove('active');
       }
       play();
     }
