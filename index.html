@@ -167,21 +167,27 @@
                 font-family="'Great Vibes', cursive">TLB</text>
         </clipPath>
         <!-- Cercles bloom (générés par JS) -->
-        <clipPath id="bloomClip"></clipPath>
         <!--
-          Intersection : zone = (rect clippé par bloomClip) clippé par letterClip
-          → seul le recoupement cercles ∩ silhouette est révélé
+          Mask bloom : cercles blancs générés par JS.
+          Blanc = visible, noir/absent = caché.
+          maskUnits userSpaceOnUse pour que les cx/cy soient en coords viewBox.
         -->
-        <clipPath id="finalClip" clip-path="url(#letterClip)">
-          <rect x="-80" y="-80" width="660" height="360"
-                clip-path="url(#bloomClip)"/>
-        </clipPath>
+        <mask id="bloomMask" x="-80" y="-80" width="660" height="360"
+              maskUnits="userSpaceOnUse">
+          <!-- JS append white circles here -->
+        </mask>
       </defs>
 
+      <!--
+        clip-path  → restreint au contour des lettres (silhouette)
+        mask       → révèle progressivement via les cercles bloom
+        Les deux s'appliquent indépendamment sur le même élément : bien supporté.
+      -->
       <text x="250" y="140" text-anchor="middle" font-size="148"
             font-family="'Great Vibes', cursive"
             fill="var(--ink)"
-            clip-path="url(#finalClip)">TLB</text>
+            clip-path="url(#letterClip)"
+            mask="url(#bloomMask)">TLB</text>
     </svg>
   </main>
 
@@ -260,16 +266,17 @@
 
     // Bloom logo
     document.fonts.ready.then(function(){
-      var clip = document.getElementById('bloomClip');
+      var mask = document.getElementById('bloomMask');
       var N = 8;
       for (var i = 0; i < N; i++) {
         var c = document.createElementNS(NS, 'circle');
         c.setAttribute('cx', (55 + Math.random() * 390).toFixed(1));
         c.setAttribute('cy', (10 + Math.random() * 140).toFixed(1));
+        c.setAttribute('fill', 'white');
         c.classList.add('bloom-c');
         c.style.animationDelay    = (Math.random() * 1.1).toFixed(2) + 's';
         c.style.animationDuration = (1.6 + Math.random() * 0.8).toFixed(2) + 's';
-        clip.appendChild(c);
+        mask.appendChild(c);
       }
     });
   </script>
