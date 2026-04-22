@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TLB — draw test</title>
+  <title>TLB — bloom test</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Space+Grotesk:wght@300&display=swap">
@@ -22,32 +22,13 @@
 
     .tlb-svg { overflow: visible; width: clamp(260px, 65vw, 640px); }
 
-    @keyframes strokeDraw { from { stroke-dashoffset: 6000; } to { stroke-dashoffset: 0; } }
+    /* Cercles du clipPath : grandissent depuis r=0 */
+    @keyframes bloom { from { r: 0; } to { r: 380px; } }
 
-    /* Stroke épais (pseudo-fill) — clippé à l'intérieur des lettres */
-    .t-fill {
-      font-family: 'Great Vibes', cursive;
-      fill: none;
-      stroke: var(--ink);
-      stroke-width: 200;       /* déborde largement, clipPath le contient */
-      stroke-linecap: round;
-      stroke-dasharray: 6000;
-      stroke-dashoffset: 6000;
-    }
-    /* Stroke fin (contour) */
-    .t-outline {
-      font-family: 'Great Vibes', cursive;
-      fill: none;
-      stroke: var(--ink);
-      stroke-width: 1.2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 6000;
-      stroke-dashoffset: 6000;
-    }
-
-    .t-fill.go, .t-outline.go {
-      animation: strokeDraw 5s cubic-bezier(.4,0,.2,1) .3s forwards;
+    .bloom-c {
+      animation-name: bloom;
+      animation-timing-function: cubic-bezier(.16,1,.3,1);
+      animation-fill-mode: forwards;
     }
 
     /* ── Controls ── */
@@ -61,16 +42,7 @@
       padding: .5rem 1.1rem; cursor: pointer;
       transition: color .2s, border-color .2s;
     }
-    .btn:hover, .btn.active { color: var(--ink); border-color: var(--ink); }
-
-    .mode-label {
-      position: fixed; top: 1.5rem; left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: .55rem; font-weight: 300;
-      letter-spacing: .18em; text-transform: uppercase;
-      color: var(--ink2);
-    }
+    .btn:hover { color: var(--ink); border-color: var(--ink); }
   </style>
 </head>
 <body>
@@ -94,35 +66,31 @@
   </script>
 
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
-  <p class="mode-label" id="modeLabel">Fill suit le stroke</p>
 
   <div class="scene">
     <svg class="tlb-svg" viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!--
-          Le clipPath contient le texte en silhouette (fill blanc = opaque).
-          Le stroke épais (.t-fill) est clippé dedans → seul l'intérieur
-          des lettres est peint, et il suit le tracé du stroke-dashoffset.
-        -->
+        <!-- clipPath contenant la silhouette des lettres -->
         <clipPath id="letterClip">
           <text x="250" y="132" text-anchor="middle" font-size="148"
                 font-family="'Great Vibes', cursive">TLB</text>
         </clipPath>
+        <!-- clipPath des cercles bloom (généré par JS) -->
+        <clipPath id="bloomClip"></clipPath>
+        <!-- Intersection : texte ET bloom -->
+        <clipPath id="finalClip" clip-path="url(#letterClip)">
+          <rect x="-50" y="-50" width="600" height="260"
+                clip-path="url(#bloomClip)"/>
+        </clipPath>
       </defs>
 
-      <!-- Layer 1 : stroke épais clippé → fill qui suit le tracé -->
-      <text class="t-fill" id="tFill"
-            x="250" y="132" text-anchor="middle" font-size="148"
-            clip-path="url(#letterClip)">TLB</text>
-
-      <!-- Layer 2 : stroke fin → contour -->
-      <text class="t-outline" id="tOutline"
-            x="250" y="132" text-anchor="middle" font-size="148">TLB</text>
+      <text x="250" y="132" text-anchor="middle" font-size="148"
+            font-family="'Great Vibes', cursive"
+            fill="var(--ink)"
+            clip-path="url(#finalClip)">TLB</text>
     </svg>
 
     <div class="controls">
-      <button class="btn active" id="btnFill">Fill + Stroke</button>
-      <button class="btn" id="btnStroke">Stroke seul</button>
       <button class="btn" id="btnReplay">↺ Rejouer</button>
     </div>
   </div>
@@ -143,42 +111,32 @@
       }
     })();
 
-    var tFill    = document.getElementById('tFill');
-    var tOutline = document.getElementById('tOutline');
-    var label    = document.getElementById('modeLabel');
-    var btnF     = document.getElementById('btnFill');
-    var btnS     = document.getElementById('btnStroke');
-    var mode     = 'fill';
+    var NS = 'http://www.w3.org/2000/svg';
 
-    function reset() {
-      tFill.classList.remove('go');
-      tOutline.classList.remove('go');
-      void tFill.offsetWidth;
+    function buildBloom() {
+      var clip = document.getElementById('bloomClip');
+      // Vider
+      while (clip.firstChild) clip.removeChild(clip.firstChild);
+
+      var N = 8;
+      for (var i = 0; i < N; i++) {
+        var c = document.createElementNS(NS, 'circle');
+        // Positions aléatoires dans la zone du texte (viewBox 500×160)
+        c.setAttribute('cx', (55 + Math.random() * 390).toFixed(1));
+        c.setAttribute('cy', (10 + Math.random() * 140).toFixed(1));
+        c.classList.add('bloom-c');
+        c.style.animationDelay    = (Math.random() * 1.1).toFixed(2) + 's';
+        c.style.animationDuration = (1.6 + Math.random() * 0.8).toFixed(2) + 's';
+        clip.appendChild(c);
+      }
     }
 
     function play() {
-      reset();
-      tOutline.classList.add('go');
-      if (mode === 'fill') tFill.classList.add('go');
+      buildBloom();
     }
 
-    function setMode(m) {
-      mode = m;
-      if (m === 'fill') {
-        label.textContent = 'Fill suit le stroke';
-        btnF.classList.add('active'); btnS.classList.remove('active');
-      } else {
-        label.textContent = 'Stroke seul';
-        btnS.classList.add('active'); btnF.classList.remove('active');
-      }
-      play();
-    }
-
-    btnF.addEventListener('click', function(){ setMode('fill'); });
-    btnS.addEventListener('click', function(){ setMode('stroke'); });
     document.getElementById('btnReplay').addEventListener('click', play);
-
-    document.fonts.ready.then(function(){ setTimeout(play, 350); });
+    document.fonts.ready.then(function(){ setTimeout(play, 300); });
   </script>
 
 </body>
