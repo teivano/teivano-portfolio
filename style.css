@@ -33,8 +33,9 @@
   position: fixed; inset: 0;
   background: var(--ink);
   z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 2.5rem;
+  display: flex; align-items: flex-start; justify-content: center;
+  flex-direction: column; gap: 0;
+  padding: 0 clamp(2rem, 8vw, 8rem);
   opacity: 0; pointer-events: none;
   transition: opacity .35s ease;
 }

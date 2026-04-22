@@ -13,10 +13,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
 
+    /* ── Main — logo au premier tiers ── */
     .main {
       position: relative; z-index: 1;
       height: 100vh;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding-top: clamp(6rem, 24vh, 16rem);
     }
 
     .tlb-logo {
@@ -30,7 +33,17 @@
       user-select: none;
     }
 
-    /* ── Hamburger ── */
+    .tlb-year {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(.6rem, 1.1vw, .75rem);
+      font-weight: 300;
+      letter-spacing: .38em;
+      color: var(--ink2);
+      margin-top: 1.4rem;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) .95s both;
+    }
+
+    /* ── Hamburger → croix ── */
     .ham {
       position: fixed; top: 1.5rem; right: 1.8rem;
       z-index: 1001;
@@ -42,9 +55,45 @@
     .ham-line {
       display: block; width: 100%; height: 1.5px;
       background: var(--ink);
-      transition: background .3s ease;
+      transform-origin: center;
+      transition: background .3s ease, transform .3s cubic-bezier(.16,1,.3,1), opacity .25s ease;
     }
-    .ham.open .ham-line { background: var(--bg); }
+    /* Ouvert : transformation en croix + couleur bg */
+    .ham.open .ham-line               { background: var(--bg); }
+    .ham.open .ham-line:nth-child(1)  { transform: translateY(7.25px) rotate(45deg); }
+    .ham.open .ham-line:nth-child(2)  { opacity: 0; transform: scaleX(0); }
+    .ham.open .ham-line:nth-child(3)  { transform: translateY(-8.25px) rotate(-45deg); }
+
+    /* ── Nav overlay — items gauche + séparateurs ── */
+    .tlb-nav {
+      width: 100%;
+      max-width: 680px;
+    }
+    .tlb-nav-item {
+      display: flex; flex-direction: column; gap: .45rem;
+      padding: 1.8rem 0;
+      border-top: 1px solid rgba(255,255,255,.12);
+      text-decoration: none;
+      transition: opacity .2s;
+    }
+    .tlb-nav-item:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+    .tlb-nav-item:hover { opacity: .65; }
+    .tlb-nav-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(2rem, 5.5vw, 3.8rem);
+      font-weight: 300;
+      color: var(--bg);
+      letter-spacing: -.02em;
+      line-height: 1;
+    }
+    .tlb-nav-desc {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .65rem;
+      font-weight: 300;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.38);
+    }
   </style>
 </head>
 <body>
@@ -74,7 +123,7 @@
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
   <!-- Hamburger -->
-  <button class="ham" id="hamBtn" onclick="openNav()" aria-label="Menu" aria-expanded="false">
+  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
     <span class="ham-line"></span>
     <span class="ham-line"></span>
     <span class="ham-line"></span>
@@ -83,14 +132,25 @@
   <!-- Main -->
   <main class="main">
     <div class="tlb-logo">TLB</div>
+    <p class="tlb-year">2026</p>
   </main>
 
   <!-- Overlay nav -->
   <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
-    <button class="tlb-overlay-close" onclick="closeNav()">Fermer ×</button>
-    <a class="tlb-overlay-link" href="/transports.html">Transports</a>
-    <a class="tlb-overlay-link" href="/demo-api.html">Démo API</a>
-    <a class="tlb-overlay-link" href="https://w.teivano.fr">Workout Tracker</a>
+    <nav class="tlb-nav">
+      <a class="tlb-nav-item" href="/transports.html">
+        <span class="tlb-nav-title">Transports</span>
+        <span class="tlb-nav-desc">Lignes A & B · temps réel</span>
+      </a>
+      <a class="tlb-nav-item" href="/demo-api.html">
+        <span class="tlb-nav-title">Démo API</span>
+        <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
+      </a>
+      <a class="tlb-nav-item" href="https://w.teivano.fr">
+        <span class="tlb-nav-title">Workout Tracker</span>
+        <span class="tlb-nav-desc">Suivi d'entraînement personnel</span>
+      </a>
+    </nav>
   </div>
 
   <script>
@@ -127,7 +187,9 @@
       hamBtn.setAttribute('aria-expanded','false');
     }
 
-    // Clic extérieur ferme l'overlay
+    hamBtn.addEventListener('click', function(){
+      hamBtn.classList.contains('open') ? closeNav() : openNav();
+    });
     overlay.addEventListener('click',function(e){ if(e.target===overlay) closeNav(); });
     document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeNav(); });
   </script>
