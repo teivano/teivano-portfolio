@@ -7,7 +7,7 @@
   <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%236B1A1A' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&family=Alex+Brush&family=Aguafina+Script&family=Great+Vibes&family=Herr+Von+Muellerhoff&display=swap">
   <link rel="stylesheet" href="style.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,7 +22,19 @@
       padding-top: clamp(6rem, 24vh, 16rem);
     }
 
+    /* ── Font test label ── */
+    .font-label {
+      position: fixed; bottom: 1.5rem; right: 1.8rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem; font-weight: 300;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2); pointer-events: none; z-index: 10;
+      opacity: 0; transition: opacity .3s;
+    }
+    .font-label.visible { opacity: 1; }
+
     .tlb-logo {
+      cursor: pointer;
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-size: clamp(5rem, 22vw, 18rem);
       font-weight: 300;
@@ -148,9 +160,12 @@
   <!-- 2026 coin haut-gauche -->
   <p class="tlb-year" aria-hidden="true">2026</p>
 
+  <!-- Font test label -->
+  <div class="font-label" id="fontLabel"></div>
+
   <!-- Main -->
   <main class="main">
-    <div class="tlb-logo">TLB</div>
+    <div class="tlb-logo" id="tlbLogo">TLB</div>
   </main>
 
   <!-- Overlay nav -->
@@ -218,6 +233,28 @@
         el.textContent=h+':'+m+':'+s+' · '+dd+' '+MOIS[d.getMonth()];
       }
       tick(); setInterval(tick,1000);
+    })();
+
+    // Font cycle
+    (function(){
+      var FONTS=[
+        {f:"'Cormorant Garamond', Georgia, serif", n:'Cormorant Garamond'},
+        {f:"'Alex Brush', cursive",               n:'Alex Brush'},
+        {f:"'Aguafina Script', cursive",           n:'Aguafina Script'},
+        {f:"'Great Vibes', cursive",               n:'Great Vibes'},
+        {f:"'Herr Von Muellerhoff', cursive",      n:'Herr Von Muellerhoff'}
+      ];
+      var i=0, timer;
+      var logo=document.getElementById('tlbLogo');
+      var label=document.getElementById('fontLabel');
+      logo.addEventListener('click', function(){
+        i=(i+1)%FONTS.length;
+        logo.style.fontFamily=FONTS[i].f;
+        label.textContent=FONTS[i].n;
+        label.classList.add('visible');
+        clearTimeout(timer);
+        timer=setTimeout(function(){ label.classList.remove('visible'); }, 2200);
+      });
     })();
 
     hamBtn.addEventListener('click', function(){
