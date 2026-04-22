@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TLB — draw test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Space+Grotesk:wght@300&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+
+    .scene {
+      position: relative; z-index: 1;
+      height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3rem;
+    }
+
+    .tlb-svg { overflow: visible; width: clamp(260px, 65vw, 640px); }
+
+    @keyframes strokeDraw  { from { stroke-dashoffset: 6000; } to { stroke-dashoffset: 0; } }
+    @keyframes fillAppear  { from { fill-opacity: 0; }          to { fill-opacity: 1; } }
+    @keyframes strokeFade  { to   { stroke-opacity: 0; } }
+
+    .tlb-text {
+      font-family: 'Great Vibes', cursive;
+      fill: var(--ink); fill-opacity: 0;
+      stroke: var(--ink); stroke-width: 1.2;
+      stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 6000; stroke-dashoffset: 6000;
+      stroke-opacity: 1;
+    }
+
+    /* Mode A : stroke qui se dessine puis fill apparaît */
+    .tlb-text.draw-fill {
+      animation:
+        strokeDraw  2.8s cubic-bezier(.4,0,.2,1)  .3s forwards,
+        fillAppear   .7s ease                      3.3s forwards,
+        strokeFade   .6s ease                      3.3s forwards;
+    }
+
+    /* Mode B : stroke seul, pas de fill */
+    .tlb-text.draw-stroke {
+      fill-opacity: 0;
+      animation: strokeDraw 2.8s cubic-bezier(.4,0,.2,1) .3s forwards;
+    }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 1.6rem; align-items: center; }
+    .btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem; font-weight: 300;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--ink2); background: none;
+      border: 1px solid var(--ink2);
+      padding: .5rem 1.1rem; cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+    .btn:hover, .btn.active { color: var(--ink); border-color: var(--ink); }
+
+    .mode-label {
+      position: fixed; top: 1.5rem; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .55rem; font-weight: 300;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2);
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    (function(){
+      var P=[
+        {s:'#B8C9E8',b:'#F5F0E8',i:'#6B1A1A',i2:'rgba(107,26,26,.45)'},
+        {s:'#A8D5C5',b:'#F2F7F5',i:'#961E50',i2:'rgba(150,30,80,.45)'},
+        {s:'#F5C9A8',b:'#FDF8F3',i:'#0A3868',i2:'rgba(10,56,104,.45)'},
+        {s:'#C8D4B0',b:'#F5F7EF',i:'#2D0A65',i2:'rgba(45,10,101,.45)'}
+      ];
+      var p=P[Math.floor(Math.random()*P.length)];
+      var r=document.documentElement.style;
+      r.setProperty('--stripe',p.s);
+      r.setProperty('--bg',p.b);
+      r.setProperty('--ink',p.i);
+      r.setProperty('--ink2',p.i2);
+      document.body.style.background=p.b;
+    })();
+  </script>
+
+  <div class="page-stripes" id="stripes" aria-hidden="true"></div>
+
+  <p class="mode-label" id="modeLabel">Stroke → Fill</p>
+
+  <div class="scene">
+    <svg class="tlb-svg" viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg">
+      <text class="tlb-text" id="tlbText"
+            x="250" y="132" text-anchor="middle" font-size="148">TLB</text>
+    </svg>
+
+    <div class="controls">
+      <button class="btn active" id="btnFill">Stroke → Fill</button>
+      <button class="btn" id="btnStroke">Stroke seul</button>
+      <button class="btn" id="btnReplay">↺ Rejouer</button>
+    </div>
+  </div>
+
+  <script>
+    // Stripes
+    (function(){
+      var el=document.getElementById('stripes');
+      for(var i=0;i<15;i++){
+        var s=document.createElement('div');
+        var isS=i%2===0;
+        s.className='page-stripe'+(isS?'':' gap');
+        if(isS){
+          s.style.background='var(--stripe)';
+          s.style.animation='stripeDrop '+(0.45+Math.random()*0.55).toFixed(2)+'s cubic-bezier(.16,1,.3,1) '+(Math.floor(i/2)*0.06+Math.random()*0.1).toFixed(2)+'s both';
+        }
+        el.appendChild(s);
+      }
+    })();
+
+    var text  = document.getElementById('tlbText');
+    var label = document.getElementById('modeLabel');
+    var btnF  = document.getElementById('btnFill');
+    var btnS  = document.getElementById('btnStroke');
+    var mode  = 'fill'; // 'fill' | 'stroke'
+
+    function play() {
+      text.classList.remove('draw-fill','draw-stroke');
+      void text.offsetWidth;
+      text.classList.add(mode === 'fill' ? 'draw-fill' : 'draw-stroke');
+    }
+
+    function setMode(m) {
+      mode = m;
+      if (m === 'fill') {
+        label.textContent = 'Stroke → Fill';
+        btnF.classList.add('active');
+        btnS.classList.remove('active');
+      } else {
+        label.textContent = 'Stroke seul';
+        btnS.classList.add('active');
+        btnF.classList.remove('active');
+      }
+      play();
+    }
+
+    btnF.addEventListener('click', function(){ setMode('fill'); });
+    btnS.addEventListener('click', function(){ setMode('stroke'); });
+    document.getElementById('btnReplay').addEventListener('click', play);
+
+    document.fonts.ready.then(function(){ setTimeout(play, 350); });
+  </script>
+
+</body>
+</html>
