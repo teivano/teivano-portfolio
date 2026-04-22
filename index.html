@@ -43,6 +43,51 @@
       animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) .95s both;
     }
 
+    /* ── Ghost letter ── */
+    .tlb-ghost {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 74vmin;
+      font-weight: 300;
+      color: var(--ink);
+      opacity: .032;
+      user-select: none; pointer-events: none;
+      z-index: 1; line-height: 1; letter-spacing: -.05em;
+    }
+
+    /* ── Branche botanique ── */
+    .tlb-branch {
+      position: fixed; bottom: -1.5rem; right: -.5rem;
+      width: clamp(100px, 15vw, 190px);
+      opacity: .22;
+      pointer-events: none; z-index: 2;
+    }
+    .bp {
+      stroke: var(--ink); stroke-width: .9;
+      fill: none; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 800; stroke-dashoffset: 800;
+    }
+    @keyframes branchDraw { to { stroke-dashoffset: 0; } }
+    .bp:nth-child(1) { animation: branchDraw 2s   cubic-bezier(.16,1,.3,1) 1.4s forwards; }
+    .bp:nth-child(2) { animation: branchDraw 1.3s cubic-bezier(.16,1,.3,1) 1.9s forwards; }
+    .bp:nth-child(3) { animation: branchDraw 1.3s cubic-bezier(.16,1,.3,1) 2.1s forwards; }
+    .bp:nth-child(4) { animation: branchDraw 1.3s cubic-bezier(.16,1,.3,1) 2.3s forwards; }
+    .bp:nth-child(5) { animation: branchDraw 1.3s cubic-bezier(.16,1,.3,1) 2.5s forwards; }
+    .bp:nth-child(6) { animation: branchDraw 1.3s cubic-bezier(.16,1,.3,1) 2.7s forwards; }
+
+    /* ── Horloge bas-gauche ── */
+    .tlb-clock {
+      position: fixed; bottom: 1.5rem; left: 1.8rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(.55rem, 1vw, .68rem);
+      font-weight: 300;
+      letter-spacing: .22em;
+      color: var(--ink2);
+      z-index: 10;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1.2s both;
+    }
+
     /* ── Hamburger → croix ── */
     .ham {
       position: fixed; top: 1.5rem; right: 1.8rem;
@@ -119,6 +164,28 @@
     })();
   </script>
 
+  <!-- Ghost letter -->
+  <div class="tlb-ghost" aria-hidden="true">T</div>
+
+  <!-- Branche botanique -->
+  <svg class="tlb-branch" viewBox="0 0 160 340" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <!-- Tige principale -->
+    <path class="bp" d="M80 340 C78 280 72 220 68 160 C64 100 72 50 80 10"/>
+    <!-- Feuille 1 — droite, basse -->
+    <path class="bp" d="M78 300 C95 290 118 272 115 265 C112 258 88 278 78 300"/>
+    <!-- Feuille 2 — gauche -->
+    <path class="bp" d="M73 255 C55 245 30 228 36 222 C42 216 65 240 73 255"/>
+    <!-- Feuille 3 — droite -->
+    <path class="bp" d="M70 205 C88 195 112 177 107 170 C102 163 78 188 70 205"/>
+    <!-- Feuille 4 — gauche -->
+    <path class="bp" d="M67 158 C48 148 24 132 30 126 C36 120 58 143 67 158"/>
+    <!-- Feuille 5 — droite, haute -->
+    <path class="bp" d="M70 108 C88 98 110 80 105 73 C100 66 78 90 70 108"/>
+  </svg>
+
+  <!-- Horloge -->
+  <div class="tlb-clock" id="tlbClock" aria-live="off" aria-label="Heure"></div>
+
   <!-- Stripes -->
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
@@ -186,6 +253,19 @@
       hamBtn.classList.remove('open');
       hamBtn.setAttribute('aria-expanded','false');
     }
+
+    // Horloge
+    (function(){
+      var el=document.getElementById('tlbClock');
+      function tick(){
+        var d=new Date();
+        var h=String(d.getHours()).padStart(2,'0');
+        var m=String(d.getMinutes()).padStart(2,'0');
+        var s=String(d.getSeconds()).padStart(2,'0');
+        el.textContent=h+':'+m+':'+s;
+      }
+      tick(); setInterval(tick,1000);
+    })();
 
     hamBtn.addEventListener('click', function(){
       hamBtn.classList.contains('open') ? closeNav() : openNav();
