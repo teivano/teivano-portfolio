@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Font test — TLB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Aguafina+Script&family=Great+Vibes&family=Herr+Von+Muellerhoff&family=Cormorant+Garamond:wght@300&family=Space+Grotesk:wght@300&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100%; background: var(--bg); }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 4rem 2rem;
+      gap: 0;
+    }
+
+    .font-row {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 2.2rem 0;
+      border-top: 1px solid rgba(0,0,0,.08);
+      gap: 2rem;
+    }
+    .font-row:last-child { border-bottom: 1px solid rgba(0,0,0,.08); }
+
+    .font-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      font-weight: 300;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      white-space: nowrap;
+      flex-shrink: 0;
+      width: 11rem;
+    }
+
+    .font-sample {
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1;
+      flex: 1;
+      text-align: right;
+    }
+
+    .alex-brush       { font-family: 'Alex Brush', cursive; }
+    .aguafina-script  { font-family: 'Aguafina Script', cursive; }
+    .great-vibes      { font-family: 'Great Vibes', cursive; }
+    .herr-von         { font-family: 'Herr Von Muellerhoff', cursive; }
+  </style>
+</head>
+<body>
+
+  <script>
+    (function(){
+      var P=[
+        {s:'#B8C9E8',b:'#F5F0E8',i:'#6B1A1A',i2:'rgba(107,26,26,.45)'},
+        {s:'#A8D5C5',b:'#F2F7F5',i:'#961E50',i2:'rgba(150,30,80,.45)'},
+        {s:'#F5C9A8',b:'#FDF8F3',i:'#0A3868',i2:'rgba(10,56,104,.45)'},
+        {s:'#C8D4B0',b:'#F5F7EF',i:'#2D0A65',i2:'rgba(45,10,101,.45)'}
+      ];
+      var p=P[Math.floor(Math.random()*P.length)];
+      var r=document.documentElement.style;
+      r.setProperty('--stripe',p.s);
+      r.setProperty('--bg',p.b);
+      r.setProperty('--ink',p.i);
+      r.setProperty('--ink2',p.i2);
+      document.body.style.background=p.b;
+    })();
+  </script>
+
+  <div class="font-row">
+    <span class="font-name">Alex Brush</span>
+    <span class="font-sample alex-brush">Thibault Le Bouëdec</span>
+  </div>
+
+  <div class="font-row">
+    <span class="font-name">Aguafina Script</span>
+    <span class="font-sample aguafina-script">Thibault Le Bouëdec</span>
+  </div>
+
+  <div class="font-row">
+    <span class="font-name">Great Vibes</span>
+    <span class="font-sample great-vibes">Thibault Le Bouëdec</span>
+  </div>
+
+  <div class="font-row">
+    <span class="font-name">Herr Von Muellerhoff</span>
+    <span class="font-sample herr-von">Thibault Le Bouëdec</span>
+  </div>
+
+</body>
+</html>
