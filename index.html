@@ -164,7 +164,7 @@
           Les cercles ne révèlent que là où les glyphes existent — pas besoin
           d'une silhouette séparée qui peut désynchroniser avec la police.
         -->
-        <mask id="bloomMask" x="-110" y="-90" width="820" height="320"
+        <mask id="bloomMask" x="-1000" y="-1000" width="4000" height="4000"
               maskUnits="userSpaceOnUse">
         </mask>
       </defs>
@@ -252,17 +252,25 @@
     // Bloom logo
     document.fonts.ready.then(function(){
       var mask = document.getElementById('bloomMask');
+      var textEl = document.querySelector('.tlb-svg text');
       var N = 8;
+      var maxEnd = 0;
       for (var i = 0; i < N; i++) {
+        var delay = parseFloat((Math.random() * 1.1).toFixed(2));
+        var dur   = parseFloat((1.6 + Math.random() * 0.8).toFixed(2));
+        if (delay + dur > maxEnd) maxEnd = delay + dur;
         var c = document.createElementNS(NS, 'circle');
         c.setAttribute('cx', (55 + Math.random() * 390).toFixed(1));
         c.setAttribute('cy', (10 + Math.random() * 140).toFixed(1));
         c.setAttribute('fill', 'white');
         c.classList.add('bloom-c');
-        c.style.animationDelay    = (Math.random() * 1.1).toFixed(2) + 's';
-        c.style.animationDuration = (1.6 + Math.random() * 0.8).toFixed(2) + 's';
+        c.style.animationDelay    = delay + 's';
+        c.style.animationDuration = dur + 's';
         mask.appendChild(c);
       }
+      // Supprime le mask après la fin de l'animation — garantit l'affichage
+      // complet du texte sans dépendre de la couverture exacte des cercles.
+      setTimeout(function(){ textEl.removeAttribute('mask'); }, (maxEnd + 0.15) * 1000);
     });
   </script>
 
