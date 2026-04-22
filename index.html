@@ -159,10 +159,11 @@
          fill="none" aria-label="TLB" role="img"
          xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <clipPath id="letterClip">
-          <text x="260" y="140" text-anchor="middle" font-size="148"
-                font-family="'Great Vibes', cursive">TLB</text>
-        </clipPath>
+        <!--
+          Pas de clip-path : le mask s'applique directement sur le <text>.
+          Les cercles ne révèlent que là où les glyphes existent — pas besoin
+          d'une silhouette séparée qui peut désynchroniser avec la police.
+        -->
         <mask id="bloomMask" x="-110" y="-90" width="820" height="320"
               maskUnits="userSpaceOnUse">
         </mask>
@@ -171,7 +172,6 @@
       <text x="260" y="140" text-anchor="middle" font-size="148"
             font-family="'Great Vibes', cursive"
             fill="var(--ink)"
-            clip-path="url(#letterClip)"
             mask="url(#bloomMask)">TLB</text>
     </svg>
   </main>
