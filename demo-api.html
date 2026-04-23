@@ -805,21 +805,7 @@
       </div>
     </section>
 
-    <!-- ══ BLOC 5 — Événements ══ -->
-    <section class="bloc" id="s-events">
-      <div class="bloc-hd">04 · Événements à Rennes</div>
-      <div class="gc">
-        <div class="ch">
-          <div class="ch-l"><span class="ch-ico">🎭</span>
-            <div><div class="ch-ttl">Agenda · Prochains événements</div><div class="ch-sub">Culture, musique, sport · open data Rennes</div></div>
-          </div>
-          <span class="ch-ts" id="ts-ev">—</span>
-        </div>
-        <div id="events"><div class="spin">Chargement</div></div>
-      </div>
-    </section>
-
-    <!-- ══ BLOC 6 — Calculateur kilométrique ══ -->
+    <!-- ══ BLOC 5 — Calculateur kilométrique ══ -->
     <section class="bloc" id="s-kilo">
       <div class="bloc-hd">05 · Calculateur de frais kilométriques</div>
       <div class="gc">
@@ -1280,74 +1266,7 @@
     }
 
     /* ═══════════════════════════════════════
-       BLOC 5 — ÉVÉNEMENTS
-    ═══════════════════════════════════════ */
-    function fmtEvDate(s) {
-      if (!s) return '—';
-      return new Date(s).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
-    }
-    function evTheme(theme) {
-      var t = (theme || '').toLowerCase();
-      if (t.includes('musiqu'))                       return {bg:'rgba(124,58,237,.1)', fg:'#6d28d9',icon:'🎵'};
-      if (t.includes('théât')||t.includes('theat'))   return {bg:'rgba(239,68,68,.1)',  fg:'#b91c1c',icon:'🎭'};
-      if (t.includes('exposi'))                       return {bg:'rgba(13,148,136,.1)', fg:'#0f766e',icon:'🎨'};
-      if (t.includes('festival'))                     return {bg:'rgba(249,115,22,.1)', fg:'#c2410c',icon:'🎪'};
-      if (t.includes('dans'))                         return {bg:'rgba(236,72,153,.1)', fg:'#be185d',icon:'💃'};
-      if (t.includes('sport'))                        return {bg:'rgba(37,99,235,.1)',  fg:'#1d4ed8',icon:'⚽'};
-      if (t.includes('ciném')||t.includes('cinem'))   return {bg:'rgba(79,70,229,.1)',  fg:'#4338ca',icon:'🎬'};
-      if (t.includes('confér')||t.includes('conf'))   return {bg:'rgba(16,185,129,.1)', fg:'#047857',icon:'🎤'};
-      return {bg:'rgba(0,0,0,.06)',fg:'#374151',icon:'📌'};
-    }
-    async function loadEvents() {
-      try {
-        var d = await starApi('events',
-          'https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/evenements-rennes-en-temps-reel/records'
-          + '?where=date_debut%20%3E%20now()&limit=8&order_by=date_debut',
-          300000  /* TTL 5 min — événements changent rarement */
-        );
-        stamp('ev');
-        if (!d.results || !d.results.length) {
-          document.getElementById('events').innerHTML = '<div style="font-size:.78rem;color:var(--muted)">Aucun événement à venir disponible.</div>';
-          return;
-        }
-        var html = '<div class="ev-grid">';
-        d.results.forEach(function(r) {
-          var titre = r.titre || 'Sans titre';
-          var theme = Array.isArray(r.thematique) ? r.thematique[0] : (r.thematique || '');
-          var tc    = evTheme(theme);
-          var date  = fmtEvDate(r.date_debut);
-          var lieu  = r.lieu_nom || '';
-          var img   = r.image_url || '';
-          html += '<div class="ev-card">';
-          if (img) {
-            html += '<div class="ev-img"><img src="' + img + '" alt="" loading="lazy"'
-              + ' onerror="this.parentNode.innerHTML=\'<span style=\\"font-size:2rem;margin:auto\\">' + tc.icon + '</span>\'"></div>';
-          } else {
-            html += '<div class="ev-img" style="background:' + tc.bg + ';display:flex;align-items:center;justify-content:center"><span style="font-size:2.2rem">' + tc.icon + '</span></div>';
-          }
-          html += '<div class="ev-body">';
-          if (theme) html += '<span class="ev-tag" style="background:' + tc.bg + ';color:' + tc.fg + '">' + theme + '</span>';
-          html += '<div class="ev-ttl">' + titre + '</div><div class="ev-date">📅 ' + date + '</div>';
-          if (lieu) html += '<div class="ev-lieu">📍 ' + lieu + '</div>';
-          html += '</div></div>';
-        });
-        document.getElementById('events').innerHTML = html + '</div>';
-        var _gc = gcOf('events'); if (_gc && window._crystalize) window._crystalize(_gc);
-      } catch(e) {
-        var evEl = document.getElementById('events');
-        if (e.message === '429') {
-          evEl.innerHTML = '<div style="font-size:.76rem;color:var(--muted)">'
-            + 'Quota API temporairement atteint. '
-            + '<span style="cursor:pointer;color:var(--accent);text-decoration:underline" onclick="loadEvents()">Réessayer</span>'
-            + '</div>';
-        } else {
-          err('events', e.message);
-        }
-      }
-    }
-
-    /* ═══════════════════════════════════════
-       BLOC 6 — CALCULATEUR
+       BLOC 5 — CALCULATEUR
     ═══════════════════════════════════════ */
     async function geocodeAddr(addr) {
       var r = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(addr) + '&limit=1');
@@ -1685,7 +1604,6 @@
     setTimeout(loadVelos,     4000);
     setTimeout(loadEtat,      6000);
     setTimeout(loadParkings,  8000);
-    setTimeout(loadEvents,   10000);
     loadSatellite();
 
     setInterval(function() {
@@ -1693,7 +1611,6 @@
       setTimeout(loadBus,       2000);
       setTimeout(loadVelos,     4000);
       setTimeout(loadParkings,  6000);
-      setTimeout(loadEvents,    8000);
       updateRefreshClock();
     }, 300000);
 

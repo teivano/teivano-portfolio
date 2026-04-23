@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Événements · Rennes · TLB</title>
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%236B1A1A' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Wrapper ── */
+    .ev-wrap {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 clamp(1.5rem,5vw,3rem) 5rem;
+    }
+
+    /* ── Back link ── */
+    .back {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2); margin-bottom: 2.5rem; display: block;
+      transition: color .2s;
+    }
+    .back:hover { color: var(--ink); }
+
+    /* ── Header ── */
+    .ev-hd { padding: clamp(5rem,12vh,8rem) 0 clamp(2rem,4vh,3rem); }
+    .ev-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(3.2rem, 9vw, 7rem);
+      font-weight: 300; letter-spacing: -.03em; line-height: .92;
+      color: var(--ink);
+    }
+    .ev-subtitle {
+      font-size: .65rem; letter-spacing: .22em; text-transform: uppercase;
+      color: var(--ink2); margin-top: 1.2rem;
+    }
+
+    /* ── Filtres ── */
+    .ev-filters {
+      display: flex; flex-wrap: wrap; gap: .45rem;
+      margin-bottom: 2.5rem; align-items: center;
+    }
+    .ev-filter-sep {
+      width: 1px; height: 16px;
+      background: var(--ink); opacity: .18;
+      margin: 0 .3rem; flex-shrink: 0;
+    }
+    .ev-chip {
+      display: inline-flex; align-items: center; gap: .3rem;
+      padding: .36rem .8rem; border-radius: 999px;
+      border: 1px solid rgba(107,26,26,.18);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .63rem; letter-spacing: .1em; text-transform: uppercase;
+      cursor: pointer; background: transparent; color: var(--ink2);
+      transition: background .18s, color .18s, border-color .18s;
+    }
+    .ev-chip:hover { border-color: var(--ink); color: var(--ink); }
+    .ev-chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+    /* ── Grid ── */
+    .ev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+      gap: 1.1rem;
+    }
+
+    /* ── Card ── */
+    .ev-card {
+      background: rgba(255,255,255,.5);
+      border: 1px solid rgba(107,26,26,.09);
+      border-radius: 3px;
+      overflow: hidden; cursor: pointer;
+      display: flex; flex-direction: column;
+      transition: transform .22s cubic-bezier(0.16,1,0.3,1), box-shadow .22s;
+    }
+    .ev-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 32px rgba(107,26,26,.1);
+    }
+    .ev-card-img {
+      aspect-ratio: 16/9; overflow: hidden;
+      background: var(--stripe); opacity: .85;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; flex-shrink: 0;
+    }
+    .ev-card-img img { width: 100%; height: 100%; object-fit: cover; opacity: 1; }
+    .ev-card-body {
+      padding: .9rem 1rem 1rem;
+      flex: 1; display: flex; flex-direction: column; gap: .35rem;
+    }
+    .ev-card-meta { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+    .ev-card-source {
+      font-size: .58rem; letter-spacing: .13em; text-transform: uppercase;
+      color: var(--ink); opacity: .45;
+    }
+    .ev-card-tag {
+      font-size: .56rem; letter-spacing: .1em; text-transform: uppercase;
+      padding: .14rem .5rem; border-radius: 999px;
+      background: rgba(107,26,26,.07); color: var(--ink2);
+    }
+    .ev-card-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.2rem; font-weight: 300; line-height: 1.2;
+      color: var(--ink);
+    }
+    .ev-card-date { font-size: .62rem; letter-spacing: .06em; color: var(--ink2); }
+    .ev-card-lieu {
+      font-size: .62rem; color: var(--ink2); opacity: .65;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── Statuts ── */
+    .ev-loading {
+      text-align: center; padding: 2.5rem 0;
+      font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2);
+    }
+    .ev-end {
+      text-align: center; padding: 2.5rem 0;
+      font-size: .65rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--ink2); opacity: .38;
+    }
+    .ev-empty {
+      grid-column: 1/-1;
+      padding: 4rem 0; text-align: center;
+      font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--ink2); opacity: .5;
+    }
+    .ev-sentinel { height: 1px; }
+
+    /* ── Modal ── */
+    .ev-modal {
+      position: fixed; inset: 0;
+      background: var(--ink);
+      z-index: 2000; overflow-y: auto;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    .ev-modal.open { opacity: 1; pointer-events: all; }
+
+    .ev-modal-close {
+      position: sticky; top: 0; float: right;
+      margin: 1.8rem 2rem 0 0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--bg); opacity: .5; cursor: pointer;
+      border: none; background: none; padding: .4rem;
+      transition: opacity .2s; z-index: 1;
+    }
+    .ev-modal-close:hover { opacity: 1; }
+
+    .ev-modal-inner {
+      max-width: 700px; margin: 0 auto;
+      padding: 5rem clamp(1.5rem,5vw,3rem) 5rem;
+      clear: both;
+    }
+    .ev-modal-img {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover;
+      border-radius: 2px; margin-bottom: 2.5rem; display: block;
+    }
+    .ev-modal-placeholder {
+      width: 100%; aspect-ratio: 16/9;
+      background: rgba(255,255,255,.06);
+      border-radius: 2px; margin-bottom: 2.5rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 4rem;
+    }
+    .ev-modal-overline {
+      font-size: .6rem; letter-spacing: .2em; text-transform: uppercase;
+      color: rgba(255,255,255,.38); margin-bottom: 1rem;
+    }
+    .ev-modal-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      font-weight: 300; color: var(--bg);
+      line-height: 1.05; letter-spacing: -.025em;
+      margin-bottom: 2rem;
+    }
+    .ev-modal-meta {
+      border-top: 1px solid rgba(255,255,255,.1);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: 1.25rem 0; margin-bottom: 2rem;
+      display: flex; flex-direction: column; gap: .7rem;
+    }
+    .ev-modal-row { display: flex; gap: 1.2rem; align-items: baseline; }
+    .ev-modal-label {
+      font-size: .58rem; letter-spacing: .2em; text-transform: uppercase;
+      color: rgba(255,255,255,.35); min-width: 72px; flex-shrink: 0;
+    }
+    .ev-modal-val { font-size: .78rem; color: rgba(255,255,255,.72); line-height: 1.5; }
+    .ev-modal-desc {
+      font-size: .86rem; line-height: 1.75;
+      color: rgba(255,255,255,.58); margin-bottom: 2.5rem;
+    }
+    .ev-modal-link {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .68rem; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--bg);
+      border-bottom: 1px solid rgba(255,255,255,.3);
+      padding-bottom: 2px; transition: opacity .2s;
+    }
+    .ev-modal-link:hover { opacity: .65; }
+  </style>
+</head>
+<body>
+
+  <!-- Palette aléatoire (même système que le reste du portfolio) -->
+  <script>
+    (function(){
+      var P=[
+        {s:'#B8C9E8',b:'#F5F0E8',i:'#6B1A1A',i2:'rgba(107,26,26,.45)'},
+        {s:'#A8D5C5',b:'#F2F7F5',i:'#961E50',i2:'rgba(150,30,80,.45)'},
+        {s:'#F5C9A8',b:'#FDF8F3',i:'#0A3868',i2:'rgba(10,56,104,.45)'},
+        {s:'#C8D4B0',b:'#F5F7EF',i:'#2D0A65',i2:'rgba(45,10,101,.45)'}
+      ];
+      var p=P[Math.floor(Math.random()*P.length)];
+      var r=document.documentElement.style;
+      r.setProperty('--stripe',p.s);
+      r.setProperty('--bg',p.b);
+      r.setProperty('--ink',p.i);
+      r.setProperty('--ink2',p.i2);
+      document.body.style.background=p.b;
+      var svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='72' font-family='Georgia,serif' font-weight='300' font-size='52' fill='"+p.i+"' text-anchor='middle' letter-spacing='-3'>TLB</text></svg>";
+      document.getElementById('favicon').href='data:image/svg+xml,'+encodeURIComponent(svg);
+    })();
+  </script>
+
+  <!-- Stripes -->
+  <div class="page-stripes" id="stripes" aria-hidden="true"></div>
+
+  <!-- Hamburger -->
+  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+  </button>
+
+  <!-- Overlay nav -->
+  <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+    <nav class="tlb-nav">
+      <a class="tlb-nav-item" href="/transports.html">
+        <span class="tlb-nav-title">Transports</span>
+        <span class="tlb-nav-desc">Lignes A &amp; B · temps réel</span>
+      </a>
+      <a class="tlb-nav-item" href="/demo-api.html">
+        <span class="tlb-nav-title">Démo API</span>
+        <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
+      </a>
+      <a class="tlb-nav-item" href="/evenements.html">
+        <span class="tlb-nav-title">Événements</span>
+        <span class="tlb-nav-desc">Agenda culturel · Rennes · OpenAgenda</span>
+      </a>
+      <a class="tlb-nav-item" href="https://w.teivano.fr">
+        <span class="tlb-nav-title">Workout Tracker</span>
+        <span class="tlb-nav-desc">Suivi d'entraînement personnel</span>
+      </a>
+    </nav>
+  </div>
+
+  <main>
+    <div class="ev-wrap">
+
+      <header class="ev-hd">
+        <a href="/" class="back">← TLB</a>
+        <h1 class="ev-title">Évène&shy;ments</h1>
+        <p class="ev-subtitle">Rennes · Kerlandrier · Rennes Métropole · Université · Ministère Culture</p>
+      </header>
+
+      <!-- Filtres -->
+      <div class="ev-filters" id="ev-filters">
+        <button class="ev-chip active" data-theme="">Tout</button>
+        <button class="ev-chip" data-theme="musique">🎵 Musique</button>
+        <button class="ev-chip" data-theme="expo">🎨 Expo</button>
+        <button class="ev-chip" data-theme="theatre">🎭 Théâtre</button>
+        <button class="ev-chip" data-theme="festival">🎪 Festival</button>
+        <button class="ev-chip" data-theme="cinema">🎬 Cinéma</button>
+        <button class="ev-chip" data-theme="sport">⚽ Sport</button>
+        <button class="ev-chip" data-theme="conference">🎤 Conférence</button>
+        <button class="ev-chip" data-theme="danse">💃 Danse</button>
+        <div class="ev-filter-sep"></div>
+        <button class="ev-chip active" data-date="all">Toutes dates</button>
+        <button class="ev-chip" data-date="today">Aujourd'hui</button>
+        <button class="ev-chip" data-date="week">Cette semaine</button>
+        <button class="ev-chip" data-date="month">Ce mois</button>
+      </div>
+
+      <!-- Grille -->
+      <div class="ev-grid" id="ev-grid"></div>
+
+      <!-- Scroll sentinel -->
+      <div class="ev-sentinel" id="ev-sentinel"></div>
+      <div id="ev-status"></div>
+
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div class="ev-modal" id="ev-modal" role="dialog" aria-modal="true" aria-label="Détail événement">
+    <button class="ev-modal-close" id="ev-modal-close">Fermer ✕</button>
+    <div class="ev-modal-inner" id="ev-modal-inner"></div>
+  </div>
+
+  <script>
+    /* ── Stripes ── */
+    (function(){
+      var el=document.getElementById('stripes'), N=8;
+      for(var i=0;i<N*2-1;i++){
+        var s=document.createElement('div');
+        var isSt=i%2===0;
+        s.className='page-stripe'+(isSt?'':' gap');
+        if(isSt){
+          s.style.background='var(--stripe)';
+          var dur=(0.45+Math.random()*0.55).toFixed(2);
+          var del=(Math.floor(i/2)*0.06+Math.random()*0.1).toFixed(2);
+          s.style.animation='stripeDrop '+dur+'s cubic-bezier(.16,1,.3,1) '+del+'s both';
+        }
+        el.appendChild(s);
+      }
+    })();
+
+    /* ── Nav overlay ── */
+    var overlay=document.getElementById('tlbOverlay');
+    var hamBtn=document.getElementById('hamBtn');
+    function openNav(){ overlay.classList.add('open'); hamBtn.classList.add('open'); hamBtn.setAttribute('aria-expanded','true'); }
+    function closeNav(){ overlay.classList.remove('open'); hamBtn.classList.remove('open'); hamBtn.setAttribute('aria-expanded','false'); }
+    hamBtn.addEventListener('click', function(){ hamBtn.classList.contains('open') ? closeNav() : openNav(); });
+    overlay.addEventListener('click', function(e){ if(e.target===overlay) closeNav(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeNav(); closeModal(); } });
+
+    /* ══════════════════════════════════════════
+       CONFIG OPENAGENDA
+    ══════════════════════════════════════════ */
+    var OA_KEY  = '0fa77b181a274844be23fd036807d9ce';
+    var AGENDAS = [
+      { uid: 20500020, label: 'Rennes Métropole' },
+      { uid: 44891982, label: 'Kerlandrier'      },
+      { uid: 4443516,  label: 'Univ. Rennes'     },
+      { uid: 86244142, label: 'Min. Culture'      }
+    ];
+    var PAGE_SIZE = 20;
+    var BATCH     = 12;
+
+    /* ── État ── */
+    var pool      = [];
+    var rendered  = 0;
+    var seenUids  = {};
+    var cursors   = {};   /* uid → null (pas encore) | array (curseur) | 'done' */
+    var loading   = false;
+    var filterTheme = '';
+    var filterDate  = 'all';
+
+    AGENDAS.forEach(function(a){ cursors[a.uid] = null; });
+
+    /* ── Catégories ── */
+    var THEMES = {
+      musique:    ['musique','concert','jazz','rock','électro','chanson','pop','rap','opéra','orchestre','chorale'],
+      expo:       ['exposition','expo','art','galerie','photographie','peinture','sculpture','vernissage','dessin','illustration'],
+      theatre:    ['théâtre','theater','spectacle','pièce','comédie','drame','cirque','marionnette','one man','humoriste'],
+      festival:   ['festival'],
+      cinema:     ['cinéma','cinema','film','projection','court-métrage','documentaire'],
+      sport:      ['sport','football','basket','tennis','rugby','handball','natation','athlétisme','course','trail','vélo','escalade'],
+      conference: ['conférence','conference','débat','rencontre','séminaire','workshop','table ronde','colloque','lecture','conférence-débat'],
+      danse:      ['danse','ballet','contemporain','hip-hop','chorégraphie','flamenco']
+    };
+    var THEME_EMOJI = { musique:'🎵', expo:'🎨', theatre:'🎭', festival:'🎪', cinema:'🎬', sport:'⚽', conference:'🎤', danse:'💃' };
+
+    function detectTheme(ev) {
+      var kw   = ev.keywords && ev.keywords.fr ? ev.keywords.fr.join(' ').toLowerCase() : '';
+      var ttl  = ev.title && ev.title.fr ? ev.title.fr.toLowerCase() : '';
+      var desc = ev.description && ev.description.fr ? ev.description.fr.toLowerCase().slice(0,200) : '';
+      var text = kw + ' ' + ttl + ' ' + desc;
+      for (var t in THEMES) {
+        if (THEMES[t].some(function(k){ return text.indexOf(k) !== -1; })) return t;
+      }
+      return '';
+    }
+
+    /* ── Filtres date ── */
+    function passesDate(ev) {
+      if (filterDate === 'all') return true;
+      var begin = ev.nextTiming && ev.nextTiming.begin ? new Date(ev.nextTiming.begin) : null;
+      if (!begin) return false;
+      var now   = new Date();
+      var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (filterDate === 'today') {
+        var tom = new Date(today); tom.setDate(today.getDate()+1);
+        return begin >= today && begin < tom;
+      }
+      if (filterDate === 'week') {
+        var nw = new Date(today); nw.setDate(today.getDate()+7);
+        return begin >= today && begin < nw;
+      }
+      if (filterDate === 'month') {
+        var nm = new Date(today); nm.setMonth(today.getMonth()+1);
+        return begin >= today && begin < nm;
+      }
+      return true;
+    }
+
+    function passesTheme(ev) {
+      return !filterTheme || ev._theme === filterTheme;
+    }
+
+    /* ── Fetch un agenda ── */
+    function fetchAgenda(a) {
+      var url = 'https://api.openagenda.com/v2/agendas/' + a.uid + '/events'
+        + '?key='    + OA_KEY
+        + '&lang=fr'
+        + '&size='   + PAGE_SIZE
+        + '&passed=0'
+        + '&city%5B%5D=Rennes'
+        + '&sort=timings.asc';
+      var cur = cursors[a.uid];
+      if (Array.isArray(cur)) {
+        cur.forEach(function(v){ url += '&after%5B%5D=' + encodeURIComponent(v); });
+      }
+      return fetch(url)
+        .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(d){
+          if (!d.events || !d.events.length) { cursors[a.uid] = 'done'; return; }
+          d.events.forEach(function(ev){
+            if (seenUids[ev.uid]) return;
+            seenUids[ev.uid] = true;
+            ev._theme       = detectTheme(ev);
+            ev._agendaLabel = a.label;
+            pool.push(ev);
+          });
+          cursors[a.uid] = Array.isArray(d.after) ? d.after : 'done';
+        })
+        .catch(function(){ cursors[a.uid] = 'done'; });
+    }
+
+    /* ── Fetch tous les agendas actifs ── */
+    function fetchAll() {
+      if (loading) return;
+      var pending = AGENDAS.filter(function(a){ return cursors[a.uid] !== 'done'; });
+      if (!pending.length) { setStatus('end'); return; }
+      loading = true;
+      setStatus('loading');
+      Promise.all(pending.map(fetchAgenda)).then(function(){
+        pool.sort(function(a, b){
+          var da = a.nextTiming && a.nextTiming.begin ? new Date(a.nextTiming.begin) : new Date(9e15);
+          var db = b.nextTiming && b.nextTiming.begin ? new Date(b.nextTiming.begin) : new Date(9e15);
+          return da - db;
+        });
+        loading = false;
+        renderMore();
+      });
+    }
+
+    /* ── Formater date/heure ── */
+    function fmtDate(ev) {
+      if (ev.dateRange && ev.dateRange.fr) return ev.dateRange.fr;
+      var t = ev.nextTiming && ev.nextTiming.begin;
+      if (!t) return '—';
+      return new Date(t).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+    }
+    function fmtTime(ev) {
+      var t = ev.nextTiming && ev.nextTiming.begin;
+      if (!t) return '';
+      var d = new Date(t);
+      if (d.getHours() === 0 && d.getMinutes() === 0) return '';
+      return d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    /* ── URL image ── */
+    function imgUrl(ev) {
+      if (!ev.image) return null;
+      if (typeof ev.image === 'string') return ev.image;
+      if (ev.image.base && ev.image.filename) return ev.image.base + ev.image.filename;
+      if (ev.image.url) return ev.image.url;
+      return null;
+    }
+
+    /* ── Rendu card ── */
+    function renderCard(ev) {
+      var title = ev.title && ev.title.fr || 'Sans titre';
+      var img   = imgUrl(ev);
+      var date  = fmtDate(ev);
+      var time  = fmtTime(ev);
+      var lieu  = ev.location && (ev.location.name || ev.location.city) || '';
+      var emoji = THEME_EMOJI[ev._theme] || '📌';
+
+      var card = document.createElement('article');
+      card.className = 'ev-card';
+      card.innerHTML =
+        '<div class="ev-card-img">'
+          + (img
+            ? '<img src="' + img + '" alt="" loading="lazy" onerror="this.parentNode.innerHTML=\'<span style=\\"font-size:2.2rem\\">' + emoji + '</span>\'">'
+            : '<span style="font-size:2.2rem">' + emoji + '</span>')
+        + '</div>'
+        + '<div class="ev-card-body">'
+          + '<div class="ev-card-meta">'
+            + '<span class="ev-card-source">' + ev._agendaLabel + '</span>'
+            + (ev._theme ? '<span class="ev-card-tag">' + ev._theme + '</span>' : '')
+          + '</div>'
+          + '<div class="ev-card-title">' + title + '</div>'
+          + '<div class="ev-card-date">📅 ' + date + (time ? ' · ' + time : '') + '</div>'
+          + (lieu ? '<div class="ev-card-lieu">📍 ' + lieu + '</div>' : '')
+        + '</div>';
+
+      card.addEventListener('click', function(){ openModal(ev); });
+      return card;
+    }
+
+    /* ── Afficher batch suivant ── */
+    function renderMore() {
+      var grid     = document.getElementById('ev-grid');
+      var filtered = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
+      var slice    = filtered.slice(rendered, rendered + BATCH);
+
+      if (!slice.length) {
+        var allDone = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+        if (allDone) {
+          if (!filtered.length) grid.innerHTML = '<div class="ev-empty">Aucun événement trouvé</div>';
+          setStatus('end');
+        } else {
+          fetchAll();
+        }
+        return;
+      }
+
+      slice.forEach(function(ev){ grid.appendChild(renderCard(ev)); });
+      rendered += slice.length;
+
+      /* Si le pool filtré est épuisé, on fetch plus */
+      if (rendered >= filtered.length) {
+        var allDone2 = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+        if (allDone2) setStatus('end'); else fetchAll();
+      } else {
+        setStatus('');
+      }
+    }
+
+    function setStatus(s) {
+      var el = document.getElementById('ev-status');
+      if      (s === 'loading') el.innerHTML = '<div class="ev-loading">Chargement…</div>';
+      else if (s === 'end')     el.innerHTML = '<div class="ev-end">· · ·</div>';
+      else                      el.innerHTML = '';
+    }
+
+    /* ── Scroll infini ── */
+    var io = new IntersectionObserver(function(entries){
+      if (!entries[0].isIntersecting || loading) return;
+      var filtered = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
+      if (rendered < filtered.length) renderMore();
+      else if (AGENDAS.some(function(a){ return cursors[a.uid] !== 'done'; })) fetchAll();
+    }, { rootMargin: '300px' });
+    io.observe(document.getElementById('ev-sentinel'));
+
+    /* ── Filtres ── */
+    document.getElementById('ev-filters').addEventListener('click', function(e){
+      var chip = e.target.closest('.ev-chip');
+      if (!chip) return;
+      if ('theme' in chip.dataset) {
+        document.querySelectorAll('[data-theme]').forEach(function(c){ c.classList.remove('active'); });
+        chip.classList.add('active');
+        filterTheme = chip.dataset.theme;
+      }
+      if ('date' in chip.dataset) {
+        document.querySelectorAll('[data-date]').forEach(function(c){ c.classList.remove('active'); });
+        chip.classList.add('active');
+        filterDate = chip.dataset.date;
+      }
+      /* Reset rendu */
+      document.getElementById('ev-grid').innerHTML = '';
+      rendered = 0;
+      renderMore();
+    });
+
+    /* ── Modal ── */
+    function openModal(ev) {
+      var title = ev.title && ev.title.fr || 'Sans titre';
+      var img   = imgUrl(ev);
+      var desc  = ev.description && ev.description.fr || '';
+      var date  = fmtDate(ev);
+      var time  = fmtTime(ev);
+      var loc   = ev.location || {};
+      var link  = ev.onlineAccessLink || '';
+      var emoji = THEME_EMOJI[ev._theme] || '📌';
+
+      document.getElementById('ev-modal-inner').innerHTML =
+        (img
+          ? '<img class="ev-modal-img" src="' + img + '" alt="" onerror="this.outerHTML=\'<div class=ev-modal-placeholder>' + emoji + '</div>\'">'
+          : '<div class="ev-modal-placeholder">' + emoji + '</div>')
+        + '<div class="ev-modal-overline">' + ev._agendaLabel + (ev._theme ? ' · ' + ev._theme : '') + '</div>'
+        + '<h2 class="ev-modal-title">' + title + '</h2>'
+        + '<div class="ev-modal-meta">'
+          + '<div class="ev-modal-row"><span class="ev-modal-label">Date</span><span class="ev-modal-val">📅 ' + date + (time ? ' · ' + time : '') + '</span></div>'
+          + (loc.name    ? '<div class="ev-modal-row"><span class="ev-modal-label">Lieu</span><span class="ev-modal-val">📍 ' + loc.name + '</span></div>' : '')
+          + (loc.address ? '<div class="ev-modal-row"><span class="ev-modal-label">Adresse</span><span class="ev-modal-val">' + loc.address + '</span></div>' : '')
+          + (loc.city && loc.city !== 'Rennes' ? '<div class="ev-modal-row"><span class="ev-modal-label">Ville</span><span class="ev-modal-val">' + loc.city + '</span></div>' : '')
+        + '</div>'
+        + (desc ? '<div class="ev-modal-desc">' + desc.slice(0, 800) + (desc.length > 800 ? '…' : '') + '</div>' : '')
+        + (link ? '<a class="ev-modal-link" href="' + link + '" target="_blank" rel="noopener">Voir l\'événement →</a>' : '');
+
+      document.getElementById('ev-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('ev-modal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('ev-modal-close').addEventListener('click', closeModal);
+    document.getElementById('ev-modal').addEventListener('click', function(e){
+      if (e.target === this) closeModal();
+    });
+
+    /* ── Lancement ── */
+    fetchAll();
+  </script>
+</body>
+</html>
