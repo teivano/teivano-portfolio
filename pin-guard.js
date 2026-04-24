@@ -30,6 +30,15 @@
       'transition:opacity .22s ease;',
     '}',
     '#pg-overlay.open{opacity:1;pointer-events:all;}',
+    '@keyframes pgShake{',
+      '0%,100%{transform:translateX(0)}',
+      '15%{transform:translateX(-9px)}',
+      '30%{transform:translateX(9px)}',
+      '45%{transform:translateX(-6px)}',
+      '60%{transform:translateX(6px)}',
+      '75%{transform:translateX(-3px)}',
+      '90%{transform:translateX(3px)}',
+    '}',
     '#pg-box{',
       'background:var(--bg,#F5F0E8);',
       'border:2px solid var(--ink,#6B1A1A);',
@@ -39,6 +48,7 @@
       'position:relative;',
       'font-family:"Space Grotesk",system-ui,sans-serif;',
     '}',
+    '#pg-box.shake{animation:pgShake .42s cubic-bezier(.36,.07,.19,.97) both;}',
     '#pg-close{',
       'position:absolute;top:.9rem;right:1rem;',
       'background:none;border:none;cursor:pointer;',
@@ -167,6 +177,10 @@
         errEl.textContent = 'Code incorrect';
         entered = '';
         refresh();
+        var box = document.getElementById('pg-box');
+        box.classList.remove('shake');
+        void box.offsetWidth; /* reflow pour relancer l'animation */
+        box.classList.add('shake');
       }
     });
   }
