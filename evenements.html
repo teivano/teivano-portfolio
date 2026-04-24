@@ -293,6 +293,7 @@
         <button class="ev-chip" data-theme="expo">Expo</button>
         <button class="ev-chip" data-theme="theatre">Théâtre</button>
         <button class="ev-chip" data-theme="festival">Festival</button>
+        <button class="ev-chip" data-theme="cindeinde">Ciné indé</button>
         <button class="ev-chip" data-theme="cinema">Cinéma</button>
         <button class="ev-chip" data-theme="sport">Sport</button>
         <button class="ev-chip" data-theme="conference">Conférence</button>
@@ -365,6 +366,11 @@
     var PAGE_SIZE = 20;
     var BATCH     = 12;
 
+    /* ── TMDB ── */
+    var TMDB_TOKEN  = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiZmZiNDk1YmU5MjgwYTQyNmEzZDE1ZjkwYzNkZjgyOCIsIm5iZiI6MTc3NzA2MjMyMi4zNTIsInN1YiI6IjY5ZWJkMWIyYTkwYWJiZTNiYmRjNzkyMCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.VV34TRF2juMglNX4ER3CT7fJPlkBKiue73T6yIpod7Q';
+    var tmdbLoaded  = false;
+    var tmdbStarted = false;
+
     /* ── État ── */
     var pool      = [];
     var rendered  = 0;
@@ -382,12 +388,12 @@
       expo:       ['exposition','expo','art','galerie','photographie','peinture','sculpture','vernissage','dessin','illustration'],
       theatre:    ['théâtre','theater','spectacle','pièce','comédie','drame','cirque','marionnette','one man','humoriste'],
       festival:   ['festival'],
-      cinema:     ['cinéma','cinema','film','projection','court-métrage','documentaire'],
+      cindeinde:  ['cinéma','cinema','film','projection','court-métrage','documentaire'],
       sport:      ['sport','football','basket','tennis','rugby','handball','natation','athlétisme','course','trail','vélo','escalade'],
       conference: ['conférence','conference','débat','rencontre','séminaire','workshop','table ronde','colloque','lecture','conférence-débat'],
       danse:      ['danse','ballet','contemporain','hip-hop','chorégraphie','flamenco']
     };
-    var THEME_EMOJI = { musique:'🎵', expo:'🎨', theatre:'🎭', festival:'🎪', cinema:'🎬', sport:'⚽', conference:'🎤', danse:'💃' };
+    var THEME_EMOJI = { musique:'🎵', expo:'🎨', theatre:'🎭', festival:'🎪', cindeinde:'🎬', cinema:'🎬', sport:'⚽', conference:'🎤', danse:'💃' };
 
     function detectTheme(ev) {
       var kw   = ev.keywords && ev.keywords.fr ? ev.keywords.fr.join(' ').toLowerCase() : '';
@@ -398,6 +404,69 @@
         if (THEMES[t].some(function(k){ return text.indexOf(k) !== -1; })) return t;
       }
       return '';
+    }
+
+    /* ── TMDB helpers ── */
+    function normalizeTMDB(m, type) {
+      var sortDate = (type === 'now_playing')
+        ? new Date()
+        : (m.release_date ? new Date(m.release_date) : new Date(9e15));
+      return {
+        uid: 'tmdb-' + m.id, _type: 'tmdb', _theme: 'cinema', _agendaLabel: 'TMDB',
+        _tmdbType: type, _tmdbDate: m.release_date,
+        title: { fr: m.title || m.original_title },
+        image: m.backdrop_path ? { url: 'https://image.tmdb.org/t/p/w780' + m.backdrop_path } : null,
+        description: { fr: m.overview || '' },
+        nextTiming: { begin: sortDate.toISOString() },
+        location: null,
+        onlineAccessLink: 'https://www.themoviedb.org/movie/' + m.id
+      };
+    }
+
+    function fetchTMDB() {
+      var hdrs = { 'Authorization': 'Bearer ' + TMDB_TOKEN };
+      var base = 'https://api.themoviedb.org/3/movie/';
+      var qs   = '?language=fr-FR&region=FR&page=1';
+      return Promise.all([
+        fetch(base + 'now_playing' + qs, { headers: hdrs }).then(function(r){ return r.ok ? r.json() : { results: [] }; }),
+        fetch(base + 'upcoming'    + qs, { headers: hdrs }).then(function(r){ return r.ok ? r.json() : { results: [] }; })
+      ]).then(function(data) {
+        (data[0].results || []).forEach(function(m){
+          if (seenUids['tmdb-'+m.id]) return; seenUids['tmdb-'+m.id] = true;
+          pool.push(normalizeTMDB(m, 'now_playing'));
+        });
+        (data[1].results || []).forEach(function(m){
+          if (seenUids['tmdb-'+m.id]) return; seenUids['tmdb-'+m.id] = true;
+          pool.push(normalizeTMDB(m, 'upcoming'));
+        });
+        tmdbLoaded = true;
+      }).catch(function(){ tmdbLoaded = true; });
+    }
+
+    function sortPool() {
+      pool.sort(function(a, b) {
+        var da = a.nextTiming && a.nextTiming.begin ? new Date(a.nextTiming.begin) : new Date(9e15);
+        var db = b.nextTiming && b.nextTiming.begin ? new Date(b.nextTiming.begin) : new Date(9e15);
+        return da - db;
+      });
+    }
+
+    function redrawGrid() {
+      var grid     = document.getElementById('ev-grid');
+      var filtered = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
+      var toShow   = Math.min(Math.max(rendered, BATCH), filtered.length);
+      grid.innerHTML = '';
+      for (var i = 0; i < toShow; i++) {
+        grid.appendChild(renderCard(filtered[i], i));
+      }
+      rendered = toShow;
+      var allDone = tmdbLoaded && AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+      if (rendered >= filtered.length && allDone) {
+        if (!filtered.length) grid.innerHTML = '<div class="ev-empty">Aucun événement trouvé</div>';
+        setStatus('end');
+      } else {
+        setStatus('');
+      }
     }
 
     /* ── Filtres date ── */
@@ -455,32 +524,36 @@
         .catch(function(){ cursors[a.uid] = 'done'; });
     }
 
-    /* ── Fetch tous les agendas actifs ── */
+    /* ── Fetch tous les agendas actifs + TMDB ── */
     function fetchAll() {
       if (loading) return;
-      var pending = AGENDAS.filter(function(a){ return cursors[a.uid] !== 'done'; });
-      if (!pending.length) { setStatus('end'); return; }
+      var oaPending = AGENDAS.filter(function(a){ return cursors[a.uid] !== 'done'; });
+      if (!oaPending.length && tmdbLoaded) { setStatus('end'); return; }
       loading = true;
       setStatus('loading');
-      Promise.all(pending.map(fetchAgenda)).then(function(){
-        pool.sort(function(a, b){
-          var da = a.nextTiming && a.nextTiming.begin ? new Date(a.nextTiming.begin) : new Date(9e15);
-          var db = b.nextTiming && b.nextTiming.begin ? new Date(b.nextTiming.begin) : new Date(9e15);
-          return da - db;
-        });
+      var fetches = oaPending.map(fetchAgenda);
+      if (!tmdbStarted) { tmdbStarted = true; fetches.push(fetchTMDB()); }
+      Promise.all(fetches).then(function(){
+        sortPool();
         loading = false;
-        renderMore();
+        redrawGrid();
       });
     }
 
     /* ── Formater date/heure ── */
     function fmtDate(ev) {
+      if (ev._type === 'tmdb') {
+        if (ev._tmdbType === 'now_playing') return 'En salle';
+        if (ev._tmdbDate) return 'Sortie le ' + new Date(ev._tmdbDate).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+        return 'Prochainement';
+      }
       if (ev.dateRange && ev.dateRange.fr) return ev.dateRange.fr;
       var t = ev.nextTiming && ev.nextTiming.begin;
       if (!t) return '—';
       return new Date(t).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
     }
     function fmtTime(ev) {
+      if (ev._type === 'tmdb') return '';
       var t = ev.nextTiming && ev.nextTiming.begin;
       if (!t) return '';
       var d = new Date(t);
@@ -527,30 +600,19 @@
 
     /* ── Afficher batch suivant ── */
     function renderMore() {
-      var grid     = document.getElementById('ev-grid');
-      var filtered = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
-      var slice    = filtered.slice(rendered, rendered + BATCH);
-
-      if (!slice.length) {
-        var allDone = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+      var filtered   = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
+      var newRendered = Math.min(rendered + BATCH, filtered.length);
+      if (newRendered > rendered) {
+        rendered = newRendered;
+        redrawGrid();
+      } else {
+        var allDone = tmdbLoaded && AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
         if (allDone) {
-          if (!filtered.length) grid.innerHTML = '<div class="ev-empty">Aucun événement trouvé</div>';
+          if (!filtered.length) document.getElementById('ev-grid').innerHTML = '<div class="ev-empty">Aucun événement trouvé</div>';
           setStatus('end');
         } else {
           fetchAll();
         }
-        return;
-      }
-
-      slice.forEach(function(ev, i){ grid.appendChild(renderCard(ev, rendered + i)); });
-      rendered += slice.length;
-
-      /* Si le pool filtré est épuisé, on fetch plus */
-      if (rendered >= filtered.length) {
-        var allDone2 = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
-        if (allDone2) setStatus('end'); else fetchAll();
-      } else {
-        setStatus('');
       }
     }
 
@@ -566,7 +628,7 @@
       if (!entries[0].isIntersecting || loading) return;
       var filtered = pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
       if (rendered < filtered.length) renderMore();
-      else if (AGENDAS.some(function(a){ return cursors[a.uid] !== 'done'; })) fetchAll();
+      else if (!tmdbLoaded || AGENDAS.some(function(a){ return cursors[a.uid] !== 'done'; })) fetchAll();
     }, { rootMargin: '300px' });
     io.observe(document.getElementById('ev-sentinel'));
 
@@ -627,9 +689,9 @@
     function updateModalNav() {
       var filtered = getFiltered();
       document.getElementById('ev-nav-prev').disabled = currentModalIdx <= 0;
-      /* "suivant" désactivé seulement si dernier event ET tous les agendas épuisés */
-      var isLast = currentModalIdx >= filtered.length - 1;
-      var allDone = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+      /* "suivant" désactivé seulement si dernier event ET toutes les sources épuisées */
+      var isLast  = currentModalIdx >= filtered.length - 1;
+      var allDone = tmdbLoaded && AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
       document.getElementById('ev-nav-next').disabled = isLast && allDone;
     }
 
@@ -648,18 +710,15 @@
 
       /* Si on dépasse les events rendus → charger le batch suivant */
       if (newIdx >= rendered) {
-        var allDone = AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
+        var allDone = tmdbLoaded && AGENDAS.every(function(a){ return cursors[a.uid] === 'done'; });
         if (!allDone) {
-          /* Charger plus et rouvrir après */
           var targetIdx = newIdx;
           loading = true;
-          var pending = AGENDAS.filter(function(a){ return cursors[a.uid] !== 'done'; });
-          Promise.all(pending.map(fetchAgenda)).then(function(){
-            pool.sort(function(a, b){
-              var da = a.nextTiming && a.nextTiming.begin ? new Date(a.nextTiming.begin) : new Date(9e15);
-              var db = b.nextTiming && b.nextTiming.begin ? new Date(b.nextTiming.begin) : new Date(9e15);
-              return da - db;
-            });
+          var oaPending = AGENDAS.filter(function(a){ return cursors[a.uid] !== 'done'; });
+          var fetches   = oaPending.map(fetchAgenda);
+          if (!tmdbStarted) { tmdbStarted = true; fetches.push(fetchTMDB()); }
+          Promise.all(fetches).then(function(){
+            sortPool();
             loading = false;
             renderMore();
             var f2 = getFiltered();
@@ -671,7 +730,7 @@
           });
           return;
         }
-        return; /* rien à charger */
+        return;
       }
       if (newIdx < 0) return;
 
