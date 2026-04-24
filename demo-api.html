@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Démo API — Rennes · TLB</title>
   <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%236B1A1A' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -54,13 +57,7 @@
     }
 
     /* ── Header ── */
-    .page-hd { padding: clamp(2rem,6vh,4.5rem) 0 clamp(1.5rem,4vh,2.5rem); }
-    .back {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
-      color: var(--muted); transition: color .2s;
-    }
-    .back:hover { color: var(--accent); }
+    .page-hd { padding: clamp(2rem,6vh,4rem) 0 clamp(1.5rem,4vh,2.5rem); }
     .page-hd h1 {
       font-size: clamp(2rem,5.5vw,3.2rem);
       font-weight: 280; letter-spacing: -.04em; line-height: 1.1;
@@ -557,10 +554,42 @@
   <!-- Stripes -->
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
+  <!-- Hamburger -->
+  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+  </button>
+
+  <!-- Overlay nav -->
+  <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
+    <nav class="tlb-nav">
+      <a class="tlb-nav-item" href="/">
+        <span class="tlb-nav-title">Accueil</span>
+        <span class="tlb-nav-desc">TLB · Portfolio</span>
+      </a>
+      <a class="tlb-nav-item" href="/transports.html">
+        <span class="tlb-nav-title">Transports</span>
+        <span class="tlb-nav-desc">Lignes A &amp; B · temps réel</span>
+      </a>
+      <a class="tlb-nav-item" href="/demo-api.html">
+        <span class="tlb-nav-title">Démo API</span>
+        <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
+      </a>
+      <a class="tlb-nav-item" href="/evenements.html">
+        <span class="tlb-nav-title">Événements</span>
+        <span class="tlb-nav-desc">Agenda culturel · Rennes · OpenAgenda</span>
+      </a>
+      <a class="tlb-nav-item" href="https://w.teivano.fr">
+        <span class="tlb-nav-title">Workout Tracker</span>
+        <span class="tlb-nav-desc">Suivi d'entraînement personnel</span>
+      </a>
+    </nav>
+  </div>
+
   <div class="wrap">
 
     <header class="page-hd">
-      <a href="/" class="back">← TLB</a>
       <h1>Démo API<br>Rennes</h1>
       <div class="refresh-block">
         <div class="rt-label">Actualisé à</div>
@@ -1837,6 +1866,17 @@
   </script>
 
   <script>
+    // Nav overlay
+    (function(){
+      var overlay=document.getElementById('tlbOverlay');
+      var hamBtn=document.getElementById('hamBtn');
+      function openNav(){ overlay.classList.add('open'); hamBtn.classList.add('open'); hamBtn.setAttribute('aria-expanded','true'); }
+      function closeNav(){ overlay.classList.remove('open'); hamBtn.classList.remove('open'); hamBtn.setAttribute('aria-expanded','false'); }
+      hamBtn.addEventListener('click', function(){ hamBtn.classList.contains('open') ? closeNav() : openNav(); });
+      overlay.addEventListener('click', function(e){ if(e.target===overlay) closeNav(); });
+      document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeNav(); });
+    })();
+
     // Stripes
     (function(){
       var el=document.getElementById('stripes');
