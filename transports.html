@@ -234,9 +234,8 @@
     var POLL_MS = 30000; // 30s
 
     // State
-    var topology = {}; // {line: {stopName: {lng, lat, rang}}}
-    var schedule = {}; // {tripId: {line, stops:[{name,ts,lng,lat}]}}
-    var markers  = {}; // {tripId: maplibregl.Marker}
+    var markers = {}; // segKey → maplibregl.Marker
+    var rafId;
     var map, rafId;
 
     /* ─── Map init ─── */
@@ -261,18 +260,14 @@
       minZoom: 11,
       maxZoom: 18
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+    /* ─── State ─── */
+    var TRANSIT_MS = 100000; // ~100s avg inter-station travel
+    var lineStops  = {};  // 'a:0' → [{name,lng,lat}, ...] ordered
+    var liveEvents = [];  // [{lineKey, idx, departMs, dest}]
 
     /* ─── Helpers ─── */
-    function getCoords(raw) {
-      if (!raw) return null;
-      if (typeof raw.lon === 'number' && typeof raw.lat === 'number') return { lng: raw.lon, lat: raw.lat };
-      if (raw.coordinates && raw.coordinates.length === 2) return { lng: raw.coordinates[0], lat: raw.coordinates[1] };
-      return null;
-    }
-
-    function normLine(s) { return (s || '').toLowerCase().trim(); }
-
     function setStatus(msg, state) {
       document.getElementById('status-txt').textContent = msg;
       var dot = document.getElementById('status-dot');
@@ -280,153 +275,117 @@
     }
 
     function updateCounts() {
-      var ca = 0, cb = 0;
-      Object.values(schedule).forEach(function(trip) {
-        var pos = tripPosition(trip);
-        if (!pos) return;
-        if (trip.line === 'a') ca++;
-        else if (trip.line === 'b') cb++;
+      var now = Date.now();
+      var ca = 0, cb = 0, seen = {};
+      liveEvents.forEach(function(e) {
+        if (e.departMs > now || e.departMs + TRANSIT_MS < now) return;
+        var seg = e.lineKey + ':' + e.idx;
+        if (seen[seg]) return; seen[seg] = true;
+        if (e.lineKey.charAt(0) === 'a') ca++; else cb++;
       });
       document.getElementById('count-a').textContent = ca + ' métro' + (ca > 1 ? 's' : '');
       document.getElementById('count-b').textContent = cb + ' métro' + (cb > 1 ? 's' : '');
     }
 
-    /* ─── Topology fetch ─── */
+    /* ─── Topology: dessertes (ordre) + passages (coords) ─── */
     function fetchTopology() {
-      return fetch(STAR + '/tco-metro-topologie-stations-td/records?limit=100&order_by=rang')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          (d.results || []).forEach(function(rec) {
-            var line = normLine(rec.nomcourtligne);
-            var name = rec.nomarret;
-            var rang = parseInt(rec.rang, 10);
-            var coords = getCoords(rec.coordonnees);
-            if (!line || !name || !coords || isNaN(rang)) return;
-            if (!topology[line]) topology[line] = {};
-            topology[line][name] = { lng: coords.lng, lat: coords.lat, rang: rang };
-          });
+      return Promise.all([
+        fetch(STAR + '/tco-metro-topologie-dessertes-td/records?limit=100&order_by=ordre').then(function(r){ return r.json(); }),
+        fetch(STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records?limit=200').then(function(r){ return r.json(); })
+      ]).then(function(res) {
+        var dessertes = res[0]; var passages = res[1];
+
+        /* Coord lookup: idarret → {name, lng, lat} */
+        var coordsById = {};
+        (passages.results || []).forEach(function(p) {
+          if (p.idarret && p.coordonnees && !coordsById[p.idarret])
+            coordsById[p.idarret] = { name: p.nomarret, lng: p.coordonnees.lon, lat: p.coordonnees.lat };
         });
-    }
 
-    /* ─── Draw metro lines on map ─── */
-    function drawLines() {
-      ['a', 'b'].forEach(function(line) {
-        var stops = Object.values(topology[line] || {}).sort(function(a,b){ return a.rang - b.rang; });
-        if (stops.length < 2) return;
+        /* dest→sens lookup from passages */
+        var destSens = {};
+        (passages.results || []).forEach(function(p) {
+          var k = p.nomcourtligne + ':' + p.destination;
+          if (!(k in destSens)) destSens[k] = p.sens;
+        });
 
-        var color = line === 'a' ? COLOR_A : COLOR_B;
-        var sourceId = 'line-' + line;
-        var layerId  = 'layer-line-' + line;
-        var casingId = 'layer-casing-' + line;
+        /* Group dessertes by parcours code */
+        var parcours = {};
+        (dessertes.results || []).forEach(function(d) {
+          var code = d.libellecourtparcours;
+          if (!parcours[code]) parcours[code] = { line: d.nomcourtligne, stops: [] };
+          parcours[code].stops.push({ ordre: d.ordre, idarret: d.idarret, name: d.nomarret });
+        });
 
-        var geojson = {
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: stops.map(function(s){ return [s.lng, s.lat]; }) }
-        };
-
-        if (map.getSource(sourceId)) {
-          map.getSource(sourceId).setData(geojson);
-        } else {
-          map.addSource(sourceId, { type: 'geojson', data: geojson });
-          // White casing
-          map.addLayer({ id: casingId, type: 'line', source: sourceId,
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#fff', 'line-width': 7, 'line-opacity': .9 }
-          });
-          // Colored line
-          map.addLayer({ id: layerId, type: 'line', source: sourceId,
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': color, 'line-width': 4.5, 'line-opacity': 1 }
-          });
-        }
-
-        // Station dots
-        stops.forEach(function(s, i) {
-          var markerId = 'station-' + line + '-' + i;
-          if (document.getElementById(markerId)) return;
-          var el = document.createElement('div');
-          el.id = markerId;
-          el.style.cssText = 'width:10px;height:10px;border-radius:50%;'
-            + 'background:#fff;border:3px solid ' + color + ';'
-            + 'box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;';
-
-          var stopName = Object.keys(topology[line]).find(function(k){ return topology[line][k] === s; }) || '';
-          var popup = new maplibregl.Popup({ offset: 14, closeButton: true })
-            .setHTML('<div>' + stopName + '</div><div class="popup-line">Ligne ' + line.toUpperCase() + ' · station ' + (i+1) + '/' + stops.length + '</div>');
-
-          new maplibregl.Marker({ element: el, anchor: 'center' })
-            .setLngLat([s.lng, s.lat])
-            .setPopup(popup)
-            .addTo(map);
+        /* Map parcours → lineKey using terminal station = destination */
+        Object.keys(parcours).forEach(function(code) {
+          var info = parcours[code];
+          info.stops.sort(function(a,b){ return a.ordre - b.ordre; });
+          var terminal = info.stops[info.stops.length - 1].name;
+          var sens = destSens[info.line + ':' + terminal];
+          if (sens === undefined) return;
+          var lineKey = info.line + ':' + sens;
+          if (lineStops[lineKey]) return;
+          lineStops[lineKey] = info.stops.map(function(s) {
+            var c = coordsById[s.idarret];
+            return c ? { name: s.name, lng: c.lng, lat: c.lat } : null;
+          }).filter(Boolean);
         });
       });
     }
 
-    /* ─── Passages fetch ─── */
-    function fetchPassages() {
-      var since = new Date(Date.now() - 4 * 60000).toISOString();
-      var until = new Date(Date.now() + 30 * 60000).toISOString();
-      var url = STAR + '/tco-metro-circulation-prochains-passages-tr/records'
-        + '?limit=200&order_by=depart'
-        + '&where=depart%3E%22' + encodeURIComponent(since) + '%22'
-        + '%20AND%20depart%3C%22' + encodeURIComponent(until) + '%22';
-
-      return fetch(url)
-        .then(function(r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
-        .then(function(d) {
-          var newSchedule = {};
-          (d.results || []).forEach(function(rec) {
-            var tripId = rec.idcourse;
-            if (!tripId) return;
-            var line = normLine(rec.nomcourtligne);
-            var stopName = rec.nomarret;
-            var depart = rec.depart ? new Date(rec.depart).getTime() : 0;
-            if (!depart) return;
-            var stopData = (topology[line] || {})[stopName];
-            if (!stopData) return;
-            if (!newSchedule[tripId]) newSchedule[tripId] = { line: line, stops: [] };
-            newSchedule[tripId].stops.push({ name: stopName, ts: depart, lng: stopData.lng, lat: stopData.lat });
-          });
-          Object.values(newSchedule).forEach(function(trip) {
-            trip.stops.sort(function(a,b){ return a.ts - b.ts; });
-          });
-          schedule = newSchedule;
-          updateCounts();
-          var now = new Date();
-          setStatus('Mis à jour à ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0'), '');
+    /* ─── Draw metro lines on map ─── */
+    function drawLines() {
+      Object.keys(lineStops).forEach(function(lineKey) {
+        var line  = lineKey.charAt(0);
+        var stops = lineStops[lineKey];
+        if (stops.length < 2) return;
+        var color = line === 'a' ? COLOR_A : COLOR_B;
+        var srcId = 'src-' + lineKey, layId = 'lay-' + lineKey, caId = 'cas-' + lineKey;
+        var geojson = { type:'Feature', geometry:{ type:'LineString', coordinates: stops.map(function(s){ return [s.lng,s.lat]; }) } };
+        if (map.getSource(srcId)) { map.getSource(srcId).setData(geojson); }
+        else {
+          map.addSource(srcId, { type:'geojson', data: geojson });
+          map.addLayer({ id: caId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round'}, paint:{'line-color':'#fff','line-width':7,'line-opacity':.9} });
+          map.addLayer({ id: layId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round'}, paint:{'line-color':color,'line-width':4.5} });
+        }
+        stops.forEach(function(s, i) {
+          var dotId = 'dot-' + lineKey + '-' + i;
+          if (document.getElementById(dotId)) return;
+          var el = document.createElement('div'); el.id = dotId;
+          el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid '+color+';box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;';
+          var popup = new maplibregl.Popup({ offset:14, closeButton:true })
+            .setHTML('<div>'+s.name+'</div><div class="popup-line">Ligne '+line.toUpperCase()+' · '+( i+1)+'/'+stops.length+'</div>');
+          new maplibregl.Marker({ element:el, anchor:'center' }).setLngLat([s.lng,s.lat]).setPopup(popup).addTo(map);
         });
+      });
     }
 
-    /* ─── Position interpolation ─── */
-    function tripPosition(trip) {
-      var now = Date.now();
-      var stops = trip.stops;
-      if (!stops || stops.length === 0) return null;
-
-      // Find segment where now is between two stops
-      for (var i = 0; i < stops.length - 1; i++) {
-        if (now >= stops[i].ts && now <= stops[i+1].ts) {
-          var dt = stops[i+1].ts - stops[i].ts;
-          var t  = dt > 0 ? (now - stops[i].ts) / dt : 0;
-          t = Math.max(0, Math.min(1, t));
-          return {
-            lng: stops[i].lng + (stops[i+1].lng - stops[i].lng) * t,
-            lat: stops[i].lat + (stops[i+1].lat - stops[i].lat) * t,
-            line: trip.line,
-            nextStop: stops[i+1].name,
-            prevStop: stops[i].name,
-            bearing: Math.atan2(stops[i+1].lng - stops[i].lng, stops[i+1].lat - stops[i].lat) * 180 / Math.PI
-          };
-        }
-      }
-      // All upcoming: position at first stop
-      if (now < stops[0].ts) {
-        return { lng: stops[0].lng, lat: stops[0].lat, line: trip.line, nextStop: stops[0].name, prevStop: null, bearing: 0 };
-      }
-      return null;
+    /* ─── Live passages: deux-prochains-passages-tr ─── */
+    function fetchPassages() {
+      return fetch(STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records?limit=200')
+        .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+        .then(function(d) {
+          var now = Date.now(); var newEvents = [];
+          (d.results || []).forEach(function(p) {
+            var lineKey = p.nomcourtligne + ':' + p.sens;
+            var stops   = lineStops[lineKey];
+            if (!stops) return;
+            var idx = -1;
+            for (var i = 0; i < stops.length; i++) { if (stops[i].name === p.nomarret){ idx=i; break; } }
+            if (idx < 0 || idx >= stops.length - 1) return;
+            var fields = ['departfirsttrain','departsecondtrain'];
+            for (var f = 0; f < fields.length; f++) {
+              var t = p[fields[f]] ? new Date(p[fields[f]]).getTime() : 0;
+              if (t && t > now - TRANSIT_MS && t < now + 400000)
+                newEvents.push({ lineKey: lineKey, idx: idx, departMs: t, dest: p.destination });
+            }
+          });
+          liveEvents = newEvents;
+          updateCounts();
+          var ts = new Date();
+          setStatus('Mis à jour à ' + ts.getHours() + ':' + String(ts.getMinutes()).padStart(2,'0') + ':' + String(ts.getSeconds()).padStart(2,'0'), '');
+        });
     }
 
     /* ─── Train SVG marker ─── */
@@ -464,40 +423,42 @@
 
     /* ─── Animation loop ─── */
     function animationLoop() {
-      var activeTrips = new Set();
+      var now = Date.now();
+      var active = {};
 
-      Object.keys(schedule).forEach(function(tripId) {
-        var trip = schedule[tripId];
-        var pos  = tripPosition(trip);
-        if (!pos) {
-          if (markers[tripId]) { markers[tripId].remove(); delete markers[tripId]; }
-          return;
-        }
-        activeTrips.add(tripId);
+      /* Keep most recent in-transit departure per segment */
+      liveEvents.forEach(function(e) {
+        if (e.departMs > now || e.departMs + TRANSIT_MS < now) return;
+        var seg = e.lineKey + ':' + e.idx;
+        if (!active[seg] || e.departMs > active[seg].departMs) active[seg] = e;
+      });
 
-        if (!markers[tripId]) {
-          var el = createTrainEl(pos.line, pos.bearing);
-          var popup = new maplibregl.Popup({ offset: 18, closeButton: false })
-            .setHTML('<div>' + (pos.nextStop || '—') + '</div>'
-              + '<div class="popup-line">→ prochaine station · Ligne ' + pos.line.toUpperCase() + '</div>');
-          markers[tripId] = new maplibregl.Marker({ element: el, anchor: 'center' })
-            .setLngLat([pos.lng, pos.lat])
-            .setPopup(popup)
-            .addTo(map);
+      Object.keys(active).forEach(function(seg) {
+        var e  = active[seg];
+        var stops = lineStops[e.lineKey];
+        var s0 = stops[e.idx], s1 = stops[e.idx + 1];
+        var p  = Math.max(0, Math.min(1, (now - e.departMs) / TRANSIT_MS));
+        var lng = s0.lng + (s1.lng - s0.lng) * p;
+        var lat = s0.lat + (s1.lat - s0.lat) * p;
+        var line    = e.lineKey.charAt(0);
+        var bearing = Math.atan2(s1.lng - s0.lng, s1.lat - s0.lat) * 180 / Math.PI;
+
+        if (!markers[seg]) {
+          var el  = createTrainEl(line, bearing);
+          var pop = new maplibregl.Popup({ offset:18, closeButton:false })
+            .setHTML('<div>→ '+s1.name+'</div><div class="popup-line">'+e.dest+' · Ligne '+line.toUpperCase()+'</div>');
+          markers[seg] = new maplibregl.Marker({ element:el, anchor:'center' })
+            .setLngLat([lng,lat]).setPopup(pop).addTo(map);
         } else {
-          markers[tripId].setLngLat([pos.lng, pos.lat]);
-          // Update popup content
-          var popup = markers[tripId].getPopup();
-          if (popup) {
-            popup.setHTML('<div>' + (pos.nextStop || '—') + '</div>'
-              + '<div class="popup-line">→ prochaine station · Ligne ' + pos.line.toUpperCase() + '</div>');
-          }
+          markers[seg].setLngLat([lng,lat]);
+          var pop2 = markers[seg].getPopup();
+          if (pop2) pop2.setHTML('<div>→ '+s1.name+'</div><div class="popup-line">'+e.dest+' · Ligne '+line.toUpperCase()+'</div>');
         }
       });
 
-      // Remove stale markers
-      Object.keys(markers).forEach(function(tripId) {
-        if (!activeTrips.has(tripId)) { markers[tripId].remove(); delete markers[tripId]; }
+      /* Remove stale markers */
+      Object.keys(markers).forEach(function(seg) {
+        if (!active[seg]) { markers[seg].remove(); delete markers[seg]; }
       });
 
       rafId = requestAnimationFrame(animationLoop);
@@ -506,28 +467,19 @@
     /* ─── Polling ─── */
     function poll() {
       setStatus('Actualisation…', 'loading');
-      fetchPassages()
-        .catch(function(err) {
-          var msg = err && err.message && err.message.indexOf('429') >= 0
-            ? 'Quota API atteint — réessai dans 30s'
-            : 'Erreur réseau — réessai dans 30s';
-          setStatus(msg, 'error');
-        });
+      fetchPassages().catch(function(err) {
+        setStatus(err && err.message && err.message.indexOf('429') >= 0
+          ? 'Quota API atteint — réessai dans 30s'
+          : 'Erreur réseau — réessai dans 30s', 'error');
+      });
     }
 
     /* ─── Boot ─── */
     map.on('load', function() {
       setStatus('Chargement topologie…', 'loading');
       fetchTopology()
-        .then(function() {
-          drawLines();
-          poll();
-          setInterval(poll, POLL_MS);
-          animationLoop();
-        })
-        .catch(function(err) {
-          setStatus('Erreur chargement carte : ' + (err && err.message || 'inconnue'), 'error');
-        });
+        .then(function() { drawLines(); poll(); setInterval(poll, POLL_MS); animationLoop(); })
+        .catch(function(err) { setStatus('Erreur chargement carte : ' + (err && err.message || 'inconnue'), 'error'); });
     });
 
   })();
