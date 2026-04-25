@@ -288,13 +288,13 @@
 
       <!-- Filtres -->
       <div class="ev-filters" id="ev-filters">
-        <button class="ev-chip active" data-theme="">Tout</button>
+        <button class="ev-chip" data-theme="">Tout</button>
         <button class="ev-chip" data-theme="musique">Musique</button>
         <button class="ev-chip" data-theme="expo">Expo</button>
         <button class="ev-chip" data-theme="theatre">Théâtre</button>
         <button class="ev-chip" data-theme="festival">Festival</button>
         <button class="ev-chip" data-theme="cindeinde">Ciné indé</button>
-        <button class="ev-chip" data-theme="cinema">Cinéma</button>
+        <button class="ev-chip active" data-theme="cinema">Cinéma</button>
         <button class="ev-chip" data-theme="sport">Sport</button>
         <button class="ev-chip" data-theme="conference">Conférence</button>
         <button class="ev-chip" data-theme="danse">Danse</button>
@@ -377,7 +377,7 @@
     var seenUids  = {};
     var cursors   = {};   /* uid → null (pas encore) | array (curseur) | 'done' */
     var loading   = false;
-    var filterTheme = '';
+    var filterTheme = 'cinema';
     var filterDate  = 'all';
 
     AGENDAS.forEach(function(a){ cursors[a.uid] = null; });
@@ -436,7 +436,9 @@
           pool.push(normalizeTMDB(m, 'now_playing'));
         });
         (data[1].results || []).forEach(function(m){
-          if (seenUids['tmdb-'+m.id]) return; seenUids['tmdb-'+m.id] = true;
+          if (seenUids['tmdb-'+m.id]) return;
+          if (m.release_date && new Date(m.release_date) < new Date()) return;
+          seenUids['tmdb-'+m.id] = true;
           pool.push(normalizeTMDB(m, 'upcoming'));
         });
         tmdbLoaded = true;
@@ -492,6 +494,7 @@
     }
 
     function passesTheme(ev) {
+      if (ev._type === 'tmdb') return filterTheme === 'cinema';
       return !filterTheme || ev._theme === filterTheme;
     }
 
@@ -514,6 +517,8 @@
           if (!d.events || !d.events.length) { cursors[a.uid] = 'done'; return; }
           d.events.forEach(function(ev){
             if (seenUids[ev.uid]) return;
+            var begin = ev.nextTiming && ev.nextTiming.begin;
+            if (begin && new Date(begin) < new Date(Date.now() - 3600000)) return;
             seenUids[ev.uid] = true;
             ev._theme       = detectTheme(ev);
             ev._agendaLabel = a.label;
@@ -659,6 +664,32 @@
       return pool.filter(function(ev){ return passesTheme(ev) && passesDate(ev); });
     }
 
+    function enrichTMDBModal(ev) {
+      var id = ev.uid.replace('tmdb-', '');
+      fetch('https://api.themoviedb.org/3/movie/' + id + '?language=fr-FR&append_to_response=credits',
+        { headers: { 'Authorization': 'Bearer ' + TMDB_TOKEN } })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d) {
+          var extra = document.getElementById('ev-tmdb-extra');
+          if (!d || !extra) return;
+          var directors = (d.credits && d.credits.crew || [])
+            .filter(function(c){ return c.job === 'Director'; })
+            .map(function(c){ return c.name; }).join(', ');
+          var cast = (d.credits && d.credits.cast || [])
+            .slice(0, 6).map(function(c){ return c.name; }).join(', ');
+          var runtime = d.runtime ? Math.floor(d.runtime / 60) + 'h' + (d.runtime % 60 ? String(d.runtime % 60).padStart(2,'0') : '') : '';
+          var genres  = (d.genres || []).map(function(g){ return g.name; }).join(', ');
+          var vote    = d.vote_average ? d.vote_average.toFixed(1) + ' / 10' : '';
+          extra.innerHTML =
+            (directors ? '<div class="ev-modal-row"><span class="ev-modal-label">Réal.</span><span class="ev-modal-val">' + directors + '</span></div>' : '')
+            + (cast    ? '<div class="ev-modal-row"><span class="ev-modal-label">Avec</span><span class="ev-modal-val">' + cast + '</span></div>' : '')
+            + (runtime ? '<div class="ev-modal-row"><span class="ev-modal-label">Durée</span><span class="ev-modal-val">' + runtime + '</span></div>' : '')
+            + (genres  ? '<div class="ev-modal-row"><span class="ev-modal-label">Genre</span><span class="ev-modal-val">' + genres + '</span></div>' : '')
+            + (vote    ? '<div class="ev-modal-row"><span class="ev-modal-label">Note</span><span class="ev-modal-val">★ ' + vote + '</span></div>' : '');
+        })
+        .catch(function(){});
+    }
+
     function renderModalContent(ev) {
       var title = ev.title && ev.title.fr || 'Sans titre';
       var img   = imgUrl(ev);
@@ -679,10 +710,12 @@
           + (loc.name    ? '<div class="ev-modal-row"><span class="ev-modal-label">Lieu</span><span class="ev-modal-val">' + loc.name + '</span></div>' : '')
           + (loc.address ? '<div class="ev-modal-row"><span class="ev-modal-label">Adresse</span><span class="ev-modal-val">' + loc.address + '</span></div>' : '')
           + (loc.city && loc.city !== 'Rennes' ? '<div class="ev-modal-row"><span class="ev-modal-label">Ville</span><span class="ev-modal-val">' + loc.city + '</span></div>' : '')
+          + (ev._type === 'tmdb' ? '<div id="ev-tmdb-extra"><div class="ev-modal-row" style="opacity:.45"><span class="ev-modal-label">…</span><span class="ev-modal-val">Chargement</span></div></div>' : '')
         + '</div>'
         + (desc ? '<div class="ev-modal-desc">' + desc.slice(0, 800) + (desc.length > 800 ? '…' : '') + '</div>' : '')
         + (link ? '<a class="ev-modal-link" href="' + link + '" target="_blank" rel="noopener">Voir l\'événement →</a>' : '');
 
+      if (ev._type === 'tmdb') enrichTMDBModal(ev);
       document.getElementById('ev-modal').scrollTo(0, 0);
     }
 

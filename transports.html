@@ -42,31 +42,12 @@
       z-index: 100;
       display: flex; align-items: center; gap: .75rem;
       padding: .55rem 1.1rem;
-      background: var(--glass);
-      backdrop-filter: var(--gblur);
-      -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: 50px;
-      box-shadow: var(--gshadow);
+      background: var(--bg);
+      border: 2px solid var(--ink);
+      border-radius: 0;
+      box-shadow: 4px 4px 0 var(--ink);
       white-space: nowrap;
     }
-    /* ── Hamburger (dans header) ── */
-    .t-ham {
-      width: 20px; height: 14px;
-      cursor: pointer; border: none; background: none; padding: 0;
-      display: flex; flex-direction: column; justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .t-ham-line {
-      display: block; width: 100%; height: 1.5px;
-      background: rgba(20,10,40,.7);
-      transform-origin: center;
-      transition: background .3s, transform .3s cubic-bezier(.16,1,.3,1), opacity .25s;
-    }
-    .t-ham.open .t-ham-line               { background: var(--bg); }
-    .t-ham.open .t-ham-line:nth-child(1)  { transform: translateY(6.25px) rotate(45deg); }
-    .t-ham.open .t-ham-line:nth-child(2)  { opacity: 0; transform: scaleX(0); }
-    .t-ham.open .t-ham-line:nth-child(3)  { transform: translateY(-6.25px) rotate(-45deg); }
     .t-sep { width: 1px; height: 18px; background: rgba(0,0,0,.12); }
     .t-title {
       font-size: .82rem; font-weight: 700;
@@ -87,12 +68,10 @@
       z-index: 100;
       display: flex; flex-direction: column; gap: .55rem;
       padding: .9rem 1.2rem;
-      background: var(--glass);
-      backdrop-filter: var(--gblur);
-      -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: var(--r);
-      box-shadow: var(--gshadow);
+      background: var(--bg);
+      border: 2px solid var(--ink);
+      border-radius: 0;
+      box-shadow: 4px 4px 0 var(--ink);
       min-width: 240px; max-width: 92vw;
     }
     .t-panel-row {
@@ -215,14 +194,14 @@
     </nav>
   </div>
 
+  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+    <span class="ham-line"></span>
+  </button>
+
   <header class="t-header" role="banner">
-    <button class="t-ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
-      <span class="t-ham-line"></span>
-      <span class="t-ham-line"></span>
-      <span class="t-ham-line"></span>
-    </button>
-    <div class="t-sep" aria-hidden="true"></div>
-    <span class="t-title">🚇 Transports · Rennes</span>
+    <span class="t-title">Transports · Rennes</span>
     <span class="t-badge a" title="Ligne A">A</span>
     <span class="t-badge b" title="Ligne B">B</span>
   </header>

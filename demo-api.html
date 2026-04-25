@@ -67,10 +67,9 @@
     /* ── Refresh clock ── */
     .refresh-block {
       display: inline-flex; align-items: center; gap: 1.1rem;
-      background: var(--glass);
-      backdrop-filter: var(--gblur); -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid var(--gb); border-radius: 16px;
-      box-shadow: var(--gshadow); padding: .55rem 1.1rem .55rem .9rem;
+      background: var(--bg);
+      border: 2px solid var(--ink); border-radius: 0;
+      box-shadow: 4px 4px 0 var(--ink); padding: .55rem 1.1rem .55rem .9rem;
     }
     .rt-label { font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 1; }
     .rt-clock { font-size: 2rem; font-weight: 200; letter-spacing: -.05em; line-height: 1; font-family: 'Courier New',monospace; color: var(--text); display: flex; align-items: baseline; }
@@ -87,56 +86,20 @@
     }
     .bloc-hd::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.07); }
 
-    /* ── Glass card — Liquid Glass ── */
+    /* ── Card neobrutalist ── */
     .gc {
-      background: var(--glass);
-      backdrop-filter: var(--gblur); -webkit-backdrop-filter: var(--gblur);
-      border: 1px solid var(--gb); border-radius: var(--r);
-      box-shadow: var(--gshadow); padding: clamp(1.1rem,3vw,1.6rem);
+      background: var(--bg);
+      border: 2px solid var(--ink); border-radius: 0;
+      box-shadow: 4px 4px 0 var(--ink);
+      padding: clamp(1.1rem,3vw,1.6rem);
       position: relative; overflow: hidden;
-      transform: perspective(1200px) rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg)) translateY(var(--par,0px));
-      transition: transform .15s ease, filter .3s ease, border-color .8s ease;
-      animation: iri-border 9s ease-in-out infinite;
-      will-change: transform;
+      transition: box-shadow .15s ease, transform .15s ease;
     }
-
-    /* Effet lentille — focus center + ombre de bord */
-    .gc::before {
-      content: '';
-      position: absolute; inset: 0; border-radius: inherit;
-      background:
-        radial-gradient(ellipse at 50% 38%, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 45%, transparent 72%),
-        radial-gradient(ellipse at 18% 14%, rgba(255,255,255,.20) 0%, transparent 40%),
-        radial-gradient(ellipse at 82% 88%, rgba(180,210,255,.10) 0%, transparent 42%),
-        radial-gradient(ellipse at 50% 108%, rgba(0,0,0,.06) 0%, transparent 55%);
-      filter: url('#glass-lens');
-      pointer-events: none; z-index: 0;
+    .gc:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--ink);
     }
-
-    /* Specular edge — top bright, sides & bottom subtils */
-    .gc::after {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 60%; border-radius: var(--r) var(--r) 60% 60%;
-      background: linear-gradient(to bottom,
-        rgba(255,255,255,.42) 0%,
-        rgba(255,255,255,.12) 45%,
-        transparent           100%);
-      pointer-events: none; z-index: 1;
-    }
-
-    @keyframes iri-border {
-      0%,100% { border-color: rgba(255,255,255,.72); }
-      20%     { border-color: rgba(220,195,255,.84); }
-      40%     { border-color: rgba(155,225,255,.84); }
-      60%     { border-color: rgba(185,255,230,.80); }
-      80%     { border-color: rgba(255,220,195,.80); }
-    }
-
-    /* Tap — chromatic aberration flash */
-    .gc.ca-flash {
-      filter: drop-shadow(2px 0 0 rgba(255,60,60,.28)) drop-shadow(-2px 0 0 rgba(0,200,255,.28));
-    }
+    .gc::before, .gc::after { display: none; }
 
     /* ── Bento grid — Bloc 1 (transports) ── */
     .bento {
