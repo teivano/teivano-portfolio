@@ -287,26 +287,23 @@
       document.getElementById('count-b').textContent = cb + ' métro' + (cb > 1 ? 's' : '');
     }
 
-    /* ─── Topology: dessertes (ordre) + passages (coords) ─── */
+    /* parcours code → sens (ligne A : POT=0 Kennedy→Poterie, JFK=1 Poterie→Kennedy
+                            ligne B : SJG=0 Cesson→StJacques, CVI=1 StJacques→Cesson) */
+    var PARCOURS_SENS = { POT: 0, JFK: 1, SJG: 0, CVI: 1 };
+
+    /* ─── Topology: dessertes (ordre) + stations-td (coords) ─── */
     function fetchTopology() {
       return Promise.all([
         fetch(STAR + '/tco-metro-topologie-dessertes-td/records?limit=100&order_by=ordre').then(function(r){ return r.json(); }),
-        fetch(STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records?limit=200').then(function(r){ return r.json(); })
+        fetch(STAR + '/tco-metro-topologie-stations-td/records?limit=100').then(function(r){ return r.json(); })
       ]).then(function(res) {
-        var dessertes = res[0]; var passages = res[1];
+        var dessertes = res[0]; var stations = res[1];
 
-        /* Coord lookup: idarret → {name, lng, lat} */
-        var coordsById = {};
-        (passages.results || []).forEach(function(p) {
-          if (p.idarret && p.coordonnees && !coordsById[p.idarret])
-            coordsById[p.idarret] = { name: p.nomarret, lng: p.coordonnees.lon, lat: p.coordonnees.lat };
-        });
-
-        /* dest→sens lookup from passages */
-        var destSens = {};
-        (passages.results || []).forEach(function(p) {
-          var k = p.nomcourtligne + ':' + p.destination;
-          if (!(k in destSens)) destSens[k] = p.sens;
+        /* Coord lookup: nom → {lng, lat} (stations-td uses "nom", dessertes uses "nomarret") */
+        var coordsByName = {};
+        (stations.results || []).forEach(function(s) {
+          if (s.nom && s.coordonnees)
+            coordsByName[s.nom] = { lng: s.coordonnees.lon, lat: s.coordonnees.lat };
         });
 
         /* Group dessertes by parcours code */
@@ -314,20 +311,19 @@
         (dessertes.results || []).forEach(function(d) {
           var code = d.libellecourtparcours;
           if (!parcours[code]) parcours[code] = { line: d.nomcourtligne, stops: [] };
-          parcours[code].stops.push({ ordre: d.ordre, idarret: d.idarret, name: d.nomarret });
+          parcours[code].stops.push({ ordre: d.ordre, name: d.nomarret });
         });
 
-        /* Map parcours → lineKey using terminal station = destination */
+        /* Build lineStops using hardcoded PARCOURS_SENS */
         Object.keys(parcours).forEach(function(code) {
+          var sens = PARCOURS_SENS[code];
+          if (sens === undefined) return;
           var info = parcours[code];
           info.stops.sort(function(a,b){ return a.ordre - b.ordre; });
-          var terminal = info.stops[info.stops.length - 1].name;
-          var sens = destSens[info.line + ':' + terminal];
-          if (sens === undefined) return;
           var lineKey = info.line + ':' + sens;
           if (lineStops[lineKey]) return;
           lineStops[lineKey] = info.stops.map(function(s) {
-            var c = coordsById[s.idarret];
+            var c = coordsByName[s.name];
             return c ? { name: s.name, lng: c.lng, lat: c.lat } : null;
           }).filter(Boolean);
         });
