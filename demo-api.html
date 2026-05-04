@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Démo API — Rennes · TLB</title>
+  <title>Tests API — Rennes · TLB</title>
   <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%236B1A1A' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +53,7 @@
     .wrap {
       position: relative; z-index: 1;
       max-width: 920px; margin: 0 auto;
-      padding: 0 clamp(1.2rem,5vw,3rem) calc(5.5rem + env(safe-area-inset-bottom, 0px));
+      padding: 0 clamp(1.2rem,5vw,3rem) clamp(2rem,5vh,3.5rem);
     }
 
     /* ── Header ── */
@@ -72,7 +72,7 @@
       box-shadow: 4px 4px 0 var(--ink); padding: .55rem 1.1rem .55rem .9rem;
     }
     .rt-label { font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); white-space: nowrap; line-height: 1; }
-    .rt-clock { font-size: 2rem; font-weight: 200; letter-spacing: -.05em; line-height: 1; font-family: 'Courier New',monospace; color: var(--text); display: flex; align-items: baseline; }
+    .rt-clock { font-size: 2rem; font-weight: 300; letter-spacing: -.04em; line-height: 1; font-family: 'Space Grotesk', sans-serif; color: var(--text); display: flex; align-items: baseline; }
     .rt-colon { animation: colonBlink 1s step-start infinite; margin: 0 1px; }
     @keyframes colonBlink { 0%,100%{opacity:1} 50%{opacity:.15} }
 
@@ -429,65 +429,12 @@
     /* ── Footer ── */
     footer { text-align: center; padding: 1rem 0 2rem; font-size: .62rem; color: var(--muted); letter-spacing: .1em; }
 
-    /* ── Dynamic Island nav ── */
-    #island-nav {
-      position: fixed;
-      bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
-      left: 50%; transform: translateX(-50%);
-      z-index: 500;
-      animation: island-appear .7s cubic-bezier(0.16,1,0.3,1) .4s both;
-    }
-    @keyframes island-appear {
-      from { transform: translateX(-50%) translateY(90px); opacity: 0; }
-      to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
-    }
-    .nav-pill {
-      display: flex; align-items: center; gap: .15rem;
-      position: relative;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: 50px;
-      box-shadow: inset 0 2px 0 rgba(255,255,255,.88),
-                  inset 0 -1px 0 rgba(255,255,255,.18),
-                  inset 1px 0 0 rgba(255,255,255,.55),
-                  inset -1px 0 0 rgba(255,255,255,.18),
-                  0 20px 56px rgba(0,0,0,.18), 0 4px 14px rgba(0,0,0,.1);
-      padding: .38rem .42rem;
-      animation: iri-border 9s ease-in-out infinite;
-    }
-    /* Bulle glissante */
-    .nav-bubble {
-      position: absolute;
-      top: .38rem;
-      height: calc(100% - .76rem);
-      background: rgba(255,255,255,.82);
-      border-radius: 40px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 2px 10px rgba(0,0,0,.1);
-      pointer-events: none; z-index: 0;
-      will-change: left, width;
-    }
-    .nav-btn {
-      display: flex; flex-direction: column; align-items: center; gap: .22rem;
-      padding: .52rem .9rem; border: none; border-radius: 40px;
-      background: transparent; cursor: pointer; position: relative; z-index: 1;
-      transition: color .2s cubic-bezier(0.16,1,0.3,1), transform .15s;
-      color: var(--muted); text-decoration: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .nav-btn svg { width: 19px; height: 19px; flex-shrink: 0; transition: transform .25s cubic-bezier(0.16,1,0.3,1); }
-    .nav-btn span { font-size: .56rem; letter-spacing: .07em; font-weight: 500; line-height: 1; }
-    .nav-btn.active { color: var(--accent); }
-    .nav-btn.active svg { transform: scale(1.12); }
-    .nav-btn:active { transform: scale(.9); }
-
     /* ── Reduced motion ── */
     @media (prefers-reduced-motion: reduce) {
       .gc { transform: none !important; transition: none !important; animation: none !important; }
       .lbar-wave { animation: none !important; }
       .metro-svg { animation: none !important; }
       #metro-train-group { animation: none !important; transform: translateX(60px) !important; }
-      #island-nav { animation: none !important; }
-      .nav-pill   { animation: none !important; }
     }
   </style>
 </head>
@@ -532,11 +479,11 @@
         <span class="tlb-nav-desc">TLB · Portfolio</span>
       </a>
       <a class="tlb-nav-item" href="/transports.html">
-        <span class="tlb-nav-title">Transports</span>
+        <span class="tlb-nav-title">Métros</span>
         <span class="tlb-nav-desc">Lignes A &amp; B · temps réel</span>
       </a>
       <a class="tlb-nav-item" href="/demo-api.html">
-        <span class="tlb-nav-title">Démo API</span>
+        <span class="tlb-nav-title">Tests API</span>
         <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
       </a>
       <a class="tlb-nav-item" href="/evenements.html">
@@ -553,7 +500,7 @@
   <div class="wrap">
 
     <header class="page-hd">
-      <h1>Démo API<br>Rennes</h1>
+      <h1>Tests API<br>Rennes</h1>
       <div class="refresh-block">
         <div class="rt-label">Actualisé à</div>
         <div class="rt-clock">
@@ -904,24 +851,6 @@
         <div id="fuel-list-wrap" style="display:none"></div>
       </div>
     </section>
-
-    <nav id="island-nav" aria-label="Navigation rapide">
-      <div class="nav-pill">
-        <div id="nav-bubble" class="nav-bubble"></div>
-        <a class="nav-btn active" href="#s-transport" id="nav-transport">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span>Rennes</span>
-        </a>
-<a class="nav-btn" href="#s-vehicle" id="nav-vehicle">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M13 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M3 17h4m6 0h4m2 0h1v-4l-2-5H6L4 13v4h1M6 13h12"/></svg>
-          <span>Auto</span>
-        </a>
-        <a class="nav-btn" href="#s-carbu" id="nav-carbu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l3-5h12l3 5v14H3z"/><path d="M3 13h18M10 8v5M14 8v5"/></svg>
-          <span>Carbu</span>
-        </a>
-      </div>
-    </nav>
 
     <footer>
       Sources · STAR open data · base-adresse.data.gouv.fr · Esri World Imagery · NASA Earth Assets · IGN Géoplateforme · API-Ninjas · data.economie.gouv.fr · TLB
@@ -1761,71 +1690,6 @@
 
     })();
 
-    /* ── Island nav — bulle glissante + active state au scroll ── */
-    (function() {
-      var bubble = document.getElementById('nav-bubble');
-      var pill   = document.querySelector('.nav-pill');
-
-      function moveBubbleTo(btn) {
-        if (!bubble || !pill || !btn) return;
-        var pR = pill.getBoundingClientRect();
-        var bR = btn.getBoundingClientRect();
-        var toLeft  = bR.left - pR.left;
-        var toWidth = bR.width;
-        if (!window.anime) {
-          bubble.style.left  = toLeft  + 'px';
-          bubble.style.width = toWidth + 'px';
-          return;
-        }
-        anime.animate(bubble, {
-          left:  toLeft,
-          width: toWidth,
-          duration: 500,
-          easing: 'spring(1, 68, 10, 8)'
-        });
-      }
-
-      /* Position initiale */
-      requestAnimationFrame(function() {
-        var first = document.querySelector('.nav-btn.active');
-        if (first && bubble && pill) {
-          var pR = pill.getBoundingClientRect();
-          var bR = first.getBoundingClientRect();
-          bubble.style.left  = (bR.left - pR.left) + 'px';
-          bubble.style.width = bR.width + 'px';
-        }
-      });
-
-      /* Click direct */
-      document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
-          btn.classList.add('active');
-          moveBubbleTo(btn);
-        });
-      });
-
-      /* Scroll auto-highlight */
-      var sMap = {
-        's-transport': 'nav-transport',
-        's-vehicle':   'nav-vehicle',
-        's-carbu':     'nav-carbu'
-      };
-      var navIO = new IntersectionObserver(function(entries) {
-        entries.forEach(function(e) {
-          if (!e.isIntersecting) return;
-          var btn = document.getElementById(sMap[e.target.id]);
-          if (!btn) return;
-          document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
-          btn.classList.add('active');
-          moveBubbleTo(btn);
-        });
-      }, { threshold: 0.35 });
-      Object.keys(sMap).forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) navIO.observe(el);
-      });
-    })();
   </script>
 
   <script>
