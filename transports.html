@@ -15,7 +15,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --a:      #E87722;
+      --a:      #F08300;
       --b:      #0065BD;
       --glass:  rgba(255,255,255,.92);
       --gblur:  none;
@@ -131,10 +131,28 @@
     .maplibregl-popup-close-button { font-size: .85rem; top: 4px; right: 6px; color: rgba(0,0,0,.4); }
     .popup-line { font-size: .62rem; font-weight: 400; color: rgba(20,10,40,.45); margin-top: 2px; }
 
+    /* ── Badge toggles ── */
+    .t-badge { cursor: pointer; user-select: none; transition: opacity .2s; }
+    .t-badge.off { opacity: .22; }
+
+    /* ── Direction selector ── */
+    .t-panel { min-width: 260px; }
+    .t-dir-group { display: flex; gap: 2px; }
+    .t-dir-opt {
+      font-size: .58rem; font-weight: 600; letter-spacing: .04em;
+      padding: .17rem .46rem;
+      border: 1.5px solid rgba(20,10,40,.18);
+      border-radius: 3px; cursor: pointer; background: transparent;
+      color: rgba(20,10,40,.38); transition: all .15s;
+      font-family: inherit; line-height: 1.4;
+    }
+    #dir-a-0.active, #dir-a-1.active { background: #F08300; border-color: #F08300; color: #fff; }
+    #dir-b-0.active, #dir-b-1.active { background: #0065BD; border-color: #0065BD; color: #fff; }
+
     @media (max-width: 440px) {
       .t-header { top: .75rem; padding: .45rem .85rem; gap: .5rem; }
       .t-title { font-size: .75rem; }
-      .t-panel { bottom: .75rem; padding: .75rem 1rem; }
+      .t-panel { bottom: .75rem; padding: .75rem 1rem; min-width: 0; }
     }
   </style>
 </head>
@@ -202,20 +220,29 @@
 
   <header class="t-header" role="banner">
     <span class="t-title">Métros · Rennes</span>
-    <span class="t-badge a" title="Ligne A">A</span>
-    <span class="t-badge b" title="Ligne B">B</span>
+    <span class="t-sep"></span>
+    <span class="t-badge a" id="badge-a" role="button" tabindex="0" title="Ligne A — cliquer pour afficher/masquer" onclick="toggleLine('a')">A</span>
+    <span class="t-badge b off" id="badge-b" role="button" tabindex="0" title="Ligne B — cliquer pour afficher/masquer" onclick="toggleLine('b')">B</span>
   </header>
 
   <!-- Legend / Status -->
   <aside class="t-panel" aria-label="Légende et statut">
-    <div class="t-panel-row">
-      <div class="t-line-dot" style="background:var(--a)"></div>
-      <span class="t-line-label">Ligne A · La Poterie ↔ Kennedy</span>
+    <div class="t-panel-row" id="panel-row-a">
+      <div class="t-line-dot" style="background:#F08300"></div>
+      <span class="t-line-label">A</span>
+      <div class="t-dir-group">
+        <button class="t-dir-opt" id="dir-a-0" onclick="setDir('a',0)">La Poterie</button>
+        <button class="t-dir-opt active" id="dir-a-1" onclick="setDir('a',1)">Kennedy</button>
+      </div>
       <span class="t-train-count" id="count-a">—</span>
     </div>
-    <div class="t-panel-row">
-      <div class="t-line-dot" style="background:var(--b)"></div>
-      <span class="t-line-label">Ligne B · Saint-Jacques ↔ Cesson</span>
+    <div class="t-panel-row" id="panel-row-b" style="display:none">
+      <div class="t-line-dot" style="background:#0065BD"></div>
+      <span class="t-line-label">B</span>
+      <div class="t-dir-group">
+        <button class="t-dir-opt" id="dir-b-0" onclick="setDir('b',0)">St-Jacques</button>
+        <button class="t-dir-opt active" id="dir-b-1" onclick="setDir('b',1)">Cesson</button>
+      </div>
       <span class="t-train-count" id="count-b">—</span>
     </div>
     <div class="t-status">
@@ -228,15 +255,21 @@
   (function() {
     'use strict';
 
-    var STAR = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
-    var COLOR_A = '#E87722';
+    var STAR    = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets';
+    var COLOR_A = '#F08300';
     var COLOR_B = '#0065BD';
-    var POLL_MS = 30000; // 30s
+    var POLL_MS = 30000;
 
-    // State
-    var markers = {}; // segKey → maplibregl.Marker
+    // ── State ──
+    var lineVisible = { a: true,  b: false };
+    var lineDir     = { a: 1,     b: 1    }; // 1=Kennedy (A), 1=Cesson (B) par défaut
+    var markers     = {};   // segKey → maplibregl.Marker
+    var stationDots = {};   // line → [DOM el]
+    var lineStops   = {};
+    var liveEvents  = [];   // [{lineKey,idx,departMs,arriveMs,dest}]
     var rafId;
-    var map, rafId;
+    var lastCountUpdate = 0;
+    var map;
 
     /* ─── Map init ─── */
     map = new maplibregl.Map({
@@ -262,11 +295,6 @@
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-    /* ─── State ─── */
-    var TRANSIT_MS = 100000; // ~100s avg inter-station travel
-    var lineStops  = {};  // 'a:0' → [{name,lng,lat}, ...] ordered
-    var liveEvents = [];  // [{lineKey, idx, departMs, dest}]
-
     /* ─── Helpers ─── */
     function setStatus(msg, state) {
       document.getElementById('status-txt').textContent = msg;
@@ -274,21 +302,31 @@
       dot.className = 't-status-dot' + (state ? ' ' + state : '');
     }
 
-    function updateCounts() {
-      var now = Date.now();
-      var ca = 0, cb = 0, seen = {};
-      liveEvents.forEach(function(e) {
-        if (e.departMs > now || e.departMs + TRANSIT_MS < now) return;
-        var seg = e.lineKey + ':' + e.idx;
-        if (seen[seg]) return; seen[seg] = true;
-        if (e.lineKey.charAt(0) === 'a') ca++; else cb++;
-      });
-      document.getElementById('count-a').textContent = ca + ' métro' + (ca > 1 ? 's' : '');
-      document.getElementById('count-b').textContent = cb + ' métro' + (cb > 1 ? 's' : '');
+    function isActiveKey(lineKey) {
+      var line = lineKey.charAt(0);
+      var dir  = parseInt(lineKey.charAt(2), 10);
+      return !!lineVisible[line] && lineDir[line] === dir;
     }
 
-    /* parcours code → sens (ligne A : POT=0 Kennedy→Poterie, JFK=1 Poterie→Kennedy
-                            ligne B : SJG=0 Cesson→StJacques, CVI=1 StJacques→Cesson) */
+    function updateCounts() {
+      var now = Date.now();
+      var counts = { a: 0, b: 0 };
+      var seen   = {};
+      liveEvents.forEach(function(e) {
+        if (now < e.departMs || now > e.arriveMs) return;
+        var seg = e.lineKey + ':' + e.idx;
+        if (seen[seg]) return; seen[seg] = true;
+        counts[e.lineKey.charAt(0)]++;
+      });
+      ['a','b'].forEach(function(l) {
+        var el = document.getElementById('count-' + l);
+        if (el) el.textContent = counts[l] + ' métro' + (counts[l] !== 1 ? 's' : '');
+      });
+    }
+
+    /* parcours code → sens
+       Ligne A : POT=0 → La Poterie,  JFK=1 → Kennedy
+       Ligne B : SJG=0 → St-Jacques,  CVI=1 → Cesson  */
     var PARCOURS_SENS = { POT: 0, JFK: 1, SJG: 0, CVI: 1 };
 
     /* ─── Topology: dessertes (ordre) + stations-td (coords) ─── */
@@ -336,47 +374,104 @@
         var line  = lineKey.charAt(0);
         var stops = lineStops[lineKey];
         if (stops.length < 2) return;
-        var color = line === 'a' ? COLOR_A : COLOR_B;
+        var color   = line === 'a' ? COLOR_A : COLOR_B;
+        var visible = lineVisible[line];
+        var vis     = visible ? 'visible' : 'none';
         var srcId = 'src-' + lineKey, layId = 'lay-' + lineKey, caId = 'cas-' + lineKey;
         var geojson = { type:'Feature', geometry:{ type:'LineString', coordinates: stops.map(function(s){ return [s.lng,s.lat]; }) } };
-        if (map.getSource(srcId)) { map.getSource(srcId).setData(geojson); }
-        else {
+        if (!map.getSource(srcId)) {
           map.addSource(srcId, { type:'geojson', data: geojson });
-          map.addLayer({ id: caId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round'}, paint:{'line-color':'#fff','line-width':7,'line-opacity':.9} });
-          map.addLayer({ id: layId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round'}, paint:{'line-color':color,'line-width':4.5} });
+          map.addLayer({ id: caId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round','visibility':vis}, paint:{'line-color':'#fff','line-width':7,'line-opacity':.9} });
+          map.addLayer({ id: layId, type:'line', source: srcId, layout:{'line-cap':'round','line-join':'round','visibility':vis}, paint:{'line-color':color,'line-width':4.5} });
         }
+        if (!stationDots[line]) stationDots[line] = [];
         stops.forEach(function(s, i) {
           var dotId = 'dot-' + lineKey + '-' + i;
           if (document.getElementById(dotId)) return;
           var el = document.createElement('div'); el.id = dotId;
-          el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid '+color+';box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;';
+          el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#fff;border:3px solid '+color+';box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;' + (visible ? '' : 'display:none');
           var popup = new maplibregl.Popup({ offset:14, closeButton:true })
-            .setHTML('<div>'+s.name+'</div><div class="popup-line">Ligne '+line.toUpperCase()+' · '+( i+1)+'/'+stops.length+'</div>');
+            .setHTML('<div>'+s.name+'</div><div class="popup-line">Ligne '+line.toUpperCase()+' · '+(i+1)+'/'+stops.length+'</div>');
           new maplibregl.Marker({ element:el, anchor:'center' }).setLngLat([s.lng,s.lat]).setPopup(popup).addTo(map);
+          stationDots[line].push(el);
         });
       });
     }
 
-    /* ─── Live passages: deux-prochains-passages-tr ─── */
+    /* ─── Sync map layers + markers with lineVisible state ─── */
+    function updateMapLayers() {
+      ['a','b'].forEach(function(line) {
+        var vis     = lineVisible[line] ? 'visible' : 'none';
+        var display = lineVisible[line] ? '' : 'none';
+        [0,1].forEach(function(dir) {
+          var lk = line + ':' + dir;
+          ['lay-'+lk,'cas-'+lk].forEach(function(id) {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+          });
+        });
+        (stationDots[line] || []).forEach(function(el) { el.style.display = display; });
+      });
+      // Retire les marqueurs trains des lignes masquées
+      Object.keys(markers).forEach(function(seg) {
+        if (!lineVisible[seg.charAt(0)]) { markers[seg].remove(); delete markers[seg]; }
+      });
+      liveEvents = liveEvents.filter(function(e) { return isActiveKey(e.lineKey); });
+      updateCounts();
+    }
+
+    /* ─── Live passages — double-anchor interpolation ─── */
     function fetchPassages() {
-      return fetch(STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records?limit=100')
+      // Construit le filtre pour n'interroger que les lignes/sens actifs
+      var conditions = [];
+      ['a','b'].forEach(function(line) {
+        if (!lineVisible[line]) return;
+        conditions.push("(nomcourtligne='" + line + "' AND sens=" + lineDir[line] + ")");
+      });
+      if (!conditions.length) return Promise.resolve();
+      var where = encodeURIComponent(conditions.join(' OR '));
+
+      return fetch(STAR + '/tco-metro-circulation-deux-prochains-passages-tr/records?limit=100&where=' + where)
         .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
         .then(function(d) {
-          var now = Date.now(); var newEvents = [];
+          var now = Date.now();
+
+          // depMap : 'a:1:Clémenceau' → { times:[t1,t2], dest:'' }
+          var depMap = {};
           (d.results || []).forEach(function(p) {
-            var lineKey = p.nomcourtligne + ':' + p.sens;
-            var stops   = lineStops[lineKey];
-            if (!stops) return;
-            var idx = -1;
-            for (var i = 0; i < stops.length; i++) { if (stops[i].name === p.nomarret){ idx=i; break; } }
-            if (idx < 0 || idx >= stops.length - 1) return;
-            var fields = ['departfirsttrain','departsecondtrain'];
-            for (var f = 0; f < fields.length; f++) {
-              var t = p[fields[f]] ? new Date(p[fields[f]]).getTime() : 0;
-              if (t && t > now - TRANSIT_MS && t < now + 400000)
-                newEvents.push({ lineKey: lineKey, idx: idx, departMs: t, dest: p.destination });
-            }
+            var lineKey = p.nomcourtligne + ':' + parseInt(p.sens, 10);
+            var key     = lineKey + ':' + p.nomarret;
+            var times   = [];
+            ['departfirsttrain','departsecondtrain'].forEach(function(f) {
+              if (p[f]) times.push(new Date(p[f]).getTime());
+            });
+            depMap[key] = { times: times.sort(function(a,b){ return a-b; }), dest: p.destination || '' };
           });
+
+          // Double-anchor : pour chaque segment A→B, cherche t_A (passé) + t_B (futur)
+          var newEvents = [];
+          Object.keys(lineStops).forEach(function(lineKey) {
+            if (!isActiveKey(lineKey)) return;
+            var stops = lineStops[lineKey];
+            stops.forEach(function(stop, idx) {
+              if (idx >= stops.length - 1) return;
+              var dataA = depMap[lineKey + ':' + stop.name];
+              var dataB = depMap[lineKey + ':' + stops[idx + 1].name];
+              if (!dataA || !dataB) return;
+              dataA.times.forEach(function(t_A) {
+                if (t_A > now) return; // le train doit être parti de A
+                // Premier départ à B postérieur à t_A et encore dans le futur
+                var t_B = null;
+                dataB.times.forEach(function(t) {
+                  if (t > t_A && t > now && (t_B === null || t < t_B)) t_B = t;
+                });
+                if (!t_B) return;
+                var travel = t_B - t_A;
+                if (travel < 20000 || travel > 360000) return; // 20s–6min garde-fou
+                newEvents.push({ lineKey: lineKey, idx: idx, departMs: t_A, arriveMs: t_B, dest: dataA.dest });
+              });
+            });
+          });
+
           liveEvents = newEvents;
           updateCounts();
           var ts = new Date();
@@ -422,18 +517,18 @@
       var now = Date.now();
       var active = {};
 
-      /* Keep most recent in-transit departure per segment */
       liveEvents.forEach(function(e) {
-        if (e.departMs > now || e.departMs + TRANSIT_MS < now) return;
+        if (now < e.departMs || now > e.arriveMs) return;
         var seg = e.lineKey + ':' + e.idx;
         if (!active[seg] || e.departMs > active[seg].departMs) active[seg] = e;
       });
 
       Object.keys(active).forEach(function(seg) {
-        var e  = active[seg];
+        var e     = active[seg];
         var stops = lineStops[e.lineKey];
-        var s0 = stops[e.idx], s1 = stops[e.idx + 1];
-        var p  = Math.max(0, Math.min(1, (now - e.departMs) / TRANSIT_MS));
+        var s0    = stops[e.idx], s1 = stops[e.idx + 1];
+        // Interpolation double-anchor : position exacte entre les deux horaires
+        var p  = Math.max(0, Math.min(1, (now - e.departMs) / (e.arriveMs - e.departMs)));
         var lng = s0.lng + (s1.lng - s0.lng) * p;
         var lat = s0.lat + (s1.lat - s0.lat) * p;
         var line    = e.lineKey.charAt(0);
@@ -452,10 +547,12 @@
         }
       });
 
-      /* Remove stale markers */
       Object.keys(markers).forEach(function(seg) {
         if (!active[seg]) { markers[seg].remove(); delete markers[seg]; }
       });
+
+      // Refresh des compteurs toutes les 5s (trains qui arrivent à destination)
+      if (now - lastCountUpdate > 5000) { updateCounts(); lastCountUpdate = now; }
 
       rafId = requestAnimationFrame(animationLoop);
     }
@@ -469,6 +566,36 @@
           : 'Erreur réseau — réessai dans 30s', 'error');
       });
     }
+
+    /* ─── Toggle ligne A/B ─── */
+    window.toggleLine = function(line) {
+      lineVisible[line] = !lineVisible[line];
+      // Badge
+      document.getElementById('badge-' + line).classList.toggle('off', !lineVisible[line]);
+      // Rangée panel
+      var row = document.getElementById('panel-row-' + line);
+      if (row) row.style.display = lineVisible[line] ? '' : 'none';
+      // Carte + marqueurs
+      updateMapLayers();
+      if (lineVisible[line]) poll();
+    };
+
+    /* ─── Choix de direction ─── */
+    window.setDir = function(line, dir) {
+      if (lineDir[line] === dir) return;
+      lineDir[line] = dir;
+      // Boutons direction
+      [0,1].forEach(function(d) {
+        var btn = document.getElementById('dir-' + line + '-' + d);
+        if (btn) btn.classList.toggle('active', d === dir);
+      });
+      // Purge marqueurs + événements de cette ligne
+      Object.keys(markers).forEach(function(seg) {
+        if (seg.charAt(0) === line) { markers[seg].remove(); delete markers[seg]; }
+      });
+      liveEvents = liveEvents.filter(function(e) { return e.lineKey.charAt(0) !== line; });
+      if (lineVisible[line]) poll();
+    };
 
     /* ─── Boot ─── */
     map.on('load', function() {
