@@ -2,11 +2,12 @@
  * SHA-256 côté client · pad numérique injecté · aucun clavier natif
  */
 (function () {
-  /* ── Hash SHA-256 du PIN "0000" ── */
+  /* ── Hash SHA-256 du PIN "0000" (fallback global) ── */
   var PIN_HASH = '9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0';
 
-  var entered   = '';
-  var targetUrl = '';
+  var entered      = '';
+  var targetUrl    = '';
+  var activePinHash = PIN_HASH; /* hash actif pour la session courante */
 
   /* ── Utilitaire SHA-256 via Web Crypto API ── */
   function sha256(str) {
@@ -134,9 +135,10 @@
   var errEl = document.getElementById('pg-error');
 
   /* ── Fonctions ── */
-  function openPin(url) {
-    targetUrl = url;
-    entered   = '';
+  function openPin(url, pinHash) {
+    targetUrl    = url;
+    activePinHash = pinHash || PIN_HASH;
+    entered      = '';
     refresh();
     overlay.classList.add('open');
   }
@@ -170,7 +172,7 @@
 
   function validate() {
     sha256(entered).then(function(h) {
-      if (h === PIN_HASH) {
+      if (h === activePinHash) {
         closePin();
         window.location.href = targetUrl;
       } else {
@@ -209,6 +211,6 @@
     var link = e.target.closest('[data-pin]');
     if (!link) return;
     e.preventDefault();
-    openPin(link.dataset.pin);
+    openPin(link.dataset.pin, link.dataset.pinHash || null);
   });
 })();
