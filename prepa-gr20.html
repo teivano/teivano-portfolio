@@ -31,22 +31,21 @@
     }
 
     html{scroll-behavior:smooth}
-    body{font-family:var(--font-s);background:var(--bg);color:var(--ink);min-height:100vh}
-
-    /* ── Topbar ── */
-    .topbar{
-      position:fixed;top:0;left:0;right:0;z-index:200;height:52px;
-      background:var(--nav-bg); /* fixed dark, never changes with theme */
-      display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;
+    body{
+      font-family:var(--font-s);background:var(--bg);color:var(--ink);
+      min-height:100vh;
+      /* Empêche tout débordement horizontal (corrige la navbar Sac) */
+      overflow-x:hidden;
     }
-    .topbar-back{font-size:.6rem;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s}
-    .topbar-back:hover{color:#fff}
-    .topbar-title{font-family:var(--font-c);font-size:1.1rem;font-weight:300;color:rgba(255,255,255,.9);letter-spacing:.04em}
-    .topbar-right{font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.55)}
 
     /* ── Layout ── */
-    main{padding-top:52px;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
-    .tab-panel{display:none;position:relative;min-height:calc(100vh - 52px - var(--nav-h));padding:1.5rem 1.25rem}
+    main{padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px))}
+    .tab-panel{
+      display:none;position:relative;
+      min-height:calc(100vh - var(--nav-h));
+      padding:1.5rem 1.25rem;
+      overflow-x:hidden; /* isole chaque onglet */
+    }
     .tab-panel.active{display:block}
     .tab-inner{max-width:960px;margin:0 auto}
 
@@ -66,24 +65,30 @@
       flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
       gap:3px;height:var(--nav-h);
       background:none;border:none;cursor:pointer;padding:.4rem .15rem;
-      color:rgba(255,255,255,.38);transition:color .15s;position:relative;
+      color:rgba(255,255,255,.38);transition:color .2s;position:relative;
     }
     .bn-item.active{color:#fff}
-    .bn-item.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent)}
+    .bn-item.active::before{
+      content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent);
+    }
+    /* Pulsation pendant l'onboarding */
+    .bn-item.ob-pulse{
+      animation:obPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes obPulse{0%,100%{color:rgba(255,255,255,.38)}50%{color:#fff}}
     .bn-item svg{width:20px;height:20px;stroke-width:1.5;flex-shrink:0}
     .bn-label{font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
 
-    /* ── Shared components ── */
+    /* ── Shared ── */
     .sh{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.4rem;flex-wrap:wrap}
     .sh-num{font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:500}
     .sh-title{font-family:var(--font-c);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:300;letter-spacing:-.01em}
-    .badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.58rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:.28rem .7rem;border:1px solid var(--ink3);color:var(--ink2)}
+    .badge{display:inline-flex;align-items:center;font-size:.58rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:.28rem .7rem;border:1px solid var(--ink3);color:var(--ink2)}
     .badge.accent{border-color:var(--accent);color:var(--accent)}
     .stat-chip{display:inline-block;font-size:.58rem;font-weight:500;letter-spacing:.06em;padding:.15rem .45rem;background:var(--bg2);color:var(--ink2)}
     .btn-sm{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.38rem .85rem;border:1px solid var(--ink3);background:none;color:var(--ink2);cursor:pointer;transition:background .15s,color .15s}
-    .btn-sm:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-    .btn-sm.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-    .btn-primary{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.55rem 1.2rem;border:none;background:var(--ink);color:var(--bg);cursor:pointer;transition:opacity .15s}
+    .btn-sm:hover,.btn-sm.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .btn-primary{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.55rem 1.2rem;border:none;background:var(--ink);color:var(--bg);cursor:pointer;transition:opacity .15s;font-family:var(--font-s)}
     .btn-primary:hover{opacity:.8}
 
     /* ── HOME tab ── */
@@ -95,7 +100,7 @@
     .cd-num{font-family:var(--font-c);font-size:3rem;font-weight:300;line-height:1;display:block}
     .cd-lbl{font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);display:block;margin-top:.15rem}
     .cd-sep{font-family:var(--font-c);font-size:1.8rem;color:var(--ink3);align-self:flex-start;padding-top:.3rem}
-    .weather-pill{display:inline-flex;align-items:center;gap:.6rem;padding:.4rem .9rem;background:var(--bg2);font-size:.65rem;color:var(--ink2);letter-spacing:.06em;margin-bottom:1.6rem}
+    .weather-pill{display:inline-flex;align-items:center;gap:.6rem;padding:.4rem .9rem;background:var(--bg2);font-size:.65rem;color:var(--ink2);margin-bottom:1.6rem}
     .home-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;margin-bottom:1.8rem}
     .hstat{background:var(--bg2);padding:.9rem 1rem}
     .hstat-val{font-family:var(--font-c);font-size:2rem;font-weight:300;line-height:1}
@@ -104,40 +109,33 @@
     .progress-label{display:flex;justify-content:space-between;font-size:.58rem;color:var(--ink2);margin-bottom:.4rem}
     .progress-bar{height:3px;background:var(--ink3)}
     .progress-fill{height:100%;background:var(--accent);transition:width .4s}
-    .home-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:2.5rem}
+    .home-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:2rem}
     @media(min-width:480px){.home-nav{grid-template-columns:repeat(3,1fr)}}
     .hnav-card{background:var(--bg2);padding:.9rem 1rem;cursor:pointer;border:1px solid transparent;transition:border-color .15s;display:flex;flex-direction:column;gap:.4rem}
     .hnav-card:hover{border-color:var(--ink3)}
     .hnav-icon{width:22px;height:22px;color:var(--accent)}
     .hnav-title{font-size:.68rem;font-weight:500}
     .hnav-desc{font-size:.58rem;color:var(--ink2);line-height:1.4}
-    .home-danger-zone{border-top:1px solid var(--ink3);padding-top:1.4rem;margin-top:.5rem}
-    .home-dz-label{font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rock);margin-bottom:.8rem}
+    .home-footer{border-top:1px solid var(--ink3);padding-top:1.4rem;margin-top:.5rem;display:flex;flex-direction:column;gap:1rem}
+    .home-back{font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink2);text-decoration:none;transition:color .15s;display:inline-flex;align-items:center;gap:.4rem}
+    .home-back:hover{color:var(--ink)}
+    .home-dz-label{font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rock);margin-bottom:.6rem}
     .btn-reset{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.42rem 1rem;border:1px solid rgba(176,48,48,.4);background:none;color:var(--danger);cursor:pointer;transition:background .15s,color .15s}
     .btn-reset:hover{background:var(--danger);color:#fff}
 
     /* ── ROUTE tab ── */
     .stage-select-wrap{position:relative;margin-bottom:1rem}
     .stage-select-wrap::after{content:'↓';position:absolute;right:.9rem;top:50%;transform:translateY(-50%);font-size:.7rem;color:var(--ink2);pointer-events:none}
-    .stage-select{
-      width:100%;font-family:var(--font-s);font-size:.8rem;padding:.7rem 2.4rem .7rem .9rem;
-      background:var(--bg2);border:1px solid var(--ink3);color:var(--ink);outline:none;
-      cursor:pointer;appearance:none;-webkit-appearance:none;transition:border-color .15s;
-    }
+    .stage-select{width:100%;font-family:var(--font-s);font-size:.8rem;padding:.7rem 2.4rem .7rem .9rem;background:var(--bg2);border:1px solid var(--ink3);color:var(--ink);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;transition:border-color .15s}
     .stage-select:focus{border-color:var(--accent)}
-
     #map{height:340px;width:100%;margin-bottom:.7rem}
     .map-legend{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:1.4rem}
     .leg-item{display:flex;align-items:center;gap:.4rem}
     .leg-dot{width:8px;height:8px;border-radius:50%}
-
-    /* Route global stats */
-    .route-global{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin-bottom:1.4rem}
+    .route-global{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;margin-bottom:1.4rem}
     .rstat{background:var(--bg2);padding:.8rem .9rem}
     .rstat-val{font-family:var(--font-c);font-size:1.8rem;font-weight:300;line-height:1}
     .rstat-lbl{font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink2);margin-top:.15rem}
-
-    /* Stage detail card */
     .stage-detail{background:var(--bg2);padding:1.1rem;margin-bottom:1.2rem}
     .stage-detail-title{font-family:var(--font-c);font-size:1.35rem;font-weight:300;margin-bottom:.75rem}
     .stage-detail-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem}
@@ -146,8 +144,6 @@
     .stage-notes-label{font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.35rem}
     .stage-notes-ta{width:100%;font-family:var(--font-s);font-size:.74rem;padding:.5rem .65rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;resize:vertical;min-height:60px;transition:border-color .15s}
     .stage-notes-ta:focus{border-color:var(--ink)}
-
-    /* Itinerary mini-table */
     .iti-table{width:100%;border-collapse:collapse}
     .iti-table th{font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
     .iti-table td{padding:.72rem .7rem;font-size:.75rem;border-bottom:1px solid var(--ink3);vertical-align:middle}
@@ -162,8 +158,6 @@
     .resa-btn.done{color:var(--ok)}.resa-btn.done:hover{background:var(--ok);color:#fff}
     .pnrc-link{display:inline-flex;align-items:center;gap:.5rem;font-size:.62rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;padding:.55rem 1.2rem;background:var(--ink);color:var(--bg);text-decoration:none;transition:opacity .15s;margin-top:1rem}
     .pnrc-link:hover{opacity:.8}
-
-    /* Resa table */
     .resa-table{width:100%;border-collapse:collapse}
     .resa-table th{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
     .resa-table td{padding:.68rem .7rem;font-size:.74rem;border-bottom:1px solid var(--ink3);vertical-align:middle}
@@ -203,10 +197,10 @@
     .sac-stats{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:center;margin-bottom:1.2rem}
     .sac-stat{font-size:.63rem;color:var(--ink2)}
     .sac-stat strong{color:var(--ink);font-weight:500}
-    .weight-bar{flex:1;min-width:140px;height:3px;background:var(--ink3)}
+    .weight-bar{flex:1;min-width:100px;height:3px;background:var(--ink3)}
     .weight-fill{height:100%;background:var(--accent);transition:width .35s;max-width:100%}
     .weight-over .weight-fill{background:var(--danger)}
-    .total-weight-display{font-family:var(--font-c);font-size:1.5rem;font-weight:300}
+    .total-weight-display{font-family:var(--font-c);font-size:1.5rem;font-weight:300;white-space:nowrap}
     .total-weight-display span{font-size:.6rem;font-family:var(--font-s);color:var(--ink2);letter-spacing:.1em;text-transform:uppercase}
     .sac-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.4rem}
     .checklist-category{margin-bottom:1.6rem}
@@ -216,20 +210,22 @@
     .check-box{width:15px;height:15px;flex-shrink:0;border:1.5px solid var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
     .check-item.checked .check-box{background:var(--ink);border-color:var(--ink)}
     .check-item.checked .check-box::after{content:'';display:block;width:7px;height:4.5px;border-left:1.5px solid var(--bg);border-bottom:1.5px solid var(--bg);transform:rotate(-45deg) translate(1px,-1px)}
-    .check-label{font-size:.75rem;flex:1;cursor:pointer;transition:color .15s}
+    .check-label{font-size:.75rem;flex:1;cursor:pointer;transition:color .15s;min-width:0;word-break:break-word}
     .check-item.checked .check-label{color:var(--ink2);text-decoration:line-through}
-    .check-weight{font-size:.6rem;color:var(--rock);cursor:pointer;padding:.1rem .3rem;border:1px solid transparent;transition:border-color .15s;white-space:nowrap}
+    .check-weight{font-size:.6rem;color:var(--rock);cursor:pointer;padding:.1rem .3rem;border:1px solid transparent;transition:border-color .15s;white-space:nowrap;flex-shrink:0}
     .check-weight:hover{border-color:var(--ink3)}
     .weight-edit-input{width:52px;font-family:var(--font-s);font-size:.62rem;padding:.1rem .25rem;background:var(--bg);border:1px solid var(--ink);color:var(--ink);outline:none}
     .item-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:.9rem;padding:0 .2rem;transition:color .15s;flex-shrink:0}
     .item-del:hover{color:var(--danger)}
+    /* Add item form — layout colonne, jamais overflow */
     .add-item-form{background:var(--bg2);padding:.9rem 1rem;margin-top:1rem}
     .add-form-title{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.7rem}
-    .add-form-row{display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:end}
-    @media(max-width:520px){.add-form-row{grid-template-columns:1fr 1fr}}
+    .add-form-fields{display:flex;flex-direction:column;gap:.5rem}
+    .add-form-bottom{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap}
+    .add-form-bottom .af-field{flex:1;min-width:100px}
     .af-field{display:flex;flex-direction:column;gap:.25rem}
     .af-field label{font-size:.53rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2);font-weight:500}
-    .af-field input,.af-field select{font-family:var(--font-s);font-size:.74rem;padding:.4rem .55rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;transition:border-color .15s}
+    .af-field input,.af-field select{font-family:var(--font-s);font-size:.74rem;padding:.4rem .55rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;transition:border-color .15s;width:100%}
     .af-field input:focus,.af-field select:focus{border-color:var(--ink)}
     .resume-table{width:100%;border-collapse:collapse}
     .resume-table th{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
@@ -282,42 +278,37 @@
     .res-link-arrow{color:var(--ink3);font-size:.75rem}
 
     /* ── GO tab ── */
-    .go-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;text-align:center;gap:1.2rem;padding:2rem}
+    .go-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1.2rem;padding:2rem}
     .go-title{font-family:var(--font-c);font-size:clamp(2rem,6vw,3.5rem);font-weight:300}
     .go-sub{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2)}
     .go-tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
 
-    /* ── ONBOARDING ── */
-    .ob-overlay{
-      position:fixed;inset:0;z-index:1000;
-      background:rgba(20,30,26,.96);
-      display:flex;align-items:center;justify-content:center;
-      padding:1rem;
+    /* ── ONBOARDING — carte contextuelle au-dessus de la navbar ── */
+    .ob-backdrop{
+      position:fixed;top:0;left:0;right:0;
+      bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));
+      z-index:400;
+      background:rgba(10,20,16,.45);
+      pointer-events:auto; /* bloque les interactions avec l'app */
     }
-    .ob-modal{
-      width:100%;max-width:480px;
-      display:flex;flex-direction:column;align-items:center;
-      gap:0;
+    .ob-card{
+      position:fixed;left:0;right:0;
+      bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));
+      z-index:401;
+      background:var(--nav-bg);
+      padding:1.25rem 1.5rem 1.4rem;
     }
-    .ob-slides{width:100%;overflow:hidden}
-    .ob-track{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1)}
-    .ob-slide{
-      min-width:100%;padding:2.5rem 1.5rem 1.5rem;
-      display:flex;flex-direction:column;align-items:center;text-align:center;gap:.9rem;
-    }
-    .ob-icon{width:56px;height:56px;color:var(--accent);flex-shrink:0}
-    .ob-step{font-size:.52rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:500}
-    .ob-title{font-family:var(--font-c);font-size:clamp(1.8rem,5vw,2.8rem);font-weight:300;color:#fff;line-height:1.05}
-    .ob-desc{font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.65;max-width:340px}
-    .ob-tags{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center}
-    .ob-tag{font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;padding:.22rem .6rem;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5)}
-    .ob-dots{display:flex;gap:.5rem;margin:.8rem 0 .5rem}
-    .ob-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s,width .2s}
-    .ob-dot.active{background:var(--accent);width:18px;border-radius:3px}
-    .ob-nav{display:flex;align-items:center;gap:.8rem;width:100%;max-width:380px;padding:0 1rem}
-    .ob-btn-prev{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;padding:.5rem .9rem;border:1px solid rgba(255,255,255,.2);background:none;color:rgba(255,255,255,.5);cursor:pointer;transition:border-color .15s,color .15s}
+    .ob-card-inner{max-width:600px;margin:0 auto}
+    .ob-step{font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:500;margin-bottom:.35rem}
+    .ob-title{font-family:var(--font-c);font-size:1.6rem;font-weight:300;color:#fff;line-height:1.05;margin-bottom:.45rem}
+    .ob-desc{font-size:.72rem;color:rgba(255,255,255,.58);line-height:1.6;margin-bottom:1rem}
+    .ob-nav{display:flex;align-items:center;gap:.8rem}
+    .ob-dots{display:flex;gap:.4rem;flex:1}
+    .ob-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s,width .2s;cursor:pointer;border:none}
+    .ob-dot.active{background:var(--accent);width:14px;border-radius:2.5px}
+    .ob-btn-prev{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;padding:.48rem .85rem;border:1px solid rgba(255,255,255,.18);background:none;color:rgba(255,255,255,.5);cursor:pointer;transition:border-color .15s,color .15s;font-family:var(--font-s)}
     .ob-btn-prev:hover{border-color:rgba(255,255,255,.5);color:#fff}
-    .ob-btn-next{flex:1;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;padding:.55rem 1rem;border:none;background:var(--accent);color:#fff;cursor:pointer;transition:opacity .15s;font-family:var(--font-s);font-weight:500}
+    .ob-btn-next{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:.52rem 1.1rem;border:none;background:var(--accent);color:#fff;cursor:pointer;transition:opacity .15s;font-family:var(--font-s);font-weight:500;white-space:nowrap}
     .ob-btn-next:hover{opacity:.85}
 
     @media(max-width:600px){
@@ -330,88 +321,18 @@
 <body>
 
   <!-- ══ ONBOARDING ══ -->
-  <div class="ob-overlay" id="obOverlay" style="display:none">
-    <div class="ob-modal">
-      <div class="ob-slides"><div class="ob-track" id="obTrack">
-
-        <!-- Slide 1 -->
-        <div class="ob-slide">
-          <svg class="ob-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <circle cx="30" cy="30" r="24"/><circle cx="30" cy="30" r="16"/>
-            <line x1="30" y1="6" x2="30" y2="14"/><line x1="30" y1="46" x2="30" y2="54"/>
-            <line x1="6" y1="30" x2="14" y2="30"/><line x1="46" y1="30" x2="54" y2="30"/>
-            <polygon points="30,16 32,30 30,24 28,30" fill="currentColor" stroke="none"/>
-          </svg>
-          <div class="ob-step">Bienvenue</div>
-          <div class="ob-title">Prépa GR20</div>
-          <div class="ob-desc">Ton outil de préparation pour le GR20 Sud. Vizzavona → Conca · 9 jours · Septembre 2026.</div>
-          <div class="ob-tags">
-            <span class="ob-tag">Moitié Sud</span>
-            <span class="ob-tag">90 km</span>
-            <span class="ob-tag">3150 m D+</span>
-          </div>
-        </div>
-
-        <!-- Slide 2 -->
-        <div class="ob-slide">
-          <svg class="ob-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 14v38l18-9 20 9 17-9V5L42 14 22 5 5 14z"/>
-            <line x1="22" y1="5" x2="22" y2="43"/><line x1="42" y1="14" x2="42" y2="52"/>
-          </svg>
-          <div class="ob-step">Onglet Route</div>
-          <div class="ob-title">Carte & Étapes</div>
-          <div class="ob-desc">Visualise le tracé complet, sélectionne une étape pour zoomer dessus, consulte ses statistiques et gère tes réservations de refuges.</div>
-        </div>
-
-        <!-- Slide 3 -->
-        <div class="ob-slide">
-          <svg class="ob-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="10" y="22" width="40" height="32" rx="6"/>
-            <path d="M22 22v-5a8 8 0 0 1 16 0v5"/>
-            <line x1="20" y1="38" x2="40" y2="38"/>
-          </svg>
-          <div class="ob-step">Onglet Sac</div>
-          <div class="ob-title">Checklist & Poids</div>
-          <div class="ob-desc">Gère ton équipement item par item, édite les poids, ajoute tes propres items, fixe un objectif de poids de sac et suis ta progression.</div>
-        </div>
-
-        <!-- Slide 4 -->
-        <div class="ob-slide">
-          <svg class="ob-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="5,35 15,35 22,55 38,5 45,35 55,35"/>
-          </svg>
-          <div class="ob-step">Onglet Training</div>
-          <div class="ob-title">Entraînements</div>
-          <div class="ob-desc">Loggue chaque sortie de préparation, suis tes km et D+ cumulés, retrouve les sites d'entraînement normands et toutes les ressources utiles.</div>
-        </div>
-
-        <!-- Slide 5 -->
-        <div class="ob-slide">
-          <svg class="ob-icon" viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="15" y1="8" x2="15" y2="54"/>
-            <path d="M15 10 L50 24 L15 40 Z"/>
-            <line x1="8" y1="48" x2="52" y2="48"/>
-          </svg>
-          <div class="ob-step">Onglet Go</div>
-          <div class="ob-title">Le Jour J</div>
-          <div class="ob-desc">Chrono d'étape, suivi GPS, journal de bord et météo du jour — disponible avant ton départ du 1er septembre 2026.</div>
-        </div>
-
-      </div></div>
-
-      <div class="ob-dots" id="obDots"></div>
+  <div class="ob-backdrop" id="obBackdrop" style="display:none"></div>
+  <div class="ob-card" id="obCard" style="display:none">
+    <div class="ob-card-inner">
+      <div class="ob-step" id="obStep"></div>
+      <div class="ob-title" id="obTitle"></div>
+      <div class="ob-desc" id="obDesc"></div>
       <div class="ob-nav">
+        <div class="ob-dots" id="obDots"></div>
         <button class="ob-btn-prev" id="obPrev" onclick="obPrev()">←</button>
         <button class="ob-btn-next" id="obNext" onclick="obNext()">Suivant →</button>
       </div>
     </div>
-  </div>
-
-  <!-- Topbar -->
-  <div class="topbar">
-    <a class="topbar-back" href="/index.html">← Retour</a>
-    <div class="topbar-title">Prépa GR20</div>
-    <div class="topbar-right" id="topbarWeather"></div>
   </div>
 
   <main>
@@ -469,9 +390,14 @@
           </div>
         </div>
 
-        <div class="home-danger-zone">
-          <div class="home-dz-label">Zone de réinitialisation</div>
-          <button class="btn-reset" onclick="resetApp()">Réinitialiser l'application</button>
+        <div class="home-footer">
+          <div>
+            <a class="home-back" href="https://teivano.fr">← teivano.fr</a>
+          </div>
+          <div>
+            <div class="home-dz-label">Zone de réinitialisation</div>
+            <button class="btn-reset" onclick="resetApp()">Réinitialiser l'application</button>
+          </div>
         </div>
       </div>
     </div>
@@ -483,41 +409,29 @@
       </svg>
       <div class="tab-inner">
         <div class="sh"><span class="sh-num">GR20 Sud</span><h2 class="sh-title">Parcours</h2></div>
-
-        <!-- Sélecteur d'étape -->
         <div class="stage-select-wrap">
           <select class="stage-select" id="stageSelect" onchange="onStageSelect(parseInt(this.value))">
             <option value="0">— Vue globale du parcours —</option>
           </select>
         </div>
-
-        <!-- Carte -->
         <div id="map"></div>
         <div class="map-legend">
           <div class="leg-item"><div class="leg-dot" style="background:#C55A3A"></div>Tracé GR20 Sud</div>
           <div class="leg-item"><div class="leg-dot" style="background:#2C4A3E"></div>Refuges</div>
           <div class="leg-item"><div class="leg-dot" style="background:#C17A3A"></div>Départ / Arrivée</div>
         </div>
-
-        <!-- Stats globales -->
         <div class="route-global" id="routeGlobal">
           <div class="rstat"><div class="rstat-val">90</div><div class="rstat-lbl">km total</div></div>
           <div class="rstat"><div class="rstat-val">3 150</div><div class="rstat-lbl">m D+</div></div>
           <div class="rstat"><div class="rstat-val">8</div><div class="rstat-lbl">Étapes</div></div>
           <div class="rstat"><div class="rstat-val">~35h</div><div class="rstat-lbl">Durée estimée</div></div>
         </div>
-
-        <!-- Panneau étape (masqué par défaut) -->
         <div id="stageDetailCard" style="display:none" class="stage-detail"></div>
-
-        <!-- Tableau itinéraire -->
         <div style="overflow-x:auto;margin-bottom:1.2rem">
           <table class="iti-table"><thead><tr>
             <th>J</th><th>De → Vers</th><th>km</th><th>D+</th><th>Durée</th><th>Refuge</th><th>Statut</th>
           </tr></thead><tbody id="itineraryBody"></tbody></table>
         </div>
-
-        <!-- Réservations -->
         <div class="sh" style="margin-top:1.8rem"><span class="sh-num">Refuges</span><h2 class="sh-title">Réservations</h2></div>
         <div style="overflow-x:auto">
           <table class="resa-table"><thead><tr>
@@ -576,7 +490,7 @@
         <div class="sac-stats">
           <div class="sac-stat"><strong id="sacChecked">0</strong> / <span id="sacTotal">0</span> items</div>
           <div class="weight-bar" id="weightBar"><div class="weight-fill" id="weightFill" style="width:0%"></div></div>
-          <div class="total-weight-display"><span id="sacWeightDisplay">0</span> <span>poids coché</span></div>
+          <div class="total-weight-display"><span id="sacWeightDisplay">0</span> <span>coché</span></div>
         </div>
         <div class="sac-actions">
           <button class="btn-sm" onclick="checkAll()">Tout cocher</button>
@@ -586,11 +500,22 @@
           <div id="checklistContainer"></div>
           <div class="add-item-form">
             <div class="add-form-title">Ajouter un item</div>
-            <div class="add-form-row">
-              <div class="af-field" style="grid-column:1/-1"><label>Libellé</label><input type="text" id="af-label" placeholder="Nom de l'item"></div>
-              <div class="af-field"><label>Catégorie</label><select id="af-cat"></select></div>
-              <div class="af-field"><label>Poids (g)</label><input type="number" id="af-weight" min="0" step="10" placeholder="0"></div>
-              <div style="align-self:end"><button class="btn-primary" onclick="addItem()">+ Ajouter</button></div>
+            <div class="add-form-fields">
+              <div class="af-field">
+                <label>Libellé</label>
+                <input type="text" id="af-label" placeholder="Nom de l'item">
+              </div>
+              <div class="add-form-bottom">
+                <div class="af-field">
+                  <label>Catégorie</label>
+                  <select id="af-cat"></select>
+                </div>
+                <div class="af-field" style="max-width:110px">
+                  <label>Poids (g)</label>
+                  <input type="number" id="af-weight" min="0" step="10" placeholder="0">
+                </div>
+                <button class="btn-primary" onclick="addItem()" style="align-self:flex-end;white-space:nowrap">+ Ajouter</button>
+              </div>
             </div>
           </div>
         </div>
@@ -660,8 +585,8 @@
     <div class="tab-panel" id="tab-go">
       <svg class="filigrane" viewBox="0 0 200 250" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <line x1="55" y1="30" x2="55" y2="220"/>
-        <path d="M55 35 L155 55 L55 95" stroke="currentColor"/>
         <path d="M55 35 L155 55 L55 95 Z" fill="currentColor" fill-opacity=".15" stroke="none"/>
+        <path d="M55 35 L155 55 L55 95"/>
         <line x1="30" y1="205" x2="175" y2="205"/><line x1="30" y1="220" x2="175" y2="220"/>
         <line x1="55" y1="205" x2="55" y2="220"/><line x1="80" y1="205" x2="80" y2="220"/>
         <line x1="105" y1="205" x2="105" y2="220"/><line x1="130" y1="205" x2="130" y2="220"/>
@@ -711,111 +636,71 @@
   </nav>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="/nav.js"></script>
   <script src="/pin-guard.js"></script>
   <script>
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      DONNÉES
-  ═══════════════════════════════ */
-  var DEPART = new Date('2026-09-01T08:00:00');
-
-  var STAGES = [
-    { j:1, de:'Vizzavona',      vers:'Capannelle',           km:13, dp:900,  dm:250,  dur:'5h30', refuge:'Bergeries de Capannelle' },
-    { j:2, de:'Capannelle',     vers:'Prati',                km:8,  dp:700,  dm:600,  dur:'4h00', refuge:'Refuge de Prati' },
-    { j:3, de:'Prati',          vers:'Bocca di Verdi',       km:14, dp:300,  dm:700,  dur:'5h00', refuge:'Gîte de Bocca di Verdi' },
-    { j:4, de:'Bocca di Verdi', vers:'Cozzano',              km:9,  dp:450,  dm:950,  dur:'4h00', refuge:'Gîte de Cozzano' },
-    { j:5, de:'Cozzano',        vers:'Usciolu',              km:10, dp:800,  dm:350,  dur:'5h30', refuge:"Refuge d'Usciolu" },
-    { j:6, de:'Usciolu',        vers:'Asinao',               km:8,  dp:200,  dm:900,  dur:'5h00', refuge:"Refuge d'Asinao" },
-    { j:7, de:'Asinao',         vers:'Paliri (via Bavella)', km:16, dp:700,  dm:500,  dur:'7h00', refuge:'Refuge de Paliri' },
-    { j:8, de:'Paliri',         vers:'Conca',                km:12, dp:150,  dm:1050, dur:'4h00', refuge:'— Arrivée Conca —' },
-    { j:9, de:'—',              vers:'Tampon / météo',       km:0,  dp:0,    dm:0,    dur:'—',    refuge:'—', buffer:true }
+  ═══════════════════════ */
+  var DEPART=new Date('2026-09-01T08:00:00');
+  var STAGES=[
+    {j:1,de:'Vizzavona',vers:'Capannelle',km:13,dp:900,dm:250,dur:'5h30',refuge:'Bergeries de Capannelle'},
+    {j:2,de:'Capannelle',vers:'Prati',km:8,dp:700,dm:600,dur:'4h00',refuge:'Refuge de Prati'},
+    {j:3,de:'Prati',vers:'Bocca di Verdi',km:14,dp:300,dm:700,dur:'5h00',refuge:'Gîte de Bocca di Verdi'},
+    {j:4,de:'Bocca di Verdi',vers:'Cozzano',km:9,dp:450,dm:950,dur:'4h00',refuge:'Gîte de Cozzano'},
+    {j:5,de:'Cozzano',vers:'Usciolu',km:10,dp:800,dm:350,dur:'5h30',refuge:"Refuge d'Usciolu"},
+    {j:6,de:'Usciolu',vers:'Asinao',km:8,dp:200,dm:900,dur:'5h00',refuge:"Refuge d'Asinao"},
+    {j:7,de:'Asinao',vers:'Paliri (via Bavella)',km:16,dp:700,dm:500,dur:'7h00',refuge:'Refuge de Paliri'},
+    {j:8,de:'Paliri',vers:'Conca',km:12,dp:150,dm:1050,dur:'4h00',refuge:'— Arrivée Conca —'},
+    {j:9,de:'—',vers:'Tampon / météo',km:0,dp:0,dm:0,dur:'—',refuge:'—',buffer:true}
   ];
-
-  var REFUGES_MAP = [
-    { name:'Vizzavona (départ)',      coords:[9.128,42.122], type:'start' },
-    { name:'Bergeries de Capannelle', coords:[9.203,42.025], type:'refuge' },
-    { name:'Refuge de Prati',         coords:[9.225,41.968], type:'refuge' },
-    { name:'Gîte de Bocca di Verdi',  coords:[9.264,41.936], type:'refuge' },
-    { name:'Gîte de Cozzano',         coords:[9.338,41.887], type:'refuge' },
-    { name:"Refuge d'Usciolu",        coords:[9.284,41.854], type:'refuge' },
-    { name:"Refuge d'Asinao",         coords:[9.278,41.754], type:'refuge' },
-    { name:'Col de Bavella',          coords:[9.255,41.742], type:'refuge' },
-    { name:'Refuge de Paliri',        coords:[9.294,41.712], type:'refuge' },
-    { name:'Conca (arrivée)',         coords:[9.352,41.672], type:'end' }
+  var REFUGES_MAP=[
+    {name:'Vizzavona (départ)',coords:[9.128,42.122],type:'start'},
+    {name:'Bergeries de Capannelle',coords:[9.203,42.025],type:'refuge'},
+    {name:'Refuge de Prati',coords:[9.225,41.968],type:'refuge'},
+    {name:'Gîte de Bocca di Verdi',coords:[9.264,41.936],type:'refuge'},
+    {name:'Gîte de Cozzano',coords:[9.338,41.887],type:'refuge'},
+    {name:"Refuge d'Usciolu",coords:[9.284,41.854],type:'refuge'},
+    {name:"Refuge d'Asinao",coords:[9.278,41.754],type:'refuge'},
+    {name:'Col de Bavella',coords:[9.255,41.742],type:'refuge'},
+    {name:'Refuge de Paliri',coords:[9.294,41.712],type:'refuge'},
+    {name:'Conca (arrivée)',coords:[9.352,41.672],type:'end'}
   ];
-
-  var TRACÉ = [
-    [9.128,42.122],[9.155,42.09],[9.180,42.055],[9.203,42.025],
-    [9.215,41.998],[9.225,41.968],[9.240,41.952],[9.264,41.936],
-    [9.295,41.918],[9.338,41.887],[9.310,41.870],[9.284,41.854],
-    [9.278,41.810],[9.278,41.754],[9.265,41.748],[9.255,41.742],
-    [9.270,41.726],[9.294,41.712],[9.320,41.692],[9.352,41.672]
+  var TRACÉ=[[9.128,42.122],[9.155,42.09],[9.180,42.055],[9.203,42.025],[9.215,41.998],[9.225,41.968],[9.240,41.952],[9.264,41.936],[9.295,41.918],[9.338,41.887],[9.310,41.870],[9.284,41.854],[9.278,41.810],[9.278,41.754],[9.265,41.748],[9.255,41.742],[9.270,41.726],[9.294,41.712],[9.320,41.692],[9.352,41.672]];
+  var STAGE_BOUNDS=[null,[9.12,41.99,9.22,42.14],[9.19,41.95,9.25,42.04],[9.22,41.92,9.28,41.98],[9.25,41.87,9.35,41.95],[9.27,41.84,9.35,41.90],[9.26,41.74,9.30,41.86],[9.24,41.70,9.30,41.76],[9.28,41.65,9.36,41.72],null];
+  var DEFAULT_CHECKLIST=[
+    {cat:'Aux pieds',items:[{id:'f1',l:'Chaussures trail/rando (déjà faites)',g:800},{id:'f2',l:'Chaussettes techniques × 2',g:120},{id:'f3',l:'Chaussettes techniques × 1 (spare)',g:60},{id:'f4',l:'Sandales légères pour le soir',g:180}]},
+    {cat:'Bas',items:[{id:'b1',l:'Short de rando ou pantalon convertible',g:220},{id:'b2',l:'Collant/legging pour le soir',g:160},{id:'b3',l:'Sous-vêtements de rechange × 1',g:60}]},
+    {cat:'Haut',items:[{id:'h1',l:'T-shirt technique respirant',g:120},{id:'h2',l:'Manche longue légère / mérinos',g:160},{id:'h3',l:'Polaire légère ou doudoune synthétique',g:280},{id:'h4',l:'Veste imperméable respirante à capuche',g:350}]},
+    {cat:'Accessoires',items:[{id:'a1',l:'Casquette ou chapeau',g:80},{id:'a2',l:'Buff / tour de cou',g:40},{id:'a3',l:'Lunettes de soleil catégorie 3',g:30},{id:'a4',l:'Gants fins',g:40},{id:'a5',l:'Bonnet léger',g:50},{id:'a6',l:'Bâtons de marche',g:400}]},
+    {cat:'Couchage / Nuit',items:[{id:'c1',l:'Sac de couchage léger (confort 5–10°C)',g:700},{id:'c2',l:'Sac à viande (drap de soie)',g:100},{id:'c3',l:'Boules Quies',g:10},{id:'c4',l:'Frontale + piles de rechange',g:90}]},
+    {cat:'Eau & Nourriture',items:[{id:'e1',l:'Gourdes / poche hydratation 2 L min.',g:200},{id:'e2',l:'Pastilles purification eau',g:30},{id:'e3',l:'Barres / fruits secs / ravitaillement',g:600}]},
+    {cat:'Sécurité & Orientation',items:[{id:'s1',l:'Mapy.cz offline (Corse téléchargée)',g:0},{id:'s2',l:'Ma Rando (FFRandonnée)',g:0},{id:'s3',l:'Batterie externe (10 000 mAh min.)',g:220},{id:'s4',l:'Couverture de survie',g:50},{id:'s5',l:'Trousse premiers secours (Compeed, bande, antidouleur, pince tiques, strap)',g:150},{id:'s6',l:'Sifflet',g:10},{id:'s7',l:'Crème solaire SPF 50',g:80},{id:'s8',l:'Papier toilette + sac déchet',g:30}]},
+    {cat:'Hygiène & Divers',items:[{id:'y1',l:'Brosse à dents + mini dentifrice',g:40},{id:'y2',l:'Savon biodégradable petit format',g:60},{id:'y3',l:'Serviette microfibre',g:90},{id:'y4',l:'Sacs zip / sacs étanches',g:40},{id:'y5',l:'Espèces + CB',g:20},{id:'y6',l:"Pièce d'identité + carte Vitale",g:20}]}
   ];
-
-  // Bounds [W,S,E,N] pour zoom par étape
-  var STAGE_BOUNDS = [
-    null,
-    [9.12,41.99,9.22,42.14],[9.19,41.95,9.25,42.04],[9.22,41.92,9.28,41.98],
-    [9.25,41.87,9.35,41.95],[9.27,41.84,9.35,41.90],[9.26,41.74,9.30,41.86],
-    [9.24,41.70,9.30,41.76],[9.28,41.65,9.36,41.72],null
-  ];
-
-  var DEFAULT_CHECKLIST = [
-    { cat:'Aux pieds', items:[
-      {id:'f1',l:'Chaussures trail/rando (déjà faites)',g:800},{id:'f2',l:'Chaussettes techniques × 2',g:120},
-      {id:'f3',l:'Chaussettes techniques × 1 (spare)',g:60},{id:'f4',l:'Sandales légères pour le soir',g:180}
-    ]},
-    { cat:'Bas', items:[
-      {id:'b1',l:'Short de rando ou pantalon convertible',g:220},{id:'b2',l:'Collant/legging pour le soir',g:160},
-      {id:'b3',l:'Sous-vêtements de rechange × 1',g:60}
-    ]},
-    { cat:'Haut', items:[
-      {id:'h1',l:'T-shirt technique respirant',g:120},{id:'h2',l:'Manche longue légère / mérinos',g:160},
-      {id:'h3',l:'Polaire légère ou doudoune synthétique',g:280},{id:'h4',l:'Veste imperméable respirante à capuche',g:350}
-    ]},
-    { cat:'Accessoires', items:[
-      {id:'a1',l:'Casquette ou chapeau',g:80},{id:'a2',l:'Buff / tour de cou',g:40},
-      {id:'a3',l:'Lunettes de soleil catégorie 3',g:30},{id:'a4',l:'Gants fins',g:40},
-      {id:'a5',l:'Bonnet léger',g:50},{id:'a6',l:'Bâtons de marche',g:400}
-    ]},
-    { cat:'Couchage / Nuit', items:[
-      {id:'c1',l:'Sac de couchage léger (confort 5–10°C)',g:700},{id:'c2',l:'Sac à viande (drap de soie)',g:100},
-      {id:'c3',l:'Boules Quies',g:10},{id:'c4',l:'Frontale + piles de rechange',g:90}
-    ]},
-    { cat:'Eau & Nourriture', items:[
-      {id:'e1',l:'Gourdes / poche hydratation 2 L min.',g:200},{id:'e2',l:'Pastilles purification eau',g:30},
-      {id:'e3',l:'Barres / fruits secs / ravitaillement',g:600}
-    ]},
-    { cat:'Sécurité & Orientation', items:[
-      {id:'s1',l:'Mapy.cz offline (Corse téléchargée)',g:0},{id:'s2',l:'Ma Rando (FFRandonnée)',g:0},
-      {id:'s3',l:'Batterie externe (10 000 mAh min.)',g:220},{id:'s4',l:'Couverture de survie',g:50},
-      {id:'s5',l:'Trousse premiers secours (Compeed, bande, antidouleur, pince tiques, strap)',g:150},
-      {id:'s6',l:'Sifflet',g:10},{id:'s7',l:'Crème solaire SPF 50',g:80},
-      {id:'s8',l:'Papier toilette + sac déchet',g:30}
-    ]},
-    { cat:'Hygiène & Divers', items:[
-      {id:'y1',l:'Brosse à dents + mini dentifrice',g:40},{id:'y2',l:'Savon biodégradable petit format',g:60},
-      {id:'y3',l:'Serviette microfibre',g:90},{id:'y4',l:'Sacs zip / sacs étanches',g:40},
-      {id:'y5',l:'Espèces + CB',g:20},{id:'y6',l:"Pièce d'identité + carte Vitale",g:20}
-    ]}
-  ];
-
-  var SITES = [
+  var SITES=[
     {name:'Clécy',region:'Suisse Normande',route:'45 min de Caen',km:16,dp:550,dur:'4h30',terrain:'Crêtes rocheuses, dalles calcaires',tip:'Monter le Pain de Sucre et le répéter 3–4× avec sac chargé.'},
     {name:'Saint-Léonard-des-Bois',region:'Alpes Mancelles',route:'1h15 de Caen',km:19,dp:650,dur:'5h30',terrain:'Pierriers, pentes sèches, aucun plat',tip:"Le parcours le plus proche d'une étape de montagne."},
     {name:"Roche d'Oëtre",region:'Orne',route:'1h00 de Caen',km:12,dp:450,dur:'4h00',terrain:'Très technique, granit, racines, chaos',tip:'Terrain le plus accidenté — parfait pour la technicité du Nord.'},
     {name:'Mortain',region:'Cascades',route:'1h15 de Caen',km:10,dp:350,dur:'3h00',terrain:'Escalade de marches, verticalité',tip:"Monter jusqu'à la Chapelle Saint-Michel pour simuler une arrivée refuge."}
   ];
-
   var RESA_REFUGES=['Bergeries de Capannelle','Refuge de Prati','Gîte de Bocca di Verdi','Gîte de Cozzano',"Refuge d'Usciolu","Refuge d'Asinao",'Refuge de Paliri','— Arrivée Conca —'];
-  var METEO_LOCS={vizzavona:{lat:42.12,lon:9.13,label:'Vizzavona (1163 m)'},zonza:{lat:41.75,lon:9.18,label:'Zonza (780 m)'}};
+  var METEO_LOCS={vizzavona:{lat:42.12,lon:9.13},zonza:{lat:41.75,lon:9.18}};
   var WMO_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌦️',82:'🌧️',85:'❄️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
   var DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   var MONTHS_FR=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
 
-  /* ═══════════════════════════════
+  /* Slides onboarding — chaque slide active un onglet réel */
+  var OB_SLIDES=[
+    {tab:'home',    step:'Accueil',   title:'Bienvenue',        desc:'Ton tableau de bord : countdown avant le départ, stats de préparation en temps réel, météo live et accès rapide à tous les outils.'},
+    {tab:'route',   step:'Route',     title:'Carte & Étapes',   desc:'Visualise le tracé complet Vizzavona → Conca. Sélectionne une étape pour zoomer sur son tracé et consulter ses statistiques détaillées.'},
+    {tab:'sac',     step:'Sac',       title:'Checklist & Poids',desc:'Gère ton équipement item par item. Édite les poids, ajoute tes propres items et suis ton poids total face à ton objectif.'},
+    {tab:'training',step:'Training',  title:'Entraînements',    desc:'Loggue chaque sortie prépa, suis tes km et D+ cumulés, retrouve les 4 sites d\'entraînement normands et toutes les ressources.'},
+    {tab:'go',      step:'Go',        title:'Le Jour J',        desc:'Chrono d\'étape, suivi GPS live, journal de bord — tout pour le terrain. Cet onglet s\'activera avant ton départ du 1er septembre 2026.'}
+  ];
+
+  /* ═══════════════════════
      STATE
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   var checklistData=(function(){var s=localStorage.getItem('gr20_checklist_items');if(s){try{return JSON.parse(s);}catch(e){}}return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));})();
   var checkState=JSON.parse(localStorage.getItem('gr20_checklist')||'{}');
   var targetWeight=parseFloat(localStorage.getItem('gr20_target_weight')||'8');
@@ -824,63 +709,85 @@
   var resaState=JSON.parse(localStorage.getItem('gr20_resa_status')||'{}');
   var sacView=localStorage.getItem('gr20_sac_view')||'liste';
   var meteoCache={};
-  var mapInited=false, map, selectedStage=0;
-  var obSlide=0, OB_TOTAL=5;
-
+  var mapInited=false,map,selectedStage=0;
+  var obSlide=0;
   var resaData=(function(){var s=localStorage.getItem('gr20_reservations');if(s){try{return JSON.parse(s);}catch(e){}}return RESA_REFUGES.map(function(r,i){var d=new Date(DEPART);d.setDate(d.getDate()+i);return{refuge:r,date:d.toISOString().split('T')[0],status:'todo',ref:'',note:''};});})();
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      ONBOARDING
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   function obRender(){
-    var track=document.getElementById('obTrack');
-    track.style.transform='translateX(-'+obSlide*100+'%)';
-    var dots='';
-    for(var i=0;i<OB_TOTAL;i++) dots+='<div class="ob-dot'+(i===obSlide?' active':'')+'" onclick="obGo('+i+')"></div>';
-    document.getElementById('obDots').innerHTML=dots;
+    var s=OB_SLIDES[obSlide];
+    document.getElementById('obStep').textContent=s.step+' · '+(obSlide+1)+' / '+OB_SLIDES.length;
+    document.getElementById('obTitle').textContent=s.title;
+    document.getElementById('obDesc').textContent=s.desc;
+    // Dots
+    document.getElementById('obDots').innerHTML=OB_SLIDES.map(function(_,i){
+      return '<button class="ob-dot'+(i===obSlide?' active':'')+'" onclick="obGo('+i+')"></button>';
+    }).join('');
+    // Prev visibility
     document.getElementById('obPrev').style.visibility=obSlide===0?'hidden':'visible';
-    document.getElementById('obNext').textContent=obSlide===OB_TOTAL-1?'Commencer ✓':'Suivant →';
+    // Next label
+    document.getElementById('obNext').textContent=obSlide===OB_SLIDES.length-1?'Commencer ✓':'Suivant →';
+    // Activer le vrai onglet correspondant
+    var btn=document.querySelector('.bn-item[data-tab="'+s.tab+'"]');
+    showTabSilent(s.tab,btn);
+    // Pulse sur l'icône active de la navbar
+    document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('ob-pulse');});
+    if(btn) btn.classList.add('ob-pulse');
   }
   function obPrev(){if(obSlide>0){obSlide--;obRender();}}
   function obNext(){
-    if(obSlide<OB_TOTAL-1){obSlide++;obRender();}
+    if(obSlide<OB_SLIDES.length-1){obSlide++;obRender();}
     else{closeOnboarding();}
   }
   function obGo(i){obSlide=i;obRender();}
   function closeOnboarding(){
-    document.getElementById('obOverlay').style.display='none';
+    document.getElementById('obBackdrop').style.display='none';
+    document.getElementById('obCard').style.display='none';
+    document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('ob-pulse');});
     localStorage.setItem('gr20_onboarded','1');
+    // Retour sur Home à la fin
+    showTab('home',document.querySelector('.bn-item[data-tab="home"]'));
   }
 
-  /* ═══════════════════════════════
-     RESET
-  ═══════════════════════════════ */
-  function resetApp(){
-    if(!confirm('Réinitialiser toute l\'application ?\nToutes les données seront supprimées (sac, entraînements, réservations, notes).\nCette action est irréversible.')) return;
-    var keys=[];
-    for(var i=0;i<localStorage.length;i++){
-      if(localStorage.key(i).indexOf('gr20_')===0) keys.push(localStorage.key(i));
-    }
-    keys.forEach(function(k){ localStorage.removeItem(k); });
-    location.reload();
-  }
-
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      NAVIGATION
-  ═══════════════════════════════ */
+  ═══════════════════════ */
+  /* showTab : navigation normale (met à jour localStorage) */
   function showTab(tabId,btn){
     document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
     document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});
     document.getElementById('tab-'+tabId).classList.add('active');
-    if(btn) btn.classList.add('active');
+    if(btn){btn.classList.add('active');}
     localStorage.setItem('gr20_tab',tabId);
     if(tabId==='route') setTimeout(initMap,50);
     if(tabId==='home') renderHomeStats();
   }
+  /* showTabSilent : pendant l'onboarding, n'enregistre pas dans localStorage */
+  function showTabSilent(tabId,btn){
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('.bn-item').forEach(function(b){b.classList.remove('active');});
+    document.getElementById('tab-'+tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    if(tabId==='route') setTimeout(initMap,80);
+    if(tabId==='home') renderHomeStats();
+  }
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
+     RESET
+  ═══════════════════════ */
+  function resetApp(){
+    if(!confirm('Réinitialiser toute l\'application ?\nToutes tes données seront supprimées (sac, entraînements, réservations, notes).\nCette action est irréversible.')) return;
+    var keys=[];
+    for(var i=0;i<localStorage.length;i++){if(localStorage.key(i).indexOf('gr20_')===0)keys.push(localStorage.key(i));}
+    keys.forEach(function(k){localStorage.removeItem(k);});
+    location.reload();
+  }
+
+  /* ═══════════════════════
      COUNTDOWN
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   function updateCountdown(){
     var diff=DEPART-new Date();
     if(diff<=0){document.getElementById('cd-j').textContent='GO';document.getElementById('cd-h').textContent='!';document.getElementById('cd-m').textContent='';return;}
@@ -889,9 +796,9 @@
     document.getElementById('cd-m').textContent=String(Math.floor(diff/60000)%60).padStart(2,'0');
   }
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      HOME STATS
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   function renderHomeStats(){
     var totalKm=0,totalDp=0;
     trainings.forEach(function(t){totalKm+=t.km;totalDp+=t.dp;});
@@ -907,9 +814,9 @@
     document.getElementById('homeSacBar').style.width=pct+'%';
   }
 
-  /* ═══════════════════════════════
-     MAP (lazy init)
-  ═══════════════════════════════ */
+  /* ═══════════════════════
+     MAP
+  ═══════════════════════ */
   function initMap(){
     if(mapInited){if(map)map.resize();return;}
     mapInited=true;
@@ -935,20 +842,16 @@
     });
   }
 
-  /* ═══════════════════════════════
-     ROUTE — Sélecteur d'étape
-  ═══════════════════════════════ */
+  /* ═══════════════════════
+     ROUTE
+  ═══════════════════════ */
   function buildStageDropdown(){
-    var sel=document.getElementById('stageSelect');
     var html='<option value="0">— Vue globale du parcours —</option>';
     STAGES.forEach(function(s){
-      if(!s.buffer)
-        html+='<option value="'+s.j+'">J'+s.j+' · '+s.de+' → '+s.vers+'</option>';
-      else
-        html+='<option value="'+s.j+'">J'+s.j+' · Jour tampon</option>';
+      html+='<option value="'+s.j+'">'+(s.buffer?'J'+s.j+' · Jour tampon':'J'+s.j+' · '+s.de+' → '+s.vers)+'</option>';
     });
-    sel.innerHTML=html;
-    sel.value=selectedStage;
+    document.getElementById('stageSelect').innerHTML=html;
+    document.getElementById('stageSelect').value=selectedStage;
   }
 
   function onStageSelect(j){
@@ -957,18 +860,14 @@
     var card=document.getElementById('stageDetailCard');
     var global=document.getElementById('routeGlobal');
     if(j===0){
-      card.style.display='none';
-      global.style.display='';
-      if(map&&mapInited) map.flyTo({center:[9.23,41.89],zoom:9.5,duration:700});
+      card.style.display='none';global.style.display='';
+      if(map&&mapInited)map.flyTo({center:[9.23,41.89],zoom:9.5,duration:700});
     } else {
       var stage=STAGES.find(function(s){return s.j===j;});
       global.style.display='none';
       if(stage&&!stage.buffer){renderStageDetail(stage);}
       else{card.style.display='none';global.style.display='';}
-      if(map&&mapInited&&STAGE_BOUNDS[j]){
-        var b=STAGE_BOUNDS[j];
-        map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:40,duration:700});
-      }
+      if(map&&mapInited&&STAGE_BOUNDS[j]){var b=STAGE_BOUNDS[j];map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:40,duration:700});}
     }
   }
 
@@ -976,20 +875,15 @@
     var resaLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
     var html='';
     STAGES.forEach(function(s){
-      if(s.buffer){
-        html+='<tr class="buffer"><td><span class="day-num">J9</span></td><td colspan="5" style="font-size:.7rem;color:var(--rock)">Jour tampon météo / fatigue</td><td>—</td></tr>';
-        return;
-      }
+      if(s.buffer){html+='<tr class="buffer"><td><span class="day-num">J9</span></td><td colspan="5" style="font-size:.7rem;color:var(--rock)">Jour tampon météo / fatigue</td><td>—</td></tr>';return;}
       var st=resaState[s.j]||'todo';
-      html+='<tr>';
-      html+='<td><span class="day-num">J'+s.j+'</span></td>';
-      html+='<td><div class="stage-route">'+s.de+' → '+s.vers+'</div><div class="stage-sub">'+s.refuge+'</div></td>';
-      html+='<td><span class="stat-chip">'+s.km+' km</span></td>';
-      html+='<td><span class="stat-chip">+'+s.dp+' m</span></td>';
-      html+='<td><span class="stat-chip">'+s.dur+'</span></td>';
-      html+='<td style="font-size:.68rem;color:var(--ink2)">'+s.refuge+'</td>';
-      html+='<td><button class="resa-btn '+st+'" onclick="cycleResaItinerary('+s.j+')">'+resaLabels[st]+'</button></td>';
-      html+='</tr>';
+      html+='<tr><td><span class="day-num">J'+s.j+'</span></td>'+
+        '<td><div class="stage-route">'+s.de+' → '+s.vers+'</div><div class="stage-sub">'+s.refuge+'</div></td>'+
+        '<td><span class="stat-chip">'+s.km+' km</span></td>'+
+        '<td><span class="stat-chip">+'+s.dp+' m</span></td>'+
+        '<td><span class="stat-chip">'+s.dur+'</span></td>'+
+        '<td style="font-size:.68rem;color:var(--ink2)">'+s.refuge+'</td>'+
+        '<td><button class="resa-btn '+st+'" onclick="cycleResaItinerary('+s.j+')">'+resaLabels[st]+'</button></td></tr>';
     });
     document.getElementById('itineraryBody').innerHTML=html;
   }
@@ -1002,27 +896,19 @@
     var resaLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
     var rSt=resa.status||'todo';
     var meteoHtml='<div class="stage-weather">🗓 '+dateStr;
-    var today=new Date();var diffDays=Math.floor((stageDate-today)/86400000);
+    var diffDays=Math.floor((stageDate-new Date())/86400000);
     if(diffDays>=0&&diffDays<7&&meteoCache['vizzavona']){
       var d=meteoCache['vizzavona'].daily;
       meteoHtml+=' · '+wmoIcon(d.weathercode[diffDays])+' '+Math.round(d.temperature_2m_max[diffDays])+'° / '+Math.round(d.temperature_2m_min[diffDays])+'°';
     } else if(diffDays>=7){
-      var avail=new Date(stageDate-7*86400000);
-      meteoHtml+=' · Météo disponible ~'+avail.getDate()+' '+MONTHS_FR[avail.getMonth()];
+      var av=new Date(stageDate-7*86400000);
+      meteoHtml+=' · Météo disponible ~'+av.getDate()+' '+MONTHS_FR[av.getMonth()];
     }
     meteoHtml+='</div>';
     var note=stageNotes[s.j]||'';
-    card.innerHTML=
-      '<div class="stage-detail-title">J'+s.j+' · '+s.de+' → '+s.vers+'</div>'+
-      '<div class="stage-detail-chips">'+
-        '<span class="stat-chip">'+s.km+' km</span><span class="stat-chip">+'+s.dp+' m D+</span>'+
-        '<span class="stat-chip">↓'+s.dm+' m D−</span><span class="stat-chip">'+s.dur+'</span>'+
-      '</div>'+
-      '<div class="stage-resa-row">'+
-        '<span>Refuge : <strong>'+s.refuge+'</strong></span>'+
-        '<span class="status-badge '+rSt+'" onclick="cycleResaDetailStatus('+s.j+')" title="Changer statut">'+resaLabels[rSt]+'</span>'+
-        (resa.ref?'<span class="stat-chip">N° '+resa.ref+'</span>':'')+
-      '</div>'+
+    card.innerHTML='<div class="stage-detail-title">J'+s.j+' · '+s.de+' → '+s.vers+'</div>'+
+      '<div class="stage-detail-chips"><span class="stat-chip">'+s.km+' km</span><span class="stat-chip">+'+s.dp+' m D+</span><span class="stat-chip">↓'+s.dm+' m D−</span><span class="stat-chip">'+s.dur+'</span></div>'+
+      '<div class="stage-resa-row"><span>Refuge : <strong>'+s.refuge+'</strong></span><span class="status-badge '+rSt+'" onclick="cycleResaDetailStatus('+s.j+')" title="Changer">'+resaLabels[rSt]+'</span>'+(resa.ref?'<span class="stat-chip">N° '+resa.ref+'</span>':'')+'</div>'+
       meteoHtml+
       '<div class="stage-notes-label">Notes</div>'+
       '<textarea class="stage-notes-ta" placeholder="Infos terrain, points d\'eau, conseils…" onchange="saveStageNote('+s.j+',this.value)">'+note+'</textarea>';
@@ -1032,8 +918,7 @@
   function saveStageNote(j,text){stageNotes[j]=text;localStorage.setItem('gr20_stage_notes',JSON.stringify(stageNotes));}
 
   function cycleResaItinerary(j){
-    var states=['todo','pending','done'];
-    var cur=resaState[j]||'todo';
+    var states=['todo','pending','done'],cur=resaState[j]||'todo';
     resaState[j]=states[(states.indexOf(cur)+1)%3];
     localStorage.setItem('gr20_resa_status',JSON.stringify(resaState));
     if(resaData[j-1]){resaData[j-1].status=resaState[j];localStorage.setItem('gr20_reservations',JSON.stringify(resaData));}
@@ -1042,11 +927,10 @@
   }
   function cycleResaDetailStatus(j){cycleResaItinerary(j);}
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      MÉTÉO
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   function wmoIcon(code){return WMO_ICONS[code]||WMO_ICONS[Math.floor(code/10)*10]||'🌡️';}
-
   function loadMeteo(loc,btn){
     if(btn){document.querySelectorAll('.meteo-tab').forEach(function(t){t.classList.remove('active');});btn.classList.add('active');}
     if(meteoCache[loc]){renderMeteo(meteoCache[loc]);return;}
@@ -1059,41 +943,34 @@
       .then(function(d){meteoCache[loc]=d;renderMeteo(d);if(loc==='vizzavona')updateHeroPill(d);})
       .catch(function(){document.getElementById('meteoGrid').textContent='Impossible de charger la météo.';});
   }
-
   function renderMeteo(d){
     var daily=d.daily;
-    var hasOrage=daily.weathercode.some(function(c){return c>=95;});
-    document.getElementById('meteoAlert').innerHTML=hasOrage?'<div class="alert-orage">⚠ Risque orage prévu sur les 7 prochains jours — vérifier Météo France Montagne avant départ</div>':'';
+    document.getElementById('meteoAlert').innerHTML=daily.weathercode.some(function(c){return c>=95;})?'<div class="alert-orage">⚠ Risque orage prévu sur les 7 prochains jours — vérifier Météo France Montagne avant départ</div>':'';
     var html='<div class="meteo-grid">';
     for(var i=0;i<7;i++){
       var date=new Date(daily.time[i]);
-      html+='<div class="meteo-card">'+
-        '<div class="meteo-day">'+DAYS_FR[date.getDay()]+' '+date.getDate()+' '+MONTHS_FR[date.getMonth()]+'</div>'+
+      html+='<div class="meteo-card"><div class="meteo-day">'+DAYS_FR[date.getDay()]+' '+date.getDate()+' '+MONTHS_FR[date.getMonth()]+'</div>'+
         '<div class="meteo-icon">'+wmoIcon(daily.weathercode[i])+'</div>'+
         '<div class="meteo-temps">'+Math.round(daily.temperature_2m_max[i])+'° <span>/ '+Math.round(daily.temperature_2m_min[i])+'°</span></div>'+
         '<div class="meteo-wind">💨 '+Math.round(daily.windspeed_10m_max[i])+' km/h</div>'+
         (daily.precipitation_sum[i]?'<div class="meteo-rain">💧 '+daily.precipitation_sum[i].toFixed(1)+' mm</div>':'')+
-      '</div>';
+        '</div>';
     }
-    html+='</div>';
     document.getElementById('meteoGrid').className='';
-    document.getElementById('meteoGrid').innerHTML=html;
+    document.getElementById('meteoGrid').innerHTML=html+'</div>';
   }
-
   function updateHeroPill(d){
     document.getElementById('heroPillIcon').textContent=wmoIcon(d.daily.weathercode[0]);
     document.getElementById('heroPillText').textContent='Vizzavona aujourd\'hui · '+Math.round(d.daily.temperature_2m_max[0])+'° / '+Math.round(d.daily.temperature_2m_min[0])+'°';
     document.getElementById('heroPill').style.display='';
-    document.getElementById('topbarWeather').textContent=wmoIcon(d.daily.weathercode[0])+' '+Math.round(d.daily.temperature_2m_max[0])+'°';
   }
 
-  /* ═══════════════════════════════
-     SAC — CHECKLIST
-  ═══════════════════════════════ */
+  /* ═══════════════════════
+     SAC
+  ═══════════════════════ */
   function saveChecklistItems(){localStorage.setItem('gr20_checklist_items',JSON.stringify(checklistData));}
   function saveCheckState(){localStorage.setItem('gr20_checklist',JSON.stringify(checkState));}
   function saveTargetWeight(val){targetWeight=parseFloat(val)||8;localStorage.setItem('gr20_target_weight',String(targetWeight));updateWeightStats();}
-
   function setSacView(v){
     sacView=v;localStorage.setItem('gr20_sac_view',v);
     document.getElementById('viewListeBtn').classList.toggle('active',v==='liste');
@@ -1102,45 +979,38 @@
     document.getElementById('viewResume').style.display=v==='resume'?'':'none';
     if(v==='resume')renderResume();
   }
-
   function toggleCheck(id){
     checkState[id]=!checkState[id];saveCheckState();updateWeightStats();
     var item=document.querySelector('.check-item[data-id="'+id+'"]');
     if(item)item.classList.toggle('checked',!!checkState[id]);
     if(sacView==='resume')renderResume();
   }
-
   function updateWeightStats(){
     var total=0,checked=0,weightTotal=0;
     checklistData.forEach(function(cat){cat.items.forEach(function(item){total++;if(checkState[item.id]){checked++;weightTotal+=item.g;}});});
     document.getElementById('sacChecked').textContent=checked;
     document.getElementById('sacTotal').textContent=total;
-    var target=targetWeight*1000;
-    var pct=target>0?Math.min(100,Math.round(weightTotal/target*100)):0;
+    var target=targetWeight*1000,pct=target>0?Math.min(100,Math.round(weightTotal/target*100)):0;
     document.getElementById('weightFill').style.width=pct+'%';
     document.getElementById('weightBar').classList.toggle('weight-over',weightTotal>target);
     document.getElementById('sacWeightDisplay').textContent=weightTotal>=1000?(weightTotal/1000).toFixed(2)+' kg':weightTotal+' g';
     renderHomeStats();
   }
-
   function editWeight(catIdx,itemIdx,el){
     var item=checklistData[catIdx].items[itemIdx];
     var inp=document.createElement('input');
     inp.type='number';inp.className='weight-edit-input';inp.value=item.g;inp.min=0;inp.step=10;
     el.replaceWith(inp);inp.focus();inp.select();
-    function commit(){var val=Math.max(0,parseInt(inp.value)||0);item.g=val;saveChecklistItems();updateWeightStats();renderChecklist();}
+    function commit(){item.g=Math.max(0,parseInt(inp.value)||0);saveChecklistItems();updateWeightStats();renderChecklist();}
     inp.addEventListener('blur',commit);
     inp.addEventListener('keydown',function(e){if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=item.g;inp.blur();}});
   }
-
   function deleteItem(catIdx,itemIdx){
-    var id=checklistData[catIdx].items[itemIdx].id;
-    delete checkState[id];
+    var id=checklistData[catIdx].items[itemIdx].id;delete checkState[id];
     checklistData[catIdx].items.splice(itemIdx,1);
     if(!checklistData[catIdx].items.length)checklistData.splice(catIdx,1);
     saveChecklistItems();saveCheckState();renderChecklist();updateWeightStats();populateCatDropdown();
   }
-
   function addItem(){
     var label=document.getElementById('af-label').value.trim();
     var catName=document.getElementById('af-cat').value;
@@ -1154,55 +1024,49 @@
     document.getElementById('af-label').value='';document.getElementById('af-weight').value='';
     renderChecklist();updateWeightStats();populateCatDropdown();
   }
-
   function populateCatDropdown(){
-    var sel=document.getElementById('af-cat');
-    var cur=sel.value;
+    var sel=document.getElementById('af-cat'),cur=sel.value;
     sel.innerHTML=checklistData.map(function(c){return'<option'+(c.cat===cur?' selected':'')+'>'+c.cat+'</option>';}).join('');
   }
-
   function checkAll(){checklistData.forEach(function(cat){cat.items.forEach(function(item){checkState[item.id]=true;});});saveCheckState();renderChecklist();updateWeightStats();}
   function checkNone(){checkState={};saveCheckState();renderChecklist();updateWeightStats();}
-
   function renderChecklist(){
     var html='';
     checklistData.forEach(function(cat,ci){
       html+='<div class="checklist-category"><div class="cat-title">'+cat.cat+'</div>';
       cat.items.forEach(function(item,ii){
         var ck=!!checkState[item.id];
-        html+='<div class="check-item'+(ck?' checked':'')+'" data-id="'+item.id+'">';
-        html+='<div class="check-box" onclick="toggleCheck(\''+item.id+'\')"></div>';
-        html+='<span class="check-label" onclick="toggleCheck(\''+item.id+'\')">'+item.l+'</span>';
-        html+='<span class="check-weight" onclick="editWeight('+ci+','+ii+',this)" title="Cliquer pour modifier">'+( item.g?item.g+' g':'—')+'</span>';
-        html+='<button class="item-del" onclick="deleteItem('+ci+','+ii+')" title="Supprimer">×</button>';
-        html+='</div>';
+        html+='<div class="check-item'+(ck?' checked':'')+'" data-id="'+item.id+'">'+
+          '<div class="check-box" onclick="toggleCheck(\''+item.id+'\')"></div>'+
+          '<span class="check-label" onclick="toggleCheck(\''+item.id+'\')">'+item.l+'</span>'+
+          '<span class="check-weight" onclick="editWeight('+ci+','+ii+',this)" title="Modifier le poids">'+(item.g?item.g+' g':'—')+'</span>'+
+          '<button class="item-del" onclick="deleteItem('+ci+','+ii+')" title="Supprimer">×</button>'+
+          '</div>';
       });
       html+='</div>';
     });
     document.getElementById('checklistContainer').innerHTML=html;
   }
-
   function renderResume(){
     var allItems=[];
     checklistData.forEach(function(cat){cat.items.forEach(function(item){allItems.push({l:item.l,cat:cat.cat,g:item.g,checked:!!checkState[item.id]});});});
     allItems.sort(function(a,b){return b.g-a.g;});
     var totalAll=0,totalChecked=0;
     allItems.forEach(function(i){totalAll+=i.g;if(i.checked)totalChecked+=i.g;});
-    var html='';
-    allItems.forEach(function(item){
-      html+='<tr><td>'+item.l+'</td><td style="font-size:.63rem;color:var(--ink2)">'+item.cat+'</td>'+
+    var html=allItems.map(function(item){
+      return'<tr><td>'+item.l+'</td><td style="font-size:.63rem;color:var(--ink2)">'+item.cat+'</td>'+
         '<td><span class="stat-chip">'+(item.g?item.g+' g':'—')+'</span></td>'+
         '<td style="font-size:.8rem">'+(item.checked?'✓':'')+'</td></tr>';
-    });
+    }).join('');
     html+='<tr class="resume-total"><td colspan="2">Total général</td>'+
       '<td><span class="stat-chip">'+(totalAll>=1000?(totalAll/1000).toFixed(2)+' kg':totalAll+' g')+'</span></td>'+
       '<td style="font-size:.63rem;color:var(--ink2)">'+(totalChecked>=1000?(totalChecked/1000).toFixed(2)+'kg':totalChecked+'g')+' coché</td></tr>';
     document.getElementById('resumeBody').innerHTML=html;
   }
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      TRAINING
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   function addTraining(){
     var date=document.getElementById('tf-date').value,lieu=document.getElementById('tf-lieu').value;
     if(!date||!lieu)return;
@@ -1215,8 +1079,7 @@
   function renderTrainings(){
     if(!trainings.length){
       document.getElementById('trainingHistory').innerHTML='<div style="font-size:.7rem;color:var(--rock);padding:.8rem 0">Aucune sortie enregistrée encore.</div>';
-      document.getElementById('trainingTotals').innerHTML='';
-      renderHomeStats();return;
+      document.getElementById('trainingTotals').innerHTML='';renderHomeStats();return;
     }
     var html='',totalKm=0,totalDp=0;
     trainings.forEach(function(t,i){
@@ -1227,7 +1090,7 @@
         '<div><div class="entry-lieu">'+t.lieu+(t.sac?' · sac '+t.sac+' kg':'')+'</div>'+
         '<div class="entry-stats">'+(t.km?'<span class="stat-chip">'+t.km+' km</span>':'')+(t.dp?'<span class="stat-chip">+'+t.dp+' m</span>':'')+(t.dur?'<span class="stat-chip">'+t.dur+'</span>':'')+'</div>'+
         (t.note?'<div class="entry-note">'+t.note+'</div>':'')+
-        '</div><button class="entry-del" onclick="deleteTraining('+i+')" title="Supprimer">×</button></div>';
+        '</div><button class="entry-del" onclick="deleteTraining('+i+')">×</button></div>';
     });
     document.getElementById('trainingHistory').innerHTML=html;
     document.getElementById('trainingTotals').innerHTML=
@@ -1236,19 +1099,18 @@
       '<div class="total-block"><div class="total-val">'+totalDp+'</div><div class="total-lbl">D+ cumulé (m)</div></div>';
     renderHomeStats();
   }
-
   function renderSites(){
     document.getElementById('trainingSites').innerHTML=SITES.map(function(s){
-      return '<div class="site-card"><div class="site-name">'+s.name+'</div><div class="site-region">'+s.region+' · '+s.route+'</div>'+
+      return'<div class="site-card"><div class="site-name">'+s.name+'</div><div class="site-region">'+s.region+' · '+s.route+'</div>'+
         '<div class="site-desc">'+s.terrain+'</div><div class="site-stats"><span class="stat-chip">'+s.km+' km</span><span class="stat-chip">+'+s.dp+' m</span><span class="stat-chip">'+s.dur+'</span></div>'+
         (s.tip?'<div style="font-size:.6rem;color:var(--accent);margin-top:.55rem;font-style:italic">'+s.tip+'</div>':'')+
         '</div>';
     }).join('');
   }
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      RÉSERVATIONS
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   var resaStatusLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
   function cycleResaStatus(i){
     var states=['todo','pending','done'];
@@ -1262,7 +1124,7 @@
   function renderResa(){
     document.getElementById('resaBody').innerHTML=resaData.map(function(r,i){
       var d=new Date(r.date+'T12:00:00');
-      return '<tr>'+
+      return'<tr>'+
         '<td style="font-family:var(--font-c);font-size:1.05rem;font-weight:300;color:var(--ink2)">N°'+(i+1)+'</td>'+
         '<td style="font-weight:500;font-size:.74rem">'+r.refuge+'</td>'+
         '<td style="font-size:.7rem;color:var(--ink2)">'+d.getDate()+' '+MONTHS_FR[d.getMonth()]+'</td>'+
@@ -1273,9 +1135,9 @@
     }).join('');
   }
 
-  /* ═══════════════════════════════
+  /* ═══════════════════════
      INIT
-  ═══════════════════════════════ */
+  ═══════════════════════ */
   updateCountdown();
   setInterval(updateCountdown,30000);
   document.getElementById('targetInput').value=targetWeight;
@@ -1284,15 +1146,17 @@
   renderTrainings();renderSites();renderHomeStats();
   loadMeteo('vizzavona',document.querySelector('.meteo-tab'));
 
-  // Restaurer dernier onglet
+  // Restaurer dernier onglet (sauf si onboarding va s'afficher)
   var savedTab=localStorage.getItem('gr20_tab')||'home';
-  var savedBtn=document.querySelector('.bn-item[data-tab="'+savedTab+'"]');
-  if(savedTab!=='home')showTab(savedTab,savedBtn);
+  if(localStorage.getItem('gr20_onboarded')){
+    if(savedTab!=='home') showTab(savedTab,document.querySelector('.bn-item[data-tab="'+savedTab+'"]'));
+  }
 
   // Onboarding première visite
   if(!localStorage.getItem('gr20_onboarded')){
+    document.getElementById('obBackdrop').style.display='block';
+    document.getElementById('obCard').style.display='block';
     obRender();
-    document.getElementById('obOverlay').style.display='flex';
   }
   </script>
 </body>
