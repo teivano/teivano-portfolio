@@ -10,394 +10,321 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap">
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
     :root {
-      --bg:       #F0F0EC;
-      --bg2:      #E8E8E2;
-      --ink:      #2C4A3E;
-      --ink2:     rgba(44,74,62,.5);
-      --ink3:     rgba(44,74,62,.18);
-      --accent:   #C17A3A;
-      --accent2:  rgba(193,122,58,.15);
-      --rock:     #8B8E8A;
-      --danger:   #B03030;
-      --ok:       #3A7A4A;
-      --warn:     #B07030;
-      --font-s:   'Space Grotesk', system-ui, sans-serif;
-      --font-c:   'Cormorant Garamond', Georgia, serif;
+      --bg:#F0F0EC; --bg2:#E8E8E2; --bg3:#DDDDD6;
+      --ink:#2C4A3E; --ink2:rgba(44,74,62,.5); --ink3:rgba(44,74,62,.16);
+      --accent:#C17A3A; --accent2:rgba(193,122,58,.13);
+      --rock:#8B8E8A; --danger:#B03030; --ok:#3A7A4A; --warn:#B07030;
+      --font-s:'Space Grotesk',system-ui,sans-serif;
+      --font-c:'Cormorant Garamond',Georgia,serif;
+      --top-h:52px; --nav-h:64px;
+    }
+    @media(prefers-color-scheme:dark){
+      :root{
+        --bg:#191E1C; --bg2:#1F2824; --bg3:#252E2A;
+        --ink:#E2DDD6; --ink2:rgba(226,221,214,.5); --ink3:rgba(226,221,214,.11);
+        --accent:#D4904A; --accent2:rgba(212,144,74,.14);
+        --ok:#4A9A5A; --warn:#C08040;
+      }
     }
 
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-s);
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font-s);background:var(--bg);color:var(--ink);min-height:100vh}
 
     /* ── Topbar ── */
-    .topbar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: 52px;
-      background: var(--ink);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 1.5rem;
+    .topbar{
+      position:fixed;top:0;left:0;right:0;z-index:200;height:var(--top-h);
+      background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;
     }
-    .topbar-back {
-      font-family: var(--font-s); font-size: .62rem; font-weight: 400;
-      letter-spacing: .18em; text-transform: uppercase;
-      color: rgba(255,255,255,.6);
-      text-decoration: none;
-      transition: color .2s;
-    }
-    .topbar-back:hover { color: #fff; }
-    .topbar-title {
-      font-family: var(--font-c); font-size: 1.15rem; font-weight: 300;
-      color: rgba(255,255,255,.9); letter-spacing: .04em;
-    }
-    .topbar-right {
-      font-size: .6rem; letter-spacing: .14em; text-transform: uppercase;
-      color: rgba(255,255,255,.4);
-    }
+    .topbar-back{font-family:var(--font-s);font-size:.6rem;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s}
+    .topbar-back:hover{color:#fff}
+    .topbar-title{font-family:var(--font-c);font-size:1.1rem;font-weight:300;color:rgba(255,255,255,.9);letter-spacing:.04em}
+    .topbar-right{font-size:.62rem;letter-spacing:.1em;color:rgba(255,255,255,.5)}
 
     /* ── Layout ── */
-    main { padding-top: 52px; max-width: 1100px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+    main{padding-top:var(--top-h);padding-bottom:calc(var(--nav-h) + 8px)}
+    .tab-panel{display:none;position:relative;min-height:calc(100vh - var(--top-h) - var(--nav-h));padding:1.5rem 1.25rem}
+    .tab-panel.active{display:block}
+    .tab-inner{max-width:960px;margin:0 auto}
 
-    /* ── Hero ── */
-    .hero {
-      padding: 3.5rem 0 2rem;
-      border-bottom: 1px solid var(--ink3);
+    /* ── Filigrane SVG ── */
+    .filigrane{
+      position:absolute;bottom:0;right:0;width:260px;height:260px;
+      opacity:.04;pointer-events:none;color:var(--ink);
     }
-    .hero-eyebrow {
-      font-size: .6rem; letter-spacing: .32em; text-transform: uppercase;
-      color: var(--accent); font-weight: 500; margin-bottom: .9rem;
-    }
-    .hero-title {
-      font-family: var(--font-c);
-      font-size: clamp(3.5rem, 9vw, 6.5rem);
-      font-weight: 300; line-height: .95;
-      color: var(--ink); letter-spacing: -.02em;
-      margin-bottom: 1.4rem;
-    }
-    .hero-meta {
-      display: flex; flex-wrap: wrap; gap: .7rem; margin-bottom: 1.8rem;
-    }
-    .badge {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-size: .6rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
-      padding: .3rem .75rem;
-      border: 1px solid var(--ink3);
-      color: var(--ink2);
-    }
-    .badge.accent { border-color: var(--accent); color: var(--accent); }
-    .hero-countdown {
-      display: flex; align-items: baseline; gap: 1.2rem; flex-wrap: wrap;
-    }
-    .countdown-block { text-align: center; }
-    .countdown-num {
-      font-family: var(--font-c); font-size: 3.2rem; font-weight: 300;
-      color: var(--ink); line-height: 1;
-      display: block;
-    }
-    .countdown-label {
-      font-size: .52rem; letter-spacing: .2em; text-transform: uppercase;
-      color: var(--ink2); display: block; margin-top: .2rem;
-    }
-    .countdown-sep {
-      font-family: var(--font-c); font-size: 2rem; color: var(--ink3);
-      align-self: flex-start; padding-top: .4rem;
-    }
-    .hero-weather-pill {
-      display: inline-flex; align-items: center; gap: .6rem;
-      padding: .4rem .9rem;
-      background: var(--bg2);
-      font-size: .65rem; letter-spacing: .08em;
-      color: var(--ink2); margin-top: 1.5rem;
-    }
+    @media(prefers-color-scheme:dark){.filigrane{opacity:.055}}
 
-    /* ── Sections ── */
-    section { padding: 3rem 0; border-bottom: 1px solid var(--ink3); }
-    section:last-child { border-bottom: none; }
-    .section-head {
-      display: flex; align-items: baseline; gap: 1rem;
-      margin-bottom: 1.6rem; flex-wrap: wrap;
+    /* ── Bottom Navbar ── */
+    .bottomnav{
+      position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--nav-h);
+      background:var(--ink);
+      display:flex;align-items:stretch;
+      padding-bottom:env(safe-area-inset-bottom,0);
     }
-    .section-title {
-      font-family: var(--font-c); font-size: clamp(1.6rem, 3.5vw, 2.6rem);
-      font-weight: 300; letter-spacing: -.01em;
+    .bn-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+      background:none;border:none;cursor:pointer;padding:.4rem .2rem;
+      color:rgba(255,255,255,.4);transition:color .15s;position:relative;
     }
-    .section-num {
-      font-size: .58rem; letter-spacing: .24em; text-transform: uppercase;
-      color: var(--accent); font-weight: 500;
+    .bn-item.active{color:#fff}
+    .bn-item.active::before{
+      content:'';position:absolute;top:0;left:20%;right:20%;height:2px;
+      background:var(--accent);
     }
+    .bn-item svg{width:20px;height:20px;stroke-width:1.5;flex-shrink:0}
+    .bn-label{font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500}
 
-    /* ── Carte ── */
-    #map { height: 380px; width: 100%; }
-    .map-legend {
-      display: flex; gap: 1.4rem; flex-wrap: wrap;
-      margin-top: .8rem;
-      font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2);
+    /* ── Sub-tabs (Route) ── */
+    .subtabs{display:flex;gap:0;margin-bottom:1.4rem;border-bottom:1px solid var(--ink3)}
+    .stb{
+      font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500;
+      padding:.55rem 1rem;background:none;border:none;border-bottom:2px solid transparent;
+      color:var(--ink2);cursor:pointer;transition:color .15s,border-color .15s;
+      margin-bottom:-1px;
     }
-    .legend-item { display: flex; align-items: center; gap: .4rem; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .stb.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .subtab-panel{display:none}
+    .subtab-panel.active{display:block}
 
-    /* ── Itinéraire ── */
-    .itinerary-table { width: 100%; border-collapse: collapse; }
-    .itinerary-table th {
-      font-size: .56rem; letter-spacing: .2em; text-transform: uppercase;
-      color: var(--ink2); font-weight: 400;
-      padding: .5rem .8rem; text-align: left;
-      border-bottom: 1px solid var(--ink3);
-    }
-    .itinerary-table td {
-      padding: .8rem .8rem; font-size: .78rem;
-      border-bottom: 1px solid var(--ink3); vertical-align: middle;
-    }
-    .itinerary-table tr:last-child td { border-bottom: none; }
-    .itinerary-table tr.buffer-day td { color: var(--rock); font-style: italic; }
-    .day-num {
-      font-family: var(--font-c); font-size: 1.2rem; font-weight: 300;
-      color: var(--ink2);
-    }
-    .stage-route { font-weight: 500; font-size: .82rem; }
-    .stage-detail { font-size: .65rem; color: var(--ink2); margin-top: .15rem; }
-    .stat-chip {
-      display: inline-block;
-      font-size: .58rem; font-weight: 500; letter-spacing: .08em;
-      padding: .15rem .45rem;
-      background: var(--bg2); color: var(--ink2);
-    }
-    .resa-btn {
-      display: inline-flex; align-items: center; gap: .3rem;
-      font-size: .58rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
-      padding: .3rem .65rem;
-      border: 1px solid currentColor;
-      cursor: pointer; background: none;
-      transition: background .15s, color .15s;
-    }
-    .resa-btn.todo { color: var(--warn); }
-    .resa-btn.todo:hover { background: var(--warn); color: #fff; }
-    .resa-btn.pending { color: var(--accent); }
-    .resa-btn.pending:hover { background: var(--accent); color: #fff; }
-    .resa-btn.done { color: var(--ok); }
-    .resa-btn.done:hover { background: var(--ok); color: #fff; }
-    .pnrc-link {
-      display: inline-flex; align-items: center; gap: .5rem;
-      font-size: .62rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
-      padding: .55rem 1.2rem;
-      background: var(--ink); color: var(--bg);
-      text-decoration: none;
-      transition: opacity .15s;
-      margin-top: 1.2rem;
-    }
-    .pnrc-link:hover { opacity: .8; }
+    /* ── Section heading ── */
+    .sh{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.4rem;flex-wrap:wrap}
+    .sh-num{font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-weight:500}
+    .sh-title{font-family:var(--font-c);font-size:clamp(1.5rem,4vw,2.4rem);font-weight:300;letter-spacing:-.01em}
 
-    /* ── Météo ── */
-    .meteo-tabs { display: flex; gap: 0; margin-bottom: 1.4rem; }
-    .meteo-tab {
-      font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
-      padding: .5rem 1.1rem; border: 1px solid var(--ink3);
-      background: none; color: var(--ink2); cursor: pointer;
-      transition: background .15s, color .15s;
-    }
-    .meteo-tab + .meteo-tab { border-left: none; }
-    .meteo-tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-    .meteo-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: .5rem; }
-    @media (max-width: 680px) { .meteo-grid { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 420px) { .meteo-grid { grid-template-columns: repeat(3, 1fr); } }
-    .meteo-card {
-      background: var(--bg2); padding: .8rem .5rem;
-      text-align: center;
-    }
-    .meteo-day { font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); margin-bottom: .4rem; }
-    .meteo-icon { font-size: 1.5rem; line-height: 1; margin-bottom: .35rem; }
-    .meteo-temps { font-family: var(--font-c); font-size: 1.05rem; color: var(--ink); }
-    .meteo-temps span { font-size: .75rem; color: var(--ink2); }
-    .meteo-wind { font-size: .55rem; color: var(--rock); margin-top: .3rem; }
-    .meteo-rain { font-size: .55rem; color: #4A7AB0; margin-top: .1rem; }
-    .alert-orage {
-      background: rgba(176,48,48,.08); border-left: 3px solid var(--danger);
-      padding: .7rem 1rem; margin-bottom: 1rem;
-      font-size: .65rem; color: var(--danger); letter-spacing: .06em;
-    }
-    .meteo-loading { font-size: .7rem; color: var(--ink2); padding: 2rem 0; }
-    .meteo-source { font-size: .55rem; color: var(--rock); margin-top: .8rem; letter-spacing: .08em; }
+    /* ── Shared: badge, stat-chip, buttons ── */
+    .badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.58rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:.28rem .7rem;border:1px solid var(--ink3);color:var(--ink2)}
+    .badge.accent{border-color:var(--accent);color:var(--accent)}
+    .stat-chip{display:inline-block;font-size:.58rem;font-weight:500;letter-spacing:.06em;padding:.15rem .45rem;background:var(--bg2);color:var(--ink2)}
+    .btn-sm{font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.38rem .85rem;border:1px solid var(--ink3);background:none;color:var(--ink2);cursor:pointer;transition:background .15s,color .15s}
+    .btn-sm:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .btn-sm.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .btn-primary{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:.55rem 1.2rem;border:none;background:var(--ink);color:var(--bg);cursor:pointer;transition:opacity .15s}
+    .btn-primary:hover{opacity:.8}
+    .btn-danger{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;padding:.3rem .7rem;border:1px solid var(--danger);background:none;color:var(--danger);cursor:pointer;transition:background .15s,color .15s}
+    .btn-danger:hover{background:var(--danger);color:#fff}
 
-    /* ── Matériel ── */
-    .checklist-stats {
-      display: flex; gap: 2rem; margin-bottom: 1.4rem; flex-wrap: wrap; align-items: center;
+    /* ── HOME tab ── */
+    .hero-eyebrow{font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:.8rem}
+    .hero-title{font-family:var(--font-c);font-size:clamp(3rem,10vw,5.5rem);font-weight:300;line-height:.92;color:var(--ink);letter-spacing:-.02em;margin-bottom:1.2rem}
+    .hero-meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.6rem}
+    .hero-countdown{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1.4rem}
+    .cd-block{text-align:center}
+    .cd-num{font-family:var(--font-c);font-size:3rem;font-weight:300;color:var(--ink);line-height:1;display:block}
+    .cd-lbl{font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink2);display:block;margin-top:.15rem}
+    .cd-sep{font-family:var(--font-c);font-size:1.8rem;color:var(--ink3);align-self:flex-start;padding-top:.3rem}
+    .weather-pill{display:inline-flex;align-items:center;gap:.6rem;padding:.4rem .9rem;background:var(--bg2);font-size:.65rem;color:var(--ink2);letter-spacing:.06em;margin-bottom:1.6rem}
+    .home-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;margin-bottom:1.8rem}
+    .hstat{background:var(--bg2);padding:.9rem 1rem}
+    .hstat-val{font-family:var(--font-c);font-size:2rem;font-weight:300;line-height:1;color:var(--ink)}
+    .hstat-lbl{font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);margin-top:.2rem}
+    .home-progress{margin-bottom:1.6rem}
+    .progress-label{display:flex;justify-content:space-between;font-size:.58rem;color:var(--ink2);margin-bottom:.4rem}
+    .progress-bar{height:3px;background:var(--ink3)}
+    .progress-fill{height:100%;background:var(--accent);transition:width .4s}
+    .home-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+    @media(min-width:480px){.home-nav{grid-template-columns:repeat(3,1fr)}}
+    .hnav-card{
+      background:var(--bg2);padding:.9rem 1rem;cursor:pointer;border:1px solid transparent;
+      transition:border-color .15s,background .15s;display:flex;flex-direction:column;gap:.4rem;
     }
-    .checklist-progress-bar {
-      flex: 1; min-width: 180px; height: 3px; background: var(--ink3);
-    }
-    .checklist-progress-fill { height: 100%; background: var(--accent); transition: width .3s; }
-    .checklist-stat { font-size: .65rem; color: var(--ink2); }
-    .checklist-stat strong { color: var(--ink); font-weight: 500; }
-    .checklist-actions { display: flex; gap: .6rem; margin-bottom: 1.6rem; flex-wrap: wrap; }
-    .btn-sm {
-      font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
-      padding: .38rem .85rem; border: 1px solid var(--ink3);
-      background: none; color: var(--ink2); cursor: pointer;
-      transition: background .15s, color .15s;
-    }
-    .btn-sm:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-    .checklist-category { margin-bottom: 1.8rem; }
-    .cat-title {
-      font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
-      color: var(--accent); font-weight: 500;
-      margin-bottom: .7rem; padding-bottom: .4rem;
-      border-bottom: 1px solid var(--accent2);
-    }
-    .check-item {
-      display: flex; align-items: center; gap: .8rem;
-      padding: .45rem 0; border-bottom: 1px solid var(--ink3);
-      cursor: pointer;
-    }
-    .check-item:last-child { border-bottom: none; }
-    .check-box {
-      width: 16px; height: 16px; flex-shrink: 0;
-      border: 1.5px solid var(--ink3);
-      display: flex; align-items: center; justify-content: center;
-      transition: background .15s, border-color .15s;
-    }
-    .check-item.checked .check-box { background: var(--ink); border-color: var(--ink); }
-    .check-item.checked .check-box::after {
-      content: ''; display: block;
-      width: 8px; height: 5px;
-      border-left: 1.5px solid var(--bg); border-bottom: 1.5px solid var(--bg);
-      transform: rotate(-45deg) translate(1px, -1px);
-    }
-    .check-label { font-size: .76rem; flex: 1; transition: color .15s; }
-    .check-item.checked .check-label { color: var(--ink2); text-decoration: line-through; }
-    .check-weight { font-size: .62rem; color: var(--rock); min-width: 40px; text-align: right; }
-    .total-weight {
-      font-family: var(--font-c); font-size: 1.6rem; font-weight: 300;
-      color: var(--ink); margin-top: .5rem;
-    }
-    .total-weight span { font-size: .65rem; font-family: var(--font-s); color: var(--ink2); letter-spacing: .1em; text-transform: uppercase; }
+    .hnav-card:hover{border-color:var(--ink3);background:var(--bg3)}
+    .hnav-icon{width:22px;height:22px;color:var(--accent)}
+    .hnav-title{font-size:.68rem;font-weight:500;color:var(--ink)}
+    .hnav-desc{font-size:.58rem;color:var(--ink2);line-height:1.4}
 
-    /* ── Entraînements ── */
-    .training-sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .8rem; margin-bottom: 2rem; }
-    .site-card {
-      background: var(--bg2); padding: 1.1rem 1rem;
-      border-left: 3px solid var(--accent2);
-    }
-    .site-card:hover { border-left-color: var(--accent); }
-    .site-name { font-family: var(--font-c); font-size: 1.1rem; font-weight: 300; margin-bottom: .35rem; }
-    .site-desc { font-size: .62rem; color: var(--ink2); line-height: 1.5; margin-bottom: .6rem; }
-    .site-stats { display: flex; gap: .5rem; flex-wrap: wrap; }
-    .combo-box {
-      background: var(--accent2); border-left: 3px solid var(--accent);
-      padding: 1rem 1.2rem; margin-bottom: 2rem;
-    }
-    .combo-title { font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: .6rem; }
-    .combo-text { font-size: .74rem; line-height: 1.65; color: var(--ink); }
+    /* ── ROUTE tab ── */
+    #map{height:350px;width:100%;margin-bottom:.8rem}
+    .map-legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+    .leg-item{display:flex;align-items:center;gap:.4rem}
+    .leg-dot{width:9px;height:9px;border-radius:50%}
 
-    .training-form {
-      background: var(--bg2); padding: 1.2rem 1.2rem;
-      margin-bottom: 1.6rem;
+    /* Stage selector */
+    .stage-selector{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1.2rem;scrollbar-width:none}
+    .stage-selector::-webkit-scrollbar{display:none}
+    .stage-pill{
+      font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;
+      padding:.35rem .75rem;border:1px solid var(--ink3);background:none;color:var(--ink2);
+      cursor:pointer;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;flex-shrink:0;
     }
-    .form-title { font-size: .6rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink2); font-weight: 500; margin-bottom: 1rem; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; margin-bottom: .8rem; }
-    .form-field { display: flex; flex-direction: column; gap: .3rem; }
-    .form-field label { font-size: .56rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); font-weight: 500; }
-    .form-field input, .form-field select, .form-field textarea {
-      font-family: var(--font-s); font-size: .75rem;
-      padding: .45rem .6rem;
-      background: var(--bg); border: 1px solid var(--ink3); color: var(--ink);
-      outline: none;
-      transition: border-color .15s;
-    }
-    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--ink); }
-    .form-field textarea { resize: vertical; min-height: 56px; }
-    .btn-primary {
-      font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
-      padding: .55rem 1.2rem; border: none;
-      background: var(--ink); color: var(--bg); cursor: pointer;
-      transition: opacity .15s;
-    }
-    .btn-primary:hover { opacity: .8; }
+    .stage-pill.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
-    .training-history { display: flex; flex-direction: column; gap: .5rem; }
-    .training-entry {
-      background: var(--bg2); padding: .8rem 1rem;
-      display: grid; grid-template-columns: auto 1fr auto;
-      gap: .5rem 1rem; align-items: start;
+    /* Stage detail card */
+    .stage-detail{background:var(--bg2);padding:1.1rem 1.1rem;margin-bottom:1.2rem;position:relative}
+    .stage-detail-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem}
+    .stage-detail-title{font-family:var(--font-c);font-size:1.4rem;font-weight:300}
+    .stage-detail-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem}
+    .stage-resa-row{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:.9rem}
+    .stage-weather{background:var(--bg);padding:.6rem .8rem;font-size:.65rem;color:var(--ink2);margin-bottom:.9rem}
+    .stage-notes-label{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.4rem}
+    .stage-notes-ta{
+      width:100%;font-family:var(--font-s);font-size:.74rem;padding:.55rem .7rem;
+      background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;resize:vertical;min-height:64px;
+      transition:border-color .15s;
     }
-    .entry-date { font-family: var(--font-c); font-size: 1.1rem; font-weight: 300; color: var(--ink2); white-space: nowrap; }
-    .entry-body {}
-    .entry-lieu { font-size: .78rem; font-weight: 500; }
-    .entry-stats { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .25rem; }
-    .entry-note { font-size: .65rem; color: var(--ink2); margin-top: .2rem; font-style: italic; }
-    .entry-del {
-      background: none; border: none; cursor: pointer; color: var(--ink3);
-      font-size: .9rem; padding: 0; transition: color .15s; align-self: center;
-    }
-    .entry-del:hover { color: var(--danger); }
-    .training-totals {
-      display: flex; gap: 2rem; flex-wrap: wrap;
-      padding: 1rem 0; border-top: 1px solid var(--ink3); margin-top: 1rem;
-    }
-    .total-block {}
-    .total-val { font-family: var(--font-c); font-size: 2.2rem; font-weight: 300; line-height: 1; }
-    .total-lbl { font-size: .55rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink2); }
+    .stage-notes-ta:focus{border-color:var(--ink)}
 
-    /* ── Réservations ── */
-    .resa-table { width: 100%; border-collapse: collapse; }
-    .resa-table th {
-      font-size: .56rem; letter-spacing: .18em; text-transform: uppercase;
-      color: var(--ink2); font-weight: 400;
-      padding: .5rem .7rem; text-align: left; border-bottom: 1px solid var(--ink3);
-    }
-    .resa-table td { padding: .75rem .7rem; font-size: .76rem; border-bottom: 1px solid var(--ink3); vertical-align: middle; }
-    .resa-table tr:last-child td { border-bottom: none; }
-    .status-badge {
-      display: inline-block; font-size: .56rem; letter-spacing: .1em; text-transform: uppercase;
-      font-weight: 500; padding: .2rem .55rem;
-    }
-    .status-badge.todo { background: rgba(176,112,48,.12); color: var(--warn); }
-    .status-badge.pending { background: rgba(193,122,58,.12); color: var(--accent); }
-    .status-badge.done { background: rgba(58,122,74,.12); color: var(--ok); }
-    .resa-input {
-      font-family: var(--font-s); font-size: .72rem;
-      background: none; border: none; border-bottom: 1px dashed var(--ink3);
-      color: var(--ink); padding: .1rem .2rem; outline: none; width: 100%;
-      transition: border-color .15s;
-    }
-    .resa-input:focus { border-color: var(--ink); }
+    /* Itinerary table */
+    .iti-table{width:100%;border-collapse:collapse}
+    .iti-table th{font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
+    .iti-table td{padding:.75rem .7rem;font-size:.76rem;border-bottom:1px solid var(--ink3);vertical-align:middle}
+    .iti-table tr:last-child td{border-bottom:none}
+    .iti-table tr.buffer td{color:var(--rock);font-style:italic}
+    .iti-table tr.stage-highlight{background:var(--accent2)}
+    .day-num{font-family:var(--font-c);font-size:1.15rem;font-weight:300;color:var(--ink2)}
+    .stage-route{font-weight:500;font-size:.8rem}
+    .stage-sub{font-size:.62rem;color:var(--ink2);margin-top:.1rem}
+    .resa-btn{display:inline-flex;align-items:center;gap:.3rem;font-size:.56rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:.28rem .6rem;border:1px solid currentColor;cursor:pointer;background:none;transition:background .15s,color .15s}
+    .resa-btn.todo{color:var(--warn)}
+    .resa-btn.todo:hover{background:var(--warn);color:#fff}
+    .resa-btn.pending{color:var(--accent)}
+    .resa-btn.pending:hover{background:var(--accent);color:#fff}
+    .resa-btn.done{color:var(--ok)}
+    .resa-btn.done:hover{background:var(--ok);color:#fff}
+    .pnrc-link{display:inline-flex;align-items:center;gap:.5rem;font-size:.62rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;padding:.55rem 1.2rem;background:var(--ink);color:var(--bg);text-decoration:none;transition:opacity .15s;margin-top:1.2rem}
+    .pnrc-link:hover{opacity:.8}
 
-    /* ── Ressources ── */
-    .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; margin-bottom: 2rem; }
-    .app-card { background: var(--bg2); padding: 1.2rem 1.1rem; }
-    .app-name { font-family: var(--font-c); font-size: 1.2rem; font-weight: 300; margin-bottom: .2rem; }
-    .app-tag { font-size: .56rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: .7rem; }
-    .app-feature { font-size: .68rem; line-height: 1.55; color: var(--ink2); margin-bottom: .4rem; }
-    .app-feature strong { color: var(--ink); font-weight: 500; }
-    .links-list { display: flex; flex-direction: column; gap: .5rem; }
-    .res-link {
-      display: flex; align-items: center; gap: .7rem;
-      font-size: .72rem; color: var(--ink); text-decoration: none;
-      padding: .6rem .8rem; background: var(--bg2);
-      transition: background .15s;
+    /* Resa table */
+    .resa-table{width:100%;border-collapse:collapse}
+    .resa-table th{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
+    .resa-table td{padding:.7rem .7rem;font-size:.75rem;border-bottom:1px solid var(--ink3);vertical-align:middle}
+    .resa-table tr:last-child td{border-bottom:none}
+    .status-badge{display:inline-block;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;padding:.2rem .5rem;cursor:pointer}
+    .status-badge.todo{background:rgba(176,112,48,.12);color:var(--warn)}
+    .status-badge.pending{background:rgba(193,122,58,.12);color:var(--accent)}
+    .status-badge.done{background:rgba(58,122,74,.12);color:var(--ok)}
+    .resa-input{font-family:var(--font-s);font-size:.72rem;background:none;border:none;border-bottom:1px dashed var(--ink3);color:var(--ink);padding:.1rem .2rem;outline:none;width:100%;transition:border-color .15s}
+    .resa-input:focus{border-color:var(--ink)}
+
+    /* ── MÉTÉO tab ── */
+    .meteo-tabs{display:flex;gap:0;margin-bottom:1.2rem}
+    .meteo-tab{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;padding:.48rem 1rem;border:1px solid var(--ink3);background:none;color:var(--ink2);cursor:pointer;transition:background .15s,color .15s}
+    .meteo-tab+.meteo-tab{border-left:none}
+    .meteo-tab.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .meteo-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.45rem}
+    @media(max-width:640px){.meteo-grid{grid-template-columns:repeat(4,1fr)}}
+    @media(max-width:400px){.meteo-grid{grid-template-columns:repeat(3,1fr)}}
+    .meteo-card{background:var(--bg2);padding:.75rem .45rem;text-align:center}
+    .meteo-day{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:.35rem}
+    .meteo-icon{font-size:1.4rem;line-height:1;margin-bottom:.3rem}
+    .meteo-temps{font-family:var(--font-c);font-size:1rem;color:var(--ink)}
+    .meteo-temps span{font-size:.72rem;color:var(--ink2)}
+    .meteo-wind{font-size:.52rem;color:var(--rock);margin-top:.25rem}
+    .meteo-rain{font-size:.52rem;color:#4A7AB0;margin-top:.1rem}
+    .alert-orage{background:rgba(176,48,48,.08);border-left:3px solid var(--danger);padding:.65rem .9rem;margin-bottom:.9rem;font-size:.63rem;color:var(--danger);letter-spacing:.05em}
+    .meteo-loading{font-size:.7rem;color:var(--ink2);padding:2rem 0}
+    .meteo-source{font-size:.53rem;color:var(--rock);margin-top:.8rem;letter-spacing:.08em}
+
+    /* ── SAC tab ── */
+    .sac-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem}
+    .sac-target-block{display:flex;align-items:center;gap:.5rem;font-size:.62rem;color:var(--ink2)}
+    .target-input{
+      font-family:var(--font-c);font-size:1.4rem;font-weight:300;color:var(--ink);
+      background:none;border:none;border-bottom:1px solid var(--ink3);outline:none;
+      width:52px;text-align:center;transition:border-color .15s;
     }
-    .res-link:hover { background: var(--ink3); }
-    .res-link-label { flex: 1; }
-    .res-link-desc { font-size: .6rem; color: var(--ink2); margin-top: .1rem; }
-    .res-link-arrow { color: var(--ink3); font-size: .8rem; }
+    .target-input:focus{border-color:var(--accent)}
+    .sac-views{display:flex;gap:0;margin-bottom:1.2rem}
+    .sac-stats{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:center;margin-bottom:1.2rem}
+    .sac-stat{font-size:.63rem;color:var(--ink2)}
+    .sac-stat strong{color:var(--ink);font-weight:500}
+    .weight-bar{flex:1;min-width:140px;height:3px;background:var(--ink3)}
+    .weight-fill{height:100%;background:var(--accent);transition:width .35s;max-width:100%}
+    .weight-over .weight-fill{background:var(--danger)}
+    .total-weight-display{font-family:var(--font-c);font-size:1.5rem;font-weight:300;color:var(--ink)}
+    .total-weight-display span{font-size:.6rem;font-family:var(--font-s);color:var(--ink2);letter-spacing:.1em;text-transform:uppercase}
+
+    .sac-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.4rem}
+    .checklist-category{margin-bottom:1.6rem}
+    .cat-title{font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:.6rem;padding-bottom:.35rem;border-bottom:1px solid var(--accent2)}
+    .check-item{display:flex;align-items:center;gap:.7rem;padding:.42rem 0;border-bottom:1px solid var(--ink3)}
+    .check-item:last-child{border-bottom:none}
+    .check-box{width:15px;height:15px;flex-shrink:0;border:1.5px solid var(--ink3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+    .check-item.checked .check-box{background:var(--ink);border-color:var(--ink)}
+    .check-item.checked .check-box::after{content:'';display:block;width:7px;height:4.5px;border-left:1.5px solid var(--bg);border-bottom:1.5px solid var(--bg);transform:rotate(-45deg) translate(1px,-1px)}
+    .check-label{font-size:.75rem;flex:1;cursor:pointer;transition:color .15s}
+    .check-item.checked .check-label{color:var(--ink2);text-decoration:line-through}
+    .check-weight{font-size:.6rem;color:var(--rock);cursor:pointer;padding:.1rem .3rem;border:1px solid transparent;transition:border-color .15s;white-space:nowrap}
+    .check-weight:hover{border-color:var(--ink3)}
+    .weight-edit-input{width:52px;font-family:var(--font-s);font-size:.62rem;padding:.1rem .25rem;background:var(--bg);border:1px solid var(--ink);color:var(--ink);outline:none}
+    .item-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:.9rem;padding:0 .2rem;transition:color .15s;flex-shrink:0}
+    .item-del:hover{color:var(--danger)}
+
+    /* Add item form */
+    .add-item-form{background:var(--bg2);padding:.9rem 1rem;margin-top:1rem}
+    .add-form-title{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.7rem}
+    .add-form-row{display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:end;flex-wrap:wrap}
+    @media(max-width:520px){.add-form-row{grid-template-columns:1fr 1fr}}
+    .af-field{display:flex;flex-direction:column;gap:.25rem}
+    .af-field label{font-size:.53rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+    .af-field input,.af-field select{font-family:var(--font-s);font-size:.74rem;padding:.4rem .55rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;transition:border-color .15s}
+    .af-field input:focus,.af-field select:focus{border-color:var(--ink)}
+
+    /* Résumé view */
+    .resume-table{width:100%;border-collapse:collapse}
+    .resume-table th{font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);font-weight:400;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--ink3)}
+    .resume-table td{padding:.6rem .7rem;font-size:.74rem;border-bottom:1px solid var(--ink3);vertical-align:middle}
+    .resume-table tr:last-child td{border-bottom:none}
+    .resume-table tr.resume-total td{font-weight:500;border-top:2px solid var(--ink3);border-bottom:none}
+
+    /* ── TRAINING tab ── */
+    .training-sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.7rem;margin-bottom:1.8rem}
+    .site-card{background:var(--bg2);padding:1rem;border-left:3px solid var(--accent2);transition:border-left-color .15s}
+    .site-card:hover{border-left-color:var(--accent)}
+    .site-name{font-family:var(--font-c);font-size:1.05rem;font-weight:300;margin-bottom:.25rem}
+    .site-region{font-size:.58rem;color:var(--accent);font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem}
+    .site-desc{font-size:.62rem;color:var(--ink2);line-height:1.5;margin-bottom:.5rem}
+    .site-stats{display:flex;gap:.4rem;flex-wrap:wrap}
+    .combo-box{background:var(--accent2);border-left:3px solid var(--accent);padding:.9rem 1.1rem;margin-bottom:1.8rem}
+    .combo-title{font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:.5rem}
+    .combo-text{font-size:.72rem;line-height:1.65;color:var(--ink)}
+    .training-form{background:var(--bg2);padding:1.1rem 1.1rem;margin-bottom:1.4rem}
+    .form-title{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.9rem}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.55rem;margin-bottom:.7rem}
+    .form-field{display:flex;flex-direction:column;gap:.25rem}
+    .form-field label{font-size:.53rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+    .form-field input,.form-field select,.form-field textarea{font-family:var(--font-s);font-size:.74rem;padding:.42rem .55rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;transition:border-color .15s}
+    .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--ink)}
+    .form-field textarea{resize:vertical;min-height:52px}
+    .training-history{display:flex;flex-direction:column;gap:.45rem}
+    .training-entry{background:var(--bg2);padding:.75rem .9rem;display:grid;grid-template-columns:auto 1fr auto;gap:.4rem .9rem;align-items:start}
+    .entry-date{font-family:var(--font-c);font-size:1.05rem;font-weight:300;color:var(--ink2);white-space:nowrap}
+    .entry-lieu{font-size:.76rem;font-weight:500}
+    .entry-stats{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.2rem}
+    .entry-note{font-size:.62rem;color:var(--ink2);margin-top:.18rem;font-style:italic}
+    .entry-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:.9rem;padding:0;transition:color .15s;align-self:center}
+    .entry-del:hover{color:var(--danger)}
+    .training-totals{display:flex;gap:1.8rem;flex-wrap:wrap;padding:1rem 0;border-top:1px solid var(--ink3);margin-top:.8rem}
+    .total-block .total-val{font-family:var(--font-c);font-size:2.1rem;font-weight:300;line-height:1}
+    .total-block .total-lbl{font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2)}
+
+    /* Ressources (in Training) */
+    .section-divider{height:1px;background:var(--ink3);margin:2rem 0}
+    .apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.7rem;margin-bottom:1.8rem}
+    .app-card{background:var(--bg2);padding:1.1rem 1rem}
+    .app-name{font-family:var(--font-c);font-size:1.15rem;font-weight:300;margin-bottom:.18rem}
+    .app-tag{font-size:.54rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:.6rem}
+    .app-feature{font-size:.65rem;line-height:1.55;color:var(--ink2);margin-bottom:.35rem}
+    .app-feature strong{color:var(--ink);font-weight:500}
+    .links-list{display:flex;flex-direction:column;gap:.4rem}
+    .res-link{display:flex;align-items:center;gap:.65rem;font-size:.72rem;color:var(--ink);text-decoration:none;padding:.55rem .8rem;background:var(--bg2);transition:background .15s}
+    .res-link:hover{background:var(--bg3)}
+    .res-link-body{flex:1}
+    .res-link-desc{font-size:.58rem;color:var(--ink2);margin-top:.08rem}
+    .res-link-arrow{color:var(--ink3);font-size:.75rem}
+
+    /* ── GO tab ── */
+    .go-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;text-align:center;gap:1.2rem;padding:2rem}
+    .go-title{font-family:var(--font-c);font-size:clamp(2rem,6vw,3.5rem);font-weight:300;color:var(--ink)}
+    .go-sub{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2)}
+    .go-tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.5rem}
 
     /* ── Responsive ── */
-    @media (max-width: 700px) {
-      .itinerary-table th:nth-child(4),
-      .itinerary-table td:nth-child(4),
-      .itinerary-table th:nth-child(5),
-      .itinerary-table td:nth-child(5) { display: none; }
-      .resa-table th:nth-child(4),
-      .resa-table td:nth-child(4) { display: none; }
-    }
-    @media (max-width: 520px) {
-      .hero-title { font-size: 3rem; }
-      .countdown-num { font-size: 2.2rem; }
+    @media(max-width:600px){
+      .iti-table th:nth-child(4),.iti-table td:nth-child(4),
+      .iti-table th:nth-child(5),.iti-table td:nth-child(5){display:none}
+      .resa-table th:nth-child(3),.resa-table td:nth-child(3){display:none}
     }
   </style>
 </head>
@@ -412,298 +339,370 @@
 
   <main>
 
-    <!-- ── Hero ── -->
-    <div class="hero">
-      <div class="hero-eyebrow">Projet trekking · Corse</div>
-      <h1 class="hero-title">Prépa<br>GR20</h1>
-      <div class="hero-meta">
-        <span class="badge accent">Moitié Sud</span>
-        <span class="badge">Vizzavona → Conca</span>
-        <span class="badge">9 jours</span>
-        <span class="badge">Septembre 2026</span>
-      </div>
-      <div class="hero-countdown" id="countdown">
-        <div class="countdown-block"><span class="countdown-num" id="cd-j">—</span><span class="countdown-label">Jours</span></div>
-        <div class="countdown-sep">·</div>
-        <div class="countdown-block"><span class="countdown-num" id="cd-h">—</span><span class="countdown-label">Heures</span></div>
-        <div class="countdown-sep">·</div>
-        <div class="countdown-block"><span class="countdown-num" id="cd-m">—</span><span class="countdown-label">Minutes</span></div>
-      </div>
-      <div class="hero-weather-pill" id="heroPill" style="display:none">
-        <span id="heroPillIcon"></span>
-        <span id="heroPillText"></span>
+    <!-- ══ TAB : HOME ══ -->
+    <div class="tab-panel active" id="tab-home">
+      <svg class="filigrane" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="100" cy="100" r="78"/><circle cx="100" cy="100" r="60"/>
+        <line x1="100" y1="22" x2="100" y2="38"/><line x1="100" y1="162" x2="100" y2="178"/>
+        <line x1="22" y1="100" x2="38" y2="100"/><line x1="162" y1="100" x2="178" y2="100"/>
+        <polygon points="100,44 103,100 100,78 97,100" fill="currentColor" stroke="none"/>
+        <polygon points="100,156 103,100 100,122 97,100" fill="currentColor" stroke="none" opacity=".25"/>
+        <text x="100" y="30" text-anchor="middle" font-size="11" fill="currentColor" stroke="none" font-family="sans-serif">N</text>
+      </svg>
+      <div class="tab-inner">
+        <div class="hero-eyebrow">Projet trekking · Corse</div>
+        <h1 class="hero-title">Prépa<br>GR20</h1>
+        <div class="hero-meta">
+          <span class="badge accent">Moitié Sud</span>
+          <span class="badge">Vizzavona → Conca</span>
+          <span class="badge">9 jours</span>
+          <span class="badge">1 sept 2026</span>
+        </div>
+        <div class="hero-countdown">
+          <div class="cd-block"><span class="cd-num" id="cd-j">—</span><span class="cd-lbl">Jours</span></div>
+          <div class="cd-sep">·</div>
+          <div class="cd-block"><span class="cd-num" id="cd-h">—</span><span class="cd-lbl">Heures</span></div>
+          <div class="cd-sep">·</div>
+          <div class="cd-block"><span class="cd-num" id="cd-m">—</span><span class="cd-lbl">Minutes</span></div>
+        </div>
+        <div class="weather-pill" id="heroPill" style="display:none">
+          <span id="heroPillIcon"></span><span id="heroPillText"></span>
+        </div>
+        <div class="home-stats" id="homeStats"></div>
+        <div class="home-progress">
+          <div class="progress-label">
+            <span>Matériel préparé</span>
+            <span id="homeSacPct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="homeSacBar" style="width:0%"></div></div>
+        </div>
+        <div class="home-nav">
+          <div class="hnav-card" onclick="showTab('route',document.querySelector('.bn-item[data-tab=route]'))">
+            <svg class="hnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            <div class="hnav-title">Route</div>
+            <div class="hnav-desc">Carte · Étapes · Réservations</div>
+          </div>
+          <div class="hnav-card" onclick="showTab('meteo',document.querySelector('.bn-item[data-tab=meteo]'))">
+            <svg class="hnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            <div class="hnav-title">Météo</div>
+            <div class="hnav-desc">7 jours live · Vizzavona · Zonza</div>
+          </div>
+          <div class="hnav-card" onclick="showTab('sac',document.querySelector('.bn-item[data-tab=sac]'))">
+            <svg class="hnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8z"/><path d="M9 6V5a2 2 0 0 1 4 0v1"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+            <div class="hnav-title">Sac</div>
+            <div class="hnav-desc">Checklist · Poids</div>
+          </div>
+          <div class="hnav-card" onclick="showTab('training',document.querySelector('.bn-item[data-tab=training]'))">
+            <svg class="hnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+            <div class="hnav-title">Training</div>
+            <div class="hnav-desc">Log · Stats · Sites</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ── 1. Carte ── -->
-    <section id="s-carte">
-      <div class="section-head">
-        <span class="section-num">01</span>
-        <h2 class="section-title">Tracé</h2>
-      </div>
-      <div id="map"></div>
-      <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#C55A3A"></div> Tracé GR20 Sud</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#2C4A3E"></div> Refuges</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#C17A3A"></div> Départ / Arrivée</div>
-      </div>
-    </section>
-
-    <!-- ── 2. Itinéraire ── -->
-    <section id="s-itineraire">
-      <div class="section-head">
-        <span class="section-num">02</span>
-        <h2 class="section-title">Itinéraire</h2>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="itinerary-table" id="itineraryTable">
-          <thead>
-            <tr>
-              <th>J</th>
-              <th>De → Vers</th>
-              <th>km</th>
-              <th>D+</th>
-              <th>Durée</th>
-              <th>Refuge</th>
-              <th>Réservé</th>
-            </tr>
-          </thead>
-          <tbody id="itineraryBody"></tbody>
-        </table>
-      </div>
-      <a class="pnrc-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener">
-        Réserver sur pnr-resa.corsica →
-      </a>
-    </section>
-
-    <!-- ── 3. Météo ── -->
-    <section id="s-meteo">
-      <div class="section-head">
-        <span class="section-num">03</span>
-        <h2 class="section-title">Météo Live</h2>
-      </div>
-      <div class="meteo-tabs">
-        <button class="meteo-tab active" data-loc="vizzavona" onclick="loadMeteo('vizzavona',this)">Vizzavona</button>
-        <button class="meteo-tab" data-loc="zonza" onclick="loadMeteo('zonza',this)">Zonza</button>
-      </div>
-      <div id="meteoAlert"></div>
-      <div id="meteoGrid" class="meteo-loading">Chargement météo…</div>
-      <div class="meteo-source">Source : Open-Meteo · Mise à jour en temps réel</div>
-    </section>
-
-    <!-- ── 4. Matériel ── -->
-    <section id="s-materiel">
-      <div class="section-head">
-        <span class="section-num">04</span>
-        <h2 class="section-title">Matériel</h2>
-      </div>
-      <div class="checklist-stats">
-        <div class="checklist-stat">
-          <strong id="checkedCount">0</strong> / <span id="totalCount">0</span> items préparés
+    <!-- ══ TAB : ROUTE ══ -->
+    <div class="tab-panel" id="tab-route">
+      <svg class="filigrane" viewBox="0 0 300 200" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round">
+        <polyline points="0,180 50,130 90,150 150,60 200,95 250,45 300,75 300,200 0,200"/>
+      </svg>
+      <div class="tab-inner">
+        <div class="sh"><span class="sh-num">Route</span><h2 class="sh-title">GR20 Sud</h2></div>
+        <div class="subtabs">
+          <button class="stb active" onclick="showSubTab('carte',this)">Carte</button>
+          <button class="stb" onclick="showSubTab('etapes',this)">Étapes</button>
+          <button class="stb" onclick="showSubTab('resa',this)">Réservations</button>
         </div>
-        <div class="checklist-progress-bar">
-          <div class="checklist-progress-fill" id="progressFill" style="width:0%"></div>
-        </div>
-        <div class="total-weight"><span id="totalWeight">0</span> g <span>poids estimé coché</span></div>
-      </div>
-      <div class="checklist-actions">
-        <button class="btn-sm" onclick="checkAll()">Tout cocher</button>
-        <button class="btn-sm" onclick="checkNone()">Tout décocher</button>
-      </div>
-      <div id="checklistContainer"></div>
-    </section>
 
-    <!-- ── 5. Entraînements ── -->
-    <section id="s-training">
-      <div class="section-head">
-        <span class="section-num">05</span>
-        <h2 class="section-title">Entraînements</h2>
-      </div>
-
-      <div class="training-sites" id="trainingSites"></div>
-
-      <div class="combo-box">
-        <div class="combo-title">L'exercice "Combo GR20" — Conseil Prépa Caen</div>
-        <div class="combo-text">
-          Ne te contente pas de faire une seule boucle. Va à <strong>Clécy</strong>, fais la montée du Pain de Sucre (la pente la plus raide), puis une fois en haut… <strong>redescends et refais-la 3 ou 4 fois de suite avec ton sac chargé.</strong>
-          C'est en enchaînant les bosses que tu prépareras tes cuisses à l'endurance spécifique requise pour les étapes corses. Rappel : sur le GR20, 1000 m D+ sur 10 km contre 600 m D+ sur 16 km en Normandie.
-        </div>
-      </div>
-
-      <div class="training-form">
-        <div class="form-title">Ajouter une sortie</div>
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Date</label>
-            <input type="date" id="tf-date">
-          </div>
-          <div class="form-field">
-            <label>Lieu</label>
-            <select id="tf-lieu">
-              <option value="">— Choisir —</option>
-              <option>Clécy</option>
-              <option>Saint-Léonard-des-Bois</option>
-              <option>Roche d'Oëtre</option>
-              <option>Mortain</option>
-              <option>Caen / urbain</option>
-              <option>Autre</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>Distance (km)</label>
-            <input type="number" id="tf-km" min="0" step="0.5" placeholder="12">
-          </div>
-          <div class="form-field">
-            <label>D+ (m)</label>
-            <input type="number" id="tf-dp" min="0" step="10" placeholder="550">
-          </div>
-          <div class="form-field">
-            <label>Durée (h:mm)</label>
-            <input type="text" id="tf-dur" placeholder="4h30">
-          </div>
-          <div class="form-field">
-            <label>Sac (kg)</label>
-            <input type="number" id="tf-sac" min="0" step="0.5" placeholder="0">
+        <!-- Sub: Carte -->
+        <div class="subtab-panel active" id="stab-carte">
+          <div id="map"></div>
+          <div class="map-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#C55A3A"></div>Tracé GR20 Sud</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#2C4A3E"></div>Refuges</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#C17A3A"></div>Départ / Arrivée</div>
           </div>
         </div>
-        <div class="form-field" style="margin-bottom:.8rem">
-          <label>Notes</label>
-          <textarea id="tf-note" placeholder="Conditions, ressentis, points à travailler…"></textarea>
-        </div>
-        <button class="btn-primary" onclick="addTraining()">Ajouter la sortie</button>
-      </div>
 
-      <div class="training-history" id="trainingHistory"></div>
-      <div class="training-totals" id="trainingTotals"></div>
-    </section>
-
-    <!-- ── 6. Réservations ── -->
-    <section id="s-reservations">
-      <div class="section-head">
-        <span class="section-num">06</span>
-        <h2 class="section-title">Réservations</h2>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="resa-table">
-          <thead>
-            <tr>
-              <th>Nuit</th>
-              <th>Refuge</th>
-              <th>Date</th>
-              <th>Statut</th>
-              <th>N° Résa</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="resaBody"></tbody>
-        </table>
-      </div>
-      <a class="pnrc-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener" style="margin-top:1rem">
-        Ouvrir pnr-resa.corsica →
-      </a>
-    </section>
-
-    <!-- ── 7. Ressources ── -->
-    <section id="s-ressources">
-      <div class="section-head">
-        <span class="section-num">07</span>
-        <h2 class="section-title">Ressources</h2>
-      </div>
-      <div class="apps-grid">
-        <div class="app-card">
-          <div class="app-name">Mapy.cz</div>
-          <div class="app-tag">100% gratuit · Recommandé</div>
-          <div class="app-feature"><strong>Killer feature :</strong> Téléchargement offline complet de la Corse, courbes de niveau gratuites, tracker vitesse/dénivelé en temps réel.</div>
-          <div class="app-feature"><strong>Profil altimétrique</strong> affiché en direct pendant la marche.</div>
+        <!-- Sub: Étapes -->
+        <div class="subtab-panel" id="stab-etapes">
+          <div class="stage-selector" id="stageSelector"></div>
+          <div id="stageDetailCard" style="display:none" class="stage-detail"></div>
+          <div style="overflow-x:auto">
+            <table class="iti-table"><thead><tr>
+              <th>J</th><th>De → Vers</th><th>km</th><th>D+</th><th>Durée</th><th>Refuge</th><th>Statut</th>
+            </tr></thead><tbody id="itineraryBody"></tbody></table>
+          </div>
+          <a class="pnrc-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener">Réserver pnr-resa.corsica →</a>
         </div>
-        <div class="app-card">
-          <div class="app-name">Ma Rando</div>
-          <div class="app-tag">FFRandonnée · Officiel</div>
-          <div class="app-feature"><strong>Tracé officiel et à jour</strong> géré par la FFRandonnée (balisage rouge/blanc). Fiable pour les variantes (ex. Cirque de la Solitude modifié).</div>
-          <div class="app-feature">Position exacte par rapport au balisage GR.</div>
-        </div>
-        <div class="app-card">
-          <div class="app-name">Organic Maps</div>
-          <div class="app-tag">Open-source · Ultra léger</div>
-          <div class="app-feature"><strong>Consommation batterie minimale</strong> — vital sur le GR20. Cartes lisibles, sources d'eau et refuges inclus.</div>
-          <div class="app-feature">Moins précis en relief que Mapy.cz, mais imbattable pour se situer vite.</div>
+
+        <!-- Sub: Réservations -->
+        <div class="subtab-panel" id="stab-resa">
+          <div style="overflow-x:auto">
+            <table class="resa-table"><thead><tr>
+              <th>Nuit</th><th>Refuge</th><th>Date</th><th>Statut</th><th>N° Résa</th><th>Notes</th>
+            </tr></thead><tbody id="resaBody"></tbody></table>
+          </div>
+          <a class="pnrc-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener">Ouvrir pnr-resa.corsica →</a>
         </div>
       </div>
+    </div>
 
-      <div class="links-list">
-        <a class="res-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener">
-          <div class="res-link-label">
-            <div>PNRC — Centrale de Réservation</div>
-            <div class="res-link-desc">Réservation officielle refuges & bivouacs GR20 · Saison 16 mai – 4 oct 2026</div>
-          </div>
-          <span class="res-link-arrow">↗</span>
-        </a>
-        <a class="res-link" href="https://gr20-infos.com" target="_blank" rel="noopener">
-          <div class="res-link-label">
-            <div>GR20-infos.com</div>
-            <div class="res-link-desc">Infos pratiques, étapes, retours d'expérience 2026</div>
-          </div>
-          <span class="res-link-arrow">↗</span>
-        </a>
-        <a class="res-link" href="https://www.le-gr20.fr" target="_blank" rel="noopener">
-          <div class="res-link-label">
-            <div>le-gr20.fr</div>
-            <div class="res-link-desc">Guide complet, refuges, météo, conseils terrain</div>
-          </div>
-          <span class="res-link-arrow">↗</span>
-        </a>
-        <a class="res-link" href="https://www.meteofrance.com/previsions-meteo-montagne" target="_blank" rel="noopener">
-          <div class="res-link-label">
-            <div>Météo France Montagne</div>
-            <div class="res-link-desc">Bulletin montagne Corse — consulter 3j avant le départ</div>
-          </div>
-          <span class="res-link-arrow">↗</span>
-        </a>
-        <a class="res-link" href="https://objectif-gr20.fr" target="_blank" rel="noopener">
-          <div class="res-link-label">
-            <div>Objectif GR20</div>
-            <div class="res-link-desc">Préparation, périodes, équipement</div>
-          </div>
-          <span class="res-link-arrow">↗</span>
-        </a>
+    <!-- ══ TAB : MÉTÉO ══ -->
+    <div class="tab-panel" id="tab-meteo">
+      <svg class="filigrane" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <circle cx="90" cy="75" r="32"/>
+        <line x1="90" y1="20" x2="90" y2="10"/><line x1="90" y1="140" x2="90" y2="130"/>
+        <line x1="145" y1="75" x2="155" y2="75"/><line x1="35" y1="75" x2="25" y2="75"/>
+        <line x1="133" y1="32" x2="140" y2="25"/><line x1="47" y1="118" x2="40" y2="125"/>
+        <line x1="133" y1="118" x2="140" y2="125"/><line x1="47" y1="32" x2="40" y2="25"/>
+        <path d="M55 155 Q55 135 72 133 Q77 118 95 118 Q118 118 122 133 Q142 133 142 155 Z"/>
+      </svg>
+      <div class="tab-inner">
+        <div class="sh"><span class="sh-num">Live</span><h2 class="sh-title">Météo</h2></div>
+        <div class="meteo-tabs">
+          <button class="meteo-tab active" onclick="loadMeteo('vizzavona',this)">Vizzavona</button>
+          <button class="meteo-tab" onclick="loadMeteo('zonza',this)">Zonza</button>
+        </div>
+        <div id="meteoAlert"></div>
+        <div id="meteoGrid" class="meteo-loading">Chargement météo…</div>
+        <div class="meteo-source">Source : Open-Meteo · Temps réel</div>
       </div>
-    </section>
+    </div>
+
+    <!-- ══ TAB : SAC ══ -->
+    <div class="tab-panel" id="tab-sac">
+      <svg class="filigrane" viewBox="0 0 200 240" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="35" y="75" width="130" height="145" rx="18"/>
+        <path d="M78 75 L78 48 Q78 28 100 28 Q122 28 122 48 L122 75"/>
+        <path d="M35 95 Q15 115 20 145 Q15 170 35 185"/>
+        <path d="M165 95 Q185 115 180 145 Q185 170 165 185"/>
+        <rect x="55" y="128" width="90" height="58" rx="10"/>
+        <line x1="78" y1="160" x2="122" y2="160"/>
+      </svg>
+      <div class="tab-inner">
+        <div class="sh"><span class="sh-num">Équipement</span><h2 class="sh-title">Sac</h2></div>
+
+        <div class="sac-header">
+          <div class="sac-views">
+            <button class="btn-sm active" id="viewListeBtn" onclick="setSacView('liste')">Liste</button>
+            <button class="btn-sm" id="viewResumeBtn" onclick="setSacView('resume')">Résumé poids</button>
+          </div>
+          <div class="sac-target-block">
+            Objectif&nbsp;
+            <input class="target-input" id="targetInput" type="number" min="1" max="25" step="0.1" value="8.0" onchange="saveTargetWeight(this.value)">
+            &nbsp;kg
+          </div>
+        </div>
+
+        <div class="sac-stats">
+          <div class="sac-stat"><strong id="sacChecked">0</strong> / <span id="sacTotal">0</span> items préparés</div>
+          <div class="weight-bar" id="weightBar"><div class="weight-fill" id="weightFill" style="width:0%"></div></div>
+          <div class="total-weight-display"><span id="sacWeightDisplay">0</span> <span>poids coché</span></div>
+        </div>
+
+        <div class="sac-actions">
+          <button class="btn-sm" onclick="checkAll()">Tout cocher</button>
+          <button class="btn-sm" onclick="checkNone()">Tout décocher</button>
+        </div>
+
+        <!-- Vue Liste -->
+        <div id="viewListe"><div id="checklistContainer"></div>
+          <div class="add-item-form">
+            <div class="add-form-title">Ajouter un item</div>
+            <div class="add-form-row">
+              <div class="af-field" style="grid-column:1/-1"><label>Libellé</label><input type="text" id="af-label" placeholder="Nom de l'item"></div>
+              <div class="af-field"><label>Catégorie</label><select id="af-cat"></select></div>
+              <div class="af-field"><label>Poids (g)</label><input type="number" id="af-weight" min="0" step="10" placeholder="0"></div>
+              <div style="align-self:end"><button class="btn-primary" onclick="addItem()">+ Ajouter</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vue Résumé -->
+        <div id="viewResume" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="resume-table"><thead><tr>
+              <th>Item</th><th>Catégorie</th><th>Poids</th><th>✓</th>
+            </tr></thead><tbody id="resumeBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB : TRAINING ══ -->
+    <div class="tab-panel" id="tab-training">
+      <svg class="filigrane" viewBox="0 0 300 200" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="0,150 40,120 75,130 120,50 160,80 200,30 240,65 300,40"/>
+        <circle cx="200" cy="30" r="8" fill="currentColor" stroke="none" opacity=".4"/>
+      </svg>
+      <div class="tab-inner">
+        <div class="sh"><span class="sh-num">Préparation</span><h2 class="sh-title">Entraînements</h2></div>
+
+        <div class="training-sites" id="trainingSites"></div>
+
+        <div class="combo-box">
+          <div class="combo-title">L'exercice "Combo GR20" — Conseil Prépa Caen</div>
+          <div class="combo-text">
+            Ne te contente pas de faire une seule boucle. Va à <strong>Clécy</strong>, fais la montée du Pain de Sucre (la pente la plus raide), puis une fois en haut… <strong>redescends et refais-la 3 ou 4 fois de suite avec ton sac chargé.</strong>
+            C'est en enchaînant les bosses que tu prépareras tes cuisses à l'endurance spécifique requise pour les étapes corses.
+          </div>
+        </div>
+
+        <div class="training-form">
+          <div class="form-title">Ajouter une sortie</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Date</label><input type="date" id="tf-date"></div>
+            <div class="form-field"><label>Lieu</label>
+              <select id="tf-lieu">
+                <option value="">— Choisir —</option>
+                <option>Clécy</option><option>Saint-Léonard-des-Bois</option>
+                <option>Roche d'Oëtre</option><option>Mortain</option>
+                <option>Caen / urbain</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="form-field"><label>Distance (km)</label><input type="number" id="tf-km" min="0" step="0.5" placeholder="12"></div>
+            <div class="form-field"><label>D+ (m)</label><input type="number" id="tf-dp" min="0" step="10" placeholder="550"></div>
+            <div class="form-field"><label>Durée (h:mm)</label><input type="text" id="tf-dur" placeholder="4h30"></div>
+            <div class="form-field"><label>Sac (kg)</label><input type="number" id="tf-sac" min="0" step="0.5" placeholder="0"></div>
+          </div>
+          <div class="form-field" style="margin-bottom:.8rem"><label>Notes</label><textarea id="tf-note" placeholder="Conditions, ressentis…"></textarea></div>
+          <button class="btn-primary" onclick="addTraining()">Ajouter la sortie</button>
+        </div>
+
+        <div class="training-history" id="trainingHistory"></div>
+        <div class="training-totals" id="trainingTotals"></div>
+
+        <div class="section-divider"></div>
+        <div class="sh"><span class="sh-num">Outils</span><h2 class="sh-title">Ressources</h2></div>
+
+        <div class="apps-grid">
+          <div class="app-card">
+            <div class="app-name">Mapy.cz</div><div class="app-tag">100% gratuit · Recommandé</div>
+            <div class="app-feature"><strong>Killer feature :</strong> Téléchargement offline complet de la Corse, courbes de niveau gratuites, tracker vitesse/dénivelé en temps réel.</div>
+            <div class="app-feature"><strong>Profil altimétrique</strong> affiché en direct pendant la marche.</div>
+          </div>
+          <div class="app-card">
+            <div class="app-name">Ma Rando</div><div class="app-tag">FFRandonnée · Officiel</div>
+            <div class="app-feature"><strong>Tracé officiel et à jour</strong> géré par la FFRandonnée. Fiable pour les variantes.</div>
+            <div class="app-feature">Position exacte par rapport au balisage GR.</div>
+          </div>
+          <div class="app-card">
+            <div class="app-name">Organic Maps</div><div class="app-tag">Open-source · Ultra léger</div>
+            <div class="app-feature"><strong>Consommation batterie minimale</strong> — vital sur le GR20. Sources d'eau et refuges inclus.</div>
+            <div class="app-feature">Imbattable pour se situer vite.</div>
+          </div>
+        </div>
+
+        <div class="links-list">
+          <a class="res-link" href="https://pnr-resa.corsica" target="_blank" rel="noopener">
+            <div class="res-link-body"><div>PNRC — Centrale de Réservation</div><div class="res-link-desc">Réservation officielle refuges & bivouacs · Saison 16 mai – 4 oct 2026</div></div><span class="res-link-arrow">↗</span>
+          </a>
+          <a class="res-link" href="https://gr20-infos.com" target="_blank" rel="noopener">
+            <div class="res-link-body"><div>GR20-infos.com</div><div class="res-link-desc">Infos pratiques, étapes, retours d'expérience 2026</div></div><span class="res-link-arrow">↗</span>
+          </a>
+          <a class="res-link" href="https://www.le-gr20.fr" target="_blank" rel="noopener">
+            <div class="res-link-body"><div>le-gr20.fr</div><div class="res-link-desc">Guide complet, refuges, météo, conseils terrain</div></div><span class="res-link-arrow">↗</span>
+          </a>
+          <a class="res-link" href="https://www.meteofrance.com/previsions-meteo-montagne" target="_blank" rel="noopener">
+            <div class="res-link-body"><div>Météo France Montagne</div><div class="res-link-desc">Bulletin montagne Corse — consulter 3j avant le départ</div></div><span class="res-link-arrow">↗</span>
+          </a>
+          <a class="res-link" href="https://objectif-gr20.fr" target="_blank" rel="noopener">
+            <div class="res-link-body"><div>Objectif GR20</div><div class="res-link-desc">Préparation, périodes, équipement</div></div><span class="res-link-arrow">↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB : GO ══ -->
+    <div class="tab-panel" id="tab-go">
+      <svg class="filigrane" viewBox="0 0 200 250" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="55" y1="30" x2="55" y2="220"/>
+        <path d="M55 35 L155 55 L55 95 Z" fill="currentColor" fill-opacity=".15" stroke="none"/>
+        <path d="M55 35 L155 55 L55 95" stroke="currentColor"/>
+        <line x1="30" y1="205" x2="175" y2="205"/>
+        <line x1="30" y1="220" x2="175" y2="220"/>
+        <line x1="55" y1="205" x2="55" y2="220"/><line x1="80" y1="205" x2="80" y2="220"/>
+        <line x1="105" y1="205" x2="105" y2="220"/><line x1="130" y1="205" x2="130" y2="220"/>
+        <line x1="155" y1="205" x2="155" y2="220"/>
+      </svg>
+      <div class="tab-inner">
+        <div class="go-placeholder">
+          <div class="go-title">Jour J</div>
+          <div class="go-sub">Chrono · GPS · Suivi d'étape</div>
+          <div class="go-tags">
+            <span class="badge">Chrono d'étape</span>
+            <span class="badge">Suivi GPS live</span>
+            <span class="badge">Journal de bord</span>
+            <span class="badge">Météo du jour</span>
+          </div>
+          <div style="font-size:.65rem;color:var(--ink2);margin-top:.5rem">Disponible avant le départ · 1er septembre 2026</div>
+        </div>
+      </div>
+    </div>
 
   </main>
+
+  <!-- ══ Bottom Navbar ══ -->
+  <nav class="bottomnav">
+    <button class="bn-item active" data-tab="home" onclick="showTab('home',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="12,5 13.5,12 12,10 10.5,12" fill="currentColor" stroke="none"/><polygon points="12,19 13.5,12 12,14 10.5,12" fill="currentColor" stroke="none" opacity=".3"/></svg>
+      <span class="bn-label">Home</span>
+    </button>
+    <button class="bn-item" data-tab="route" onclick="showTab('route',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span class="bn-label">Route</span>
+    </button>
+    <button class="bn-item" data-tab="meteo" onclick="showTab('meteo',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      <span class="bn-label">Météo</span>
+    </button>
+    <button class="bn-item" data-tab="sac" onclick="showTab('sac',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8z"/><path d="M9 6V5a2 2 0 0 1 4 0v1"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+      <span class="bn-label">Sac</span>
+    </button>
+    <button class="bn-item" data-tab="training" onclick="showTab('training',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      <span class="bn-label">Training</span>
+    </button>
+    <button class="bn-item" data-tab="go" onclick="showTab('go',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="4" x2="6" y2="20"/><path d="M6 5 L20 11 L6 17 Z"/></svg>
+      <span class="bn-label">Go</span>
+    </button>
+  </nav>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="/nav.js"></script>
   <script src="/pin-guard.js"></script>
   <script>
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════
      DONNÉES
-  ═══════════════════════════════════════ */
-
+  ═══════════════════════════════ */
   var DEPART = new Date('2026-09-01T08:00:00');
 
   var STAGES = [
-    { j:1, de:'Vizzavona',       vers:'Capannelle',          km:13, dp:900, dm:250, dur:'5h30', refuge:'Bergeries de Capannelle' },
-    { j:2, de:'Capannelle',      vers:'Prati',               km:8,  dp:700, dm:600, dur:'4h00', refuge:'Refuge de Prati' },
-    { j:3, de:'Prati',           vers:'Bocca di Verdi',      km:14, dp:300, dm:700, dur:'5h00', refuge:'Gîte de Bocca di Verdi' },
-    { j:4, de:'Bocca di Verdi',  vers:'Cozzano',             km:9,  dp:450, dm:950, dur:'4h00', refuge:'Gîte de Cozzano' },
-    { j:5, de:'Cozzano',         vers:'Usciolu',             km:10, dp:800, dm:350, dur:'5h30', refuge:'Refuge d\'Usciolu' },
-    { j:6, de:'Usciolu',         vers:'Asinao',              km:8,  dp:200, dm:900, dur:'5h00', refuge:'Refuge d\'Asinao' },
-    { j:7, de:'Asinao',          vers:'Paliri (via Bavella)',km:16, dp:700, dm:500, dur:'7h00', refuge:'Refuge de Paliri' },
-    { j:8, de:'Paliri',          vers:'Conca',               km:12, dp:150, dm:1050,dur:'4h00', refuge:'— Arrivée Conca —' },
-    { j:9, de:'—',               vers:'Tampon / météo',      km:0,  dp:0,   dm:0,  dur:'—',    refuge:'—', buffer:true }
+    { j:1, de:'Vizzavona',      vers:'Capannelle',           km:13, dp:900,  dm:250,  dur:'5h30', refuge:'Bergeries de Capannelle' },
+    { j:2, de:'Capannelle',     vers:'Prati',                km:8,  dp:700,  dm:600,  dur:'4h00', refuge:'Refuge de Prati' },
+    { j:3, de:'Prati',          vers:'Bocca di Verdi',       km:14, dp:300,  dm:700,  dur:'5h00', refuge:'Gîte de Bocca di Verdi' },
+    { j:4, de:'Bocca di Verdi', vers:'Cozzano',              km:9,  dp:450,  dm:950,  dur:'4h00', refuge:'Gîte de Cozzano' },
+    { j:5, de:'Cozzano',        vers:'Usciolu',              km:10, dp:800,  dm:350,  dur:'5h30', refuge:"Refuge d'Usciolu" },
+    { j:6, de:'Usciolu',        vers:'Asinao',               km:8,  dp:200,  dm:900,  dur:'5h00', refuge:"Refuge d'Asinao" },
+    { j:7, de:'Asinao',         vers:'Paliri (via Bavella)', km:16, dp:700,  dm:500,  dur:'7h00', refuge:'Refuge de Paliri' },
+    { j:8, de:'Paliri',         vers:'Conca',                km:12, dp:150,  dm:1050, dur:'4h00', refuge:'— Arrivée Conca —' },
+    { j:9, de:'—',              vers:'Tampon / météo',       km:0,  dp:0,    dm:0,    dur:'—',    refuge:'—', buffer:true }
   ];
 
   var REFUGES_MAP = [
-    { name:'Vizzavona (départ)', coords:[9.128, 42.122], type:'start' },
-    { name:'Bergeries de Capannelle', coords:[9.203, 42.025], type:'refuge' },
-    { name:'Refuge de Prati', coords:[9.225, 41.968], type:'refuge' },
-    { name:'Gîte de Bocca di Verdi', coords:[9.264, 41.936], type:'refuge' },
-    { name:'Gîte de Cozzano', coords:[9.338, 41.887], type:'refuge' },
-    { name:'Refuge d\'Usciolu', coords:[9.284, 41.854], type:'refuge' },
-    { name:'Refuge d\'Asinao', coords:[9.278, 41.754], type:'refuge' },
-    { name:'Col de Bavella', coords:[9.255, 41.742], type:'refuge' },
-    { name:'Refuge de Paliri', coords:[9.294, 41.712], type:'refuge' },
-    { name:'Conca (arrivée)', coords:[9.352, 41.672], type:'end' }
+    { name:'Vizzavona (départ)',       coords:[9.128,42.122], type:'start' },
+    { name:'Bergeries de Capannelle',  coords:[9.203,42.025], type:'refuge' },
+    { name:'Refuge de Prati',          coords:[9.225,41.968], type:'refuge' },
+    { name:'Gîte de Bocca di Verdi',   coords:[9.264,41.936], type:'refuge' },
+    { name:'Gîte de Cozzano',          coords:[9.338,41.887], type:'refuge' },
+    { name:"Refuge d'Usciolu",         coords:[9.284,41.854], type:'refuge' },
+    { name:"Refuge d'Asinao",          coords:[9.278,41.754], type:'refuge' },
+    { name:'Col de Bavella',           coords:[9.255,41.742], type:'refuge' },
+    { name:'Refuge de Paliri',         coords:[9.294,41.712], type:'refuge' },
+    { name:'Conca (arrivée)',          coords:[9.352,41.672], type:'end' }
   ];
 
   var TRACÉ = [
@@ -714,456 +713,715 @@
     [9.270,41.726],[9.294,41.712],[9.320,41.692],[9.352,41.672]
   ];
 
-  var CHECKLIST = [
+  // Bounding boxes approx par étape [W,S,E,N]
+  var STAGE_BOUNDS = [
+    null,
+    [9.12,41.99,9.22,42.14], // J1
+    [9.19,41.95,9.25,42.04], // J2
+    [9.22,41.92,9.28,41.98], // J3
+    [9.25,41.87,9.35,41.95], // J4
+    [9.27,41.84,9.35,41.90], // J5
+    [9.26,41.74,9.30,41.86], // J6
+    [9.24,41.70,9.30,41.76], // J7
+    [9.28,41.65,9.36,41.72], // J8
+    null  // J9 buffer
+  ];
+
+  var DEFAULT_CHECKLIST = [
     { cat:'Aux pieds', items:[
-      { l:'Chaussures trail/rando (déjà faites)', g:800 },
-      { l:'Chaussettes techniques × 2', g:120 },
-      { l:'Chaussettes techniques × 1 (spare)', g:60 },
-      { l:'Sandales légères pour le soir', g:180 },
+      { id:'f1', l:'Chaussures trail/rando (déjà faites)', g:800 },
+      { id:'f2', l:'Chaussettes techniques × 2', g:120 },
+      { id:'f3', l:'Chaussettes techniques × 1 (spare)', g:60 },
+      { id:'f4', l:'Sandales légères pour le soir', g:180 }
     ]},
     { cat:'Bas', items:[
-      { l:'Short de rando ou pantalon convertible', g:220 },
-      { l:'Collant/legging pour le soir', g:160 },
-      { l:'Sous-vêtements de rechange × 1', g:60 },
+      { id:'b1', l:'Short de rando ou pantalon convertible', g:220 },
+      { id:'b2', l:'Collant/legging pour le soir', g:160 },
+      { id:'b3', l:'Sous-vêtements de rechange × 1', g:60 }
     ]},
     { cat:'Haut', items:[
-      { l:'T-shirt technique respirant', g:120 },
-      { l:'Manche longue légère / mérinos', g:160 },
-      { l:'Polaire légère ou doudoune synthétique', g:280 },
-      { l:'Veste imperméable respirante à capuche', g:350 },
+      { id:'h1', l:'T-shirt technique respirant', g:120 },
+      { id:'h2', l:'Manche longue légère / mérinos', g:160 },
+      { id:'h3', l:'Polaire légère ou doudoune synthétique', g:280 },
+      { id:'h4', l:'Veste imperméable respirante à capuche', g:350 }
     ]},
     { cat:'Accessoires', items:[
-      { l:'Casquette ou chapeau', g:80 },
-      { l:'Buff / tour de cou', g:40 },
-      { l:'Lunettes de soleil catégorie 3', g:30 },
-      { l:'Gants fins', g:40 },
-      { l:'Bonnet léger', g:50 },
-      { l:'Bâtons de marche', g:400 },
+      { id:'a1', l:'Casquette ou chapeau', g:80 },
+      { id:'a2', l:'Buff / tour de cou', g:40 },
+      { id:'a3', l:'Lunettes de soleil catégorie 3', g:30 },
+      { id:'a4', l:'Gants fins', g:40 },
+      { id:'a5', l:'Bonnet léger', g:50 },
+      { id:'a6', l:'Bâtons de marche', g:400 }
     ]},
     { cat:'Couchage / Nuit', items:[
-      { l:'Sac de couchage léger (confort 5–10°C)', g:700 },
-      { l:'Sac à viande (drap de soie)', g:100 },
-      { l:'Boules Quies', g:10 },
-      { l:'Frontale + piles de rechange', g:90 },
+      { id:'c1', l:'Sac de couchage léger (confort 5–10°C)', g:700 },
+      { id:'c2', l:'Sac à viande (drap de soie)', g:100 },
+      { id:'c3', l:'Boules Quies', g:10 },
+      { id:'c4', l:'Frontale + piles de rechange', g:90 }
     ]},
     { cat:'Eau & Nourriture', items:[
-      { l:'Gourdes / poche hydratation 2 L minimum', g:200 },
-      { l:'Pastilles purification eau', g:30 },
-      { l:'Barres / fruits secs / ravitaillement journée', g:600 },
+      { id:'e1', l:'Gourdes / poche hydratation 2 L min.', g:200 },
+      { id:'e2', l:'Pastilles purification eau', g:30 },
+      { id:'e3', l:'Barres / fruits secs / ravitaillement', g:600 }
     ]},
     { cat:'Sécurité & Orientation', items:[
-      { l:'Mapy.cz offline (Corse téléchargée)', g:0 },
-      { l:'Ma Rando (FFRandonnée)', g:0 },
-      { l:'Batterie externe (10 000 mAh min)', g:220 },
-      { l:'Couverture de survie', g:50 },
-      { l:'Trousse premiers secours (Compeed, bande, antidouleur, pince à tiques, strap)', g:150 },
-      { l:'Sifflet', g:10 },
-      { l:'Crème solaire SPF 50', g:80 },
-      { l:'Papier toilette + sac déchet', g:30 },
+      { id:'s1', l:'Mapy.cz offline (Corse téléchargée)', g:0 },
+      { id:'s2', l:'Ma Rando (FFRandonnée)', g:0 },
+      { id:'s3', l:'Batterie externe (10 000 mAh min.)', g:220 },
+      { id:'s4', l:'Couverture de survie', g:50 },
+      { id:'s5', l:'Trousse premiers secours (Compeed, bande, antidouleur, pince tiques, strap)', g:150 },
+      { id:'s6', l:'Sifflet', g:10 },
+      { id:'s7', l:'Crème solaire SPF 50', g:80 },
+      { id:'s8', l:'Papier toilette + sac déchet', g:30 }
     ]},
     { cat:'Hygiène & Divers', items:[
-      { l:'Brosse à dents + mini dentifrice', g:40 },
-      { l:'Savon biodégradable petit format', g:60 },
-      { l:'Serviette microfibre', g:90 },
-      { l:'Sacs zip / sacs étanches', g:40 },
-      { l:'Espèces + CB', g:20 },
-      { l:'Pièce d\'identité + carte Vitale', g:20 },
+      { id:'y1', l:'Brosse à dents + mini dentifrice', g:40 },
+      { id:'y2', l:'Savon biodégradable petit format', g:60 },
+      { id:'y3', l:'Serviette microfibre', g:90 },
+      { id:'y4', l:'Sacs zip / sacs étanches', g:40 },
+      { id:'y5', l:'Espèces + CB', g:20 },
+      { id:'y6', l:"Pièce d'identité + carte Vitale", g:20 }
     ]}
   ];
 
   var SITES = [
-    { name:'Clécy', region:'Suisse Normande', route:'45 min de Caen', km:16, dp:550, dur:'4h30', terrain:'Crêtes rocheuses, dalles calcaires', depart:'Parking du Vey (bord de l\'Orne)', tip:'Monter le Pain de Sucre et le répéter 3–4× avec sac chargé.' },
-    { name:'Saint-Léonard-des-Bois', region:'Alpes Mancelles', route:'1h15 de Caen', km:19, dp:650, dur:'5h30', terrain:'Pierriers, pentes sèches, aucun plat', depart:'Place de l\'église', tip:'Le parcours le plus proche d\'une étape de montagne.' },
-    { name:'Roche d\'Oëtre', region:'Orne', route:'1h00 de Caen', km:12, dp:450, dur:'4h00', terrain:'Très technique, granit, racines, chaos', depart:'Parking Saint-Philbert-sur-Orne', tip:'Terrain le plus accidenté — parfait pour la technicité du Nord.' },
-    { name:'Mortain', region:'Cascades', route:'1h15 de Caen', km:10, dp:350, dur:'3h00', terrain:'Escalade de marches, verticalité', depart:'Parking Petite Cascade', tip:'Monter jusqu\'à la Chapelle Saint-Michel pour simuler une arrivée refuge.' },
+    { name:'Clécy', region:'Suisse Normande', route:'45 min de Caen', km:16, dp:550, dur:'4h30', terrain:'Crêtes rocheuses, dalles calcaires', tip:'Monter le Pain de Sucre et le répéter 3–4× avec sac chargé.' },
+    { name:'Saint-Léonard-des-Bois', region:'Alpes Mancelles', route:'1h15 de Caen', km:19, dp:650, dur:'5h30', terrain:'Pierriers, pentes sèches, aucun plat', tip:'Le parcours le plus proche d\'une étape de montagne.' },
+    { name:"Roche d'Oëtre", region:'Orne', route:'1h00 de Caen', km:12, dp:450, dur:'4h00', terrain:'Très technique, granit, racines, chaos', tip:'Terrain le plus accidenté — parfait pour la technicité du Nord.' },
+    { name:'Mortain', region:'Cascades', route:'1h15 de Caen', km:10, dp:350, dur:'3h00', terrain:'Escalade de marches, verticalité', tip:"Monter jusqu'à la Chapelle Saint-Michel pour simuler une arrivée refuge." }
   ];
 
   var RESA_REFUGES = [
     'Bergeries de Capannelle','Refuge de Prati','Gîte de Bocca di Verdi',
-    'Gîte de Cozzano','Refuge d\'Usciolu','Refuge d\'Asinao',
+    'Gîte de Cozzano',"Refuge d'Usciolu","Refuge d'Asinao",
     'Refuge de Paliri','— Arrivée Conca —'
   ];
 
   var METEO_LOCS = {
-    vizzavona: { lat:42.12, lon:9.13, label:'Vizzavona (1163 m)' },
-    zonza:     { lat:41.75, lon:9.18, label:'Zonza (780 m)' }
+    vizzavona:{ lat:42.12, lon:9.13, label:'Vizzavona (1163 m)' },
+    zonza:    { lat:41.75, lon:9.18, label:'Zonza (780 m)' }
   };
 
   var WMO_ICONS = {
-    0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
-    45:'🌫️', 48:'🌫️',
-    51:'🌦️', 53:'🌦️', 55:'🌧️',
-    61:'🌧️', 63:'🌧️', 65:'🌧️',
-    71:'❄️', 73:'❄️', 75:'❄️',
-    80:'🌦️', 81:'🌦️', 82:'🌧️',
-    85:'❄️', 86:'❄️',
-    95:'⛈️', 96:'⛈️', 99:'⛈️'
+    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+    51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
+    71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌦️',82:'🌧️',
+    85:'❄️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'
   };
 
-  var DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  var DAYS_FR   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   var MONTHS_FR = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
 
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════
+     STATE
+  ═══════════════════════════════ */
+  var checklistData = (function(){
+    var stored = localStorage.getItem('gr20_checklist_items');
+    if(stored){ try{ return JSON.parse(stored); }catch(e){} }
+    return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));
+  })();
+
+  var checkState   = JSON.parse(localStorage.getItem('gr20_checklist')||'{}');
+  var targetWeight = parseFloat(localStorage.getItem('gr20_target_weight')||'8');
+  var stageNotes   = JSON.parse(localStorage.getItem('gr20_stage_notes')||'{}');
+  var trainings    = JSON.parse(localStorage.getItem('gr20_training')||'[]');
+  var resaState    = JSON.parse(localStorage.getItem('gr20_resa_status')||'{}');
+  var sacView      = localStorage.getItem('gr20_sac_view')||'liste';
+  var meteoCache   = {};
+  var mapInited    = false;
+  var map, selectedStage = 0;
+
+  var resaData = (function(){
+    var stored = localStorage.getItem('gr20_reservations');
+    if(stored){ try{ return JSON.parse(stored); }catch(e){} }
+    return RESA_REFUGES.map(function(r,i){
+      var d = new Date(DEPART); d.setDate(d.getDate()+i);
+      return { refuge:r, date:d.toISOString().split('T')[0], status:'todo', ref:'', note:'' };
+    });
+  })();
+
+  /* ═══════════════════════════════
+     NAVIGATION
+  ═══════════════════════════════ */
+  function showTab(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.bn-item').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('tab-'+tabId).classList.add('active');
+    if(btn) btn.classList.add('active');
+    localStorage.setItem('gr20_tab', tabId);
+    if(tabId==='route'){ setTimeout(initMap,50); }
+    if(tabId==='home'){ renderHomeStats(); }
+  }
+
+  function showSubTab(id, btn) {
+    document.querySelectorAll('.subtab-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.stb').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('stab-'+id).classList.add('active');
+    btn.classList.add('active');
+    if(id==='carte'){ setTimeout(function(){ if(map) map.resize(); },50); }
+  }
+
+  /* ═══════════════════════════════
      COUNTDOWN
-  ═══════════════════════════════════════ */
-  function updateCountdown() {
-    var now = new Date();
-    var diff = DEPART - now;
-    if (diff <= 0) {
-      document.getElementById('cd-j').textContent = 'GO';
-      document.getElementById('cd-h').textContent = '!';
-      document.getElementById('cd-m').textContent = '';
+  ═══════════════════════════════ */
+  function updateCountdown(){
+    var diff = DEPART - new Date();
+    if(diff<=0){
+      document.getElementById('cd-j').textContent='GO';
+      document.getElementById('cd-h').textContent='!';
+      document.getElementById('cd-m').textContent='';
       return;
     }
-    var totalMinutes = Math.floor(diff / 60000);
-    var totalHours   = Math.floor(diff / 3600000);
-    var jours        = Math.floor(diff / 86400000);
-    var heures       = totalHours % 24;
-    var minutes      = totalMinutes % 60;
-    document.getElementById('cd-j').textContent = jours;
-    document.getElementById('cd-h').textContent = String(heures).padStart(2,'0');
-    document.getElementById('cd-m').textContent = String(minutes).padStart(2,'0');
+    var j = Math.floor(diff/86400000);
+    var h = Math.floor(diff/3600000)%24;
+    var m = Math.floor(diff/60000)%60;
+    document.getElementById('cd-j').textContent=j;
+    document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
   }
-  updateCountdown();
-  setInterval(updateCountdown, 30000);
 
-  /* ═══════════════════════════════════════
-     CARTE
-  ═══════════════════════════════════════ */
-  var map = new maplibregl.Map({
-    container: 'map',
-    style: {
-      version: 8,
-      sources: {
-        'ign-ortho': {
-          type: 'raster',
-          tiles: ['https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
-          tileSize: 256,
-          attribution: '© IGN'
-        }
+  /* ═══════════════════════════════
+     HOME STATS
+  ═══════════════════════════════ */
+  function renderHomeStats(){
+    var totalKm=0, totalDp=0, sorties=trainings.length;
+    trainings.forEach(function(t){ totalKm+=t.km; totalDp+=t.dp; });
+
+    var allItems=0, checked=0, weightTotal=0;
+    checklistData.forEach(function(cat){
+      cat.items.forEach(function(item){
+        allItems++;
+        if(checkState[item.id]){ checked++; weightTotal+=item.g; }
+      });
+    });
+    var pct = allItems ? Math.round(checked/allItems*100) : 0;
+
+    document.getElementById('homeStats').innerHTML =
+      '<div class="hstat"><div class="hstat-val">'+sorties+'</div><div class="hstat-lbl">Sorties</div></div>'+
+      '<div class="hstat"><div class="hstat-val">'+totalKm.toFixed(0)+'</div><div class="hstat-lbl">Km prépa</div></div>'+
+      '<div class="hstat"><div class="hstat-val">'+totalDp+'</div><div class="hstat-lbl">D+ cumulé (m)</div></div>'+
+      '<div class="hstat"><div class="hstat-val">'+(weightTotal>=1000?(weightTotal/1000).toFixed(1)+'kg':weightTotal+'g')+'</div><div class="hstat-lbl">Poids sac coché</div></div>';
+
+    document.getElementById('homeSacPct').textContent = pct+'%';
+    document.getElementById('homeSacBar').style.width = pct+'%';
+  }
+
+  /* ═══════════════════════════════
+     MAP (lazy init)
+  ═══════════════════════════════ */
+  function initMap(){
+    if(mapInited) { if(map) map.resize(); return; }
+    mapInited = true;
+    map = new maplibregl.Map({
+      container:'map',
+      style:{
+        version:8,
+        sources:{ 'ign':{ type:'raster',
+          tiles:['https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
+          tileSize:256, attribution:'© IGN' } },
+        layers:[{ id:'ign', type:'raster', source:'ign' }]
       },
-      layers: [{ id:'ign', type:'raster', source:'ign-ortho' }]
-    },
-    center: [9.23, 41.89],
-    zoom: 9.5
-  });
-
-  map.addControl(new maplibregl.NavigationControl({ showCompass:false }), 'top-right');
-
-  map.on('load', function() {
-    map.addSource('trace', {
-      type:'geojson',
-      data:{ type:'Feature', geometry:{ type:'LineString', coordinates:TRACÉ } }
+      center:[9.23,41.89], zoom:9.5
     });
-    map.addLayer({ id:'trace-bg', type:'line', source:'trace', paint:{ 'line-color':'#fff', 'line-width':5, 'line-opacity':.7 } });
-    map.addLayer({ id:'trace-fg', type:'line', source:'trace', paint:{ 'line-color':'#C55A3A', 'line-width':2.5, 'line-dasharray':[4,2] } });
-
-    REFUGES_MAP.forEach(function(r) {
-      var color = r.type==='start'||r.type==='end' ? '#C17A3A' : '#2C4A3E';
-      var size  = r.type==='start'||r.type==='end' ? 14 : 10;
-      var el = document.createElement('div');
-      el.style.cssText = 'width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer';
-      new maplibregl.Marker({ element:el })
-        .setLngLat(r.coords)
-        .setPopup(new maplibregl.Popup({ offset:12, closeButton:false })
-          .setHTML('<div style="font-family:\'Space Grotesk\',sans-serif;font-size:.68rem;color:#2C4A3E;padding:.1rem">'+r.name+'</div>'))
-        .addTo(map);
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+    map.on('load',function(){
+      map.addSource('trace',{ type:'geojson', data:{ type:'Feature', geometry:{ type:'LineString', coordinates:TRACÉ } } });
+      map.addLayer({ id:'trace-bg', type:'line', source:'trace', paint:{ 'line-color':'#fff', 'line-width':5, 'line-opacity':.65 } });
+      map.addLayer({ id:'trace-fg', type:'line', source:'trace', paint:{ 'line-color':'#C55A3A', 'line-width':2.5, 'line-dasharray':[4,2] } });
+      REFUGES_MAP.forEach(function(r){
+        var color = (r.type==='start'||r.type==='end') ? '#C17A3A' : '#2C4A3E';
+        var size  = (r.type==='start'||r.type==='end') ? 13 : 9;
+        var el=document.createElement('div');
+        el.style.cssText='width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer';
+        new maplibregl.Marker({element:el}).setLngLat(r.coords)
+          .setPopup(new maplibregl.Popup({offset:12,closeButton:false})
+            .setHTML('<div style="font-family:\'Space Grotesk\',sans-serif;font-size:.66rem;color:#2C4A3E;padding:.1rem">'+r.name+'</div>'))
+          .addTo(map);
+      });
     });
-  });
-
-  /* ═══════════════════════════════════════
-     ITINÉRAIRE
-  ═══════════════════════════════════════ */
-  var resaState = JSON.parse(localStorage.getItem('gr20_resa_status')||'{}');
-
-  function saveResaStatus() { localStorage.setItem('gr20_resa_status', JSON.stringify(resaState)); }
-
-  function cycleResa(j) {
-    var states = ['todo','pending','done'];
-    var cur = resaState[j] || 'todo';
-    var idx = states.indexOf(cur);
-    resaState[j] = states[(idx+1)%3];
-    saveResaStatus();
-    renderItinerary();
   }
 
-  var resaLabels = { todo:'À réserver', pending:'En attente', done:'Confirmé' };
+  function zoomToStage(j){
+    if(!map || !STAGE_BOUNDS[j]) return;
+    var b = STAGE_BOUNDS[j];
+    map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:40,duration:600});
+  }
 
-  function renderItinerary() {
-    var html = '';
-    STAGES.forEach(function(s) {
-      if (s.buffer) {
-        html += '<tr class="buffer-day"><td><span class="day-num">J9</span></td><td colspan="5" style="font-size:.72rem;color:var(--rock)">Jour tampon météo / fatigue</td><td>—</td></tr>';
+  /* ═══════════════════════════════
+     ITINÉRAIRE + STAGE SELECTOR
+  ═══════════════════════════════ */
+  function buildStageSelector(){
+    var html = '<button class="stage-pill'+(selectedStage===0?' active':'')+'" onclick="selectStage(0,this)">Tout</button>';
+    STAGES.forEach(function(s){
+      html += '<button class="stage-pill'+(selectedStage===s.j?' active':'')+'" onclick="selectStage('+s.j+',this)">J'+s.j+(s.buffer?' ·':''+'</button>');
+    });
+    document.getElementById('stageSelector').innerHTML = html;
+  }
+
+  function selectStage(j, btn){
+    selectedStage = j;
+    document.querySelectorAll('.stage-pill').forEach(function(p){ p.classList.remove('active'); });
+    if(btn) btn.classList.add('active');
+    renderItinerary();
+    if(j===0){
+      document.getElementById('stageDetailCard').style.display='none';
+      if(map && mapInited) map.flyTo({center:[9.23,41.89],zoom:9.5,duration:600});
+    } else {
+      var stage = STAGES.find(function(s){ return s.j===j; });
+      if(stage && !stage.buffer){ renderStageDetail(stage); zoomToStage(j); }
+      else { document.getElementById('stageDetailCard').style.display='none'; }
+    }
+  }
+
+  function renderItinerary(){
+    var resaLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
+    var html='';
+    STAGES.forEach(function(s){
+      if(s.buffer){
+        if(selectedStage===0||selectedStage===9)
+          html+='<tr class="buffer'+(selectedStage===9?' stage-highlight':'')+'"><td><span class="day-num">J9</span></td><td colspan="5" style="font-size:.7rem;color:var(--rock)">Jour tampon météo / fatigue</td><td>—</td></tr>';
         return;
       }
-      var st = resaState[s.j] || 'todo';
-      html += '<tr>';
-      html += '<td><span class="day-num">'+s.j+'</span></td>';
-      html += '<td><div class="stage-route">'+s.de+' → '+s.vers+'</div><div class="stage-detail">'+s.refuge+'</div></td>';
-      html += '<td><span class="stat-chip">'+s.km+' km</span></td>';
-      html += '<td><span class="stat-chip">+'+s.dp+' m</span></td>';
-      html += '<td><span class="stat-chip">'+s.dur+'</span></td>';
-      html += '<td style="font-size:.7rem;color:var(--ink2)">'+s.refuge+'</td>';
-      html += '<td><button class="resa-btn '+st+'" onclick="cycleResa('+s.j+')">'+resaLabels[st]+'</button></td>';
-      html += '</tr>';
+      var highlight = selectedStage===s.j ? ' stage-highlight' : '';
+      if(selectedStage!==0 && selectedStage!==s.j) return;
+      var st = resaState[s.j]||'todo';
+      html+='<tr class="'+highlight+'">';
+      html+='<td><span class="day-num">J'+s.j+'</span></td>';
+      html+='<td><div class="stage-route">'+s.de+' → '+s.vers+'</div><div class="stage-sub">'+s.refuge+'</div></td>';
+      html+='<td><span class="stat-chip">'+s.km+' km</span></td>';
+      html+='<td><span class="stat-chip">+'+s.dp+' m</span></td>';
+      html+='<td><span class="stat-chip">'+s.dur+'</span></td>';
+      html+='<td style="font-size:.68rem;color:var(--ink2)">'+s.refuge+'</td>';
+      html+='<td><button class="resa-btn '+st+'" onclick="cycleResaItinerary('+s.j+')">'+resaLabels[st]+'</button></td>';
+      html+='</tr>';
     });
     document.getElementById('itineraryBody').innerHTML = html;
   }
-  renderItinerary();
 
-  /* ═══════════════════════════════════════
-     MÉTÉO
-  ═══════════════════════════════════════ */
-  var meteoCache = {};
+  function renderStageDetail(s){
+    var card = document.getElementById('stageDetailCard');
+    var stageDate = new Date(DEPART);
+    stageDate.setDate(stageDate.getDate() + s.j - 1);
+    var dateStr = stageDate.getDate()+' '+MONTHS_FR[stageDate.getMonth()]+' '+stageDate.getFullYear();
 
-  function wmoIcon(code) { return WMO_ICONS[code] || WMO_ICONS[Math.floor(code/10)*10] || '🌡️'; }
+    var resa = resaData[s.j-1] || {};
+    var resaLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
+    var rSt = resa.status||'todo';
 
-  function loadMeteo(loc, btn) {
-    document.querySelectorAll('.meteo-tab').forEach(function(t){ t.classList.remove('active'); });
-    btn.classList.add('active');
-
-    if (meteoCache[loc]) { renderMeteo(meteoCache[loc], loc); return; }
-
-    document.getElementById('meteoGrid').className = 'meteo-loading';
-    document.getElementById('meteoGrid').textContent = 'Chargement météo…';
-    document.getElementById('meteoAlert').innerHTML = '';
-
-    var l = METEO_LOCS[loc];
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude='+l.lat+'&longitude='+l.lon
-      +'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,weathercode'
-      +'&timezone=Europe%2FParis&forecast_days=7';
-
-    fetch(url)
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        meteoCache[loc] = d;
-        renderMeteo(d, loc);
-        updateHeroPill(d);
-      })
-      .catch(function(){
-        document.getElementById('meteoGrid').textContent = 'Impossible de charger la météo.';
-      });
-  }
-
-  function renderMeteo(d, loc) {
-    var daily = d.daily;
-    var hasOrage = daily.weathercode.some(function(c){ return c >= 95; });
-    document.getElementById('meteoAlert').innerHTML = hasOrage
-      ? '<div class="alert-orage">Risque orage prévu sur les 7 prochains jours — vérifier météo France montagne avant départ</div>'
-      : '';
-
-    var html = '<div class="meteo-grid">';
-    for (var i=0; i<7; i++) {
-      var date = new Date(daily.time[i]);
-      var day  = DAYS_FR[date.getDay()];
-      var icon = wmoIcon(daily.weathercode[i]);
-      var tmax = Math.round(daily.temperature_2m_max[i]);
-      var tmin = Math.round(daily.temperature_2m_min[i]);
-      var rain = daily.precipitation_sum[i] ? daily.precipitation_sum[i].toFixed(1)+' mm' : '';
-      var wind = Math.round(daily.windspeed_10m_max[i])+' km/h';
-      html += '<div class="meteo-card">';
-      html += '<div class="meteo-day">'+day+' '+date.getDate()+' '+MONTHS_FR[date.getMonth()]+'</div>';
-      html += '<div class="meteo-icon">'+icon+'</div>';
-      html += '<div class="meteo-temps">'+tmax+'° <span>/ '+tmin+'°</span></div>';
-      html += '<div class="meteo-wind">💨 '+wind+'</div>';
-      if (rain) html += '<div class="meteo-rain">💧 '+rain+'</div>';
-      html += '</div>';
+    // Météo pour ce jour si disponible
+    var meteoHtml = '<div class="stage-weather">🗓 '+dateStr;
+    var today=new Date(); var diffDays=Math.floor((stageDate-today)/86400000);
+    if(diffDays>=0 && diffDays<7 && meteoCache['vizzavona']){
+      var d=meteoCache['vizzavona'].daily;
+      var icon=wmoIcon(d.weathercode[diffDays]);
+      var tmax=Math.round(d.temperature_2m_max[diffDays]);
+      var tmin=Math.round(d.temperature_2m_min[diffDays]);
+      meteoHtml += ' · '+icon+' '+tmax+'° / '+tmin+'°';
+    } else if(diffDays>=7){
+      meteoHtml += ' · Météo disponible ~'+new Date(stageDate-7*86400000).getDate()+' '+MONTHS_FR[new Date(stageDate-7*86400000).getMonth()];
     }
-    html += '</div>';
-    document.getElementById('meteoGrid').className = '';
-    document.getElementById('meteoGrid').innerHTML = html;
+    meteoHtml += '</div>';
+
+    var note = stageNotes[s.j]||'';
+    card.innerHTML =
+      '<div class="stage-detail-head">'+
+        '<div class="stage-detail-title">J'+s.j+' · '+s.de+' → '+s.vers+'</div>'+
+      '</div>'+
+      '<div class="stage-detail-chips">'+
+        '<span class="stat-chip">'+s.km+' km</span>'+
+        '<span class="stat-chip">+'+s.dp+' m D+</span>'+
+        '<span class="stat-chip">↓'+s.dm+' m D−</span>'+
+        '<span class="stat-chip">'+s.dur+'</span>'+
+      '</div>'+
+      '<div class="stage-resa-row">'+
+        '<span style="font-size:.68rem;color:var(--ink2)">Refuge : <strong>'+s.refuge+'</strong></span>'+
+        '<span class="status-badge '+rSt+'" onclick="cycleResaDetailStatus('+s.j+')" title="Changer statut">'+resaLabels[rSt]+'</span>'+
+        (resa.ref ? '<span class="stat-chip">N° '+resa.ref+'</span>' : '')+
+      '</div>'+
+      meteoHtml+
+      '<div class="stage-notes-label">Notes</div>'+
+      '<textarea class="stage-notes-ta" placeholder="Infos terrain, points d\'eau, conseils…" onchange="saveStageNote('+s.j+',this.value)">'+note+'</textarea>';
+
+    card.style.display='block';
   }
 
-  function updateHeroPill(d) {
-    var icon = wmoIcon(d.daily.weathercode[0]);
-    var tmax = Math.round(d.daily.temperature_2m_max[0]);
-    var tmin = Math.round(d.daily.temperature_2m_min[0]);
-    document.getElementById('heroPillIcon').textContent = icon;
-    document.getElementById('heroPillText').textContent = 'Vizzavona aujourd\'hui · '+tmax+'° / '+tmin+'°';
-    document.getElementById('heroPill').style.display = '';
-    document.getElementById('topbarWeather').textContent = icon+' '+tmax+'°';
+  function saveStageNote(j, text){
+    stageNotes[j]=text;
+    localStorage.setItem('gr20_stage_notes',JSON.stringify(stageNotes));
   }
 
-  loadMeteo('vizzavona', document.querySelector('.meteo-tab'));
-
-  /* ═══════════════════════════════════════
-     CHECKLIST MATÉRIEL
-  ═══════════════════════════════════════ */
-  var checkState = JSON.parse(localStorage.getItem('gr20_checklist')||'{}');
-
-  function saveCheck() { localStorage.setItem('gr20_checklist', JSON.stringify(checkState)); }
-
-  function toggleCheck(id) {
-    checkState[id] = !checkState[id];
-    saveCheck();
-    renderChecklist();
+  function cycleResaItinerary(j){
+    var states=['todo','pending','done'];
+    var cur=resaState[j]||'todo';
+    resaState[j]=states[(states.indexOf(cur)+1)%3];
+    localStorage.setItem('gr20_resa_status',JSON.stringify(resaState));
+    // Sync to resaData
+    if(resaData[j-1]) resaData[j-1].status=resaState[j];
+    localStorage.setItem('gr20_reservations',JSON.stringify(resaData));
+    renderItinerary();
+    if(selectedStage===j){ var s=STAGES.find(function(st){return st.j===j;}); if(s) renderStageDetail(s); }
   }
 
-  function checkAll() { CHECKLIST.forEach(function(cat){ cat.items.forEach(function(item,i){ checkState[cat.cat+'_'+i]=true; }); }); saveCheck(); renderChecklist(); }
-  function checkNone() { checkState={}; saveCheck(); renderChecklist(); }
-
-  function renderChecklist() {
-    var total=0, checked=0, weightTotal=0;
-    var html = '';
-    CHECKLIST.forEach(function(cat) {
-      html += '<div class="checklist-category"><div class="cat-title">'+cat.cat+'</div>';
-      cat.items.forEach(function(item, i) {
-        var id = cat.cat+'_'+i;
-        var ck = !!checkState[id];
-        total++;
-        if (ck) { checked++; weightTotal += item.g; }
-        html += '<div class="check-item'+(ck?' checked':'')+'" onclick="toggleCheck(\''+id+'\')">';
-        html += '<div class="check-box"></div>';
-        html += '<span class="check-label">'+item.l+'</span>';
-        if (item.g) html += '<span class="check-weight">'+item.g+' g</span>';
-        html += '</div>';
-      });
-      html += '</div>';
-    });
-    document.getElementById('checklistContainer').innerHTML = html;
-    document.getElementById('checkedCount').textContent = checked;
-    document.getElementById('totalCount').textContent = total;
-    document.getElementById('progressFill').style.width = (total?Math.round(checked/total*100):0)+'%';
-    document.getElementById('totalWeight').textContent = weightTotal >= 1000 ? (weightTotal/1000).toFixed(1)+' kg' : weightTotal;
-    document.querySelector('#s-materiel .total-weight span').textContent = weightTotal >= 1000 ? 'poids estimé coché' : 'g estimés cochés';
-  }
-  renderChecklist();
-
-  /* ═══════════════════════════════════════
-     SITES D'ENTRAÎNEMENT
-  ═══════════════════════════════════════ */
-  var sitesHtml = '';
-  SITES.forEach(function(s) {
-    sitesHtml += '<div class="site-card">';
-    sitesHtml += '<div class="site-name">'+s.name+'</div>';
-    sitesHtml += '<div class="site-desc" style="font-size:.6rem;color:var(--accent);font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem">'+s.region+' · '+s.route+'</div>';
-    sitesHtml += '<div class="site-desc">'+s.terrain+'</div>';
-    sitesHtml += '<div class="site-stats">';
-    sitesHtml += '<span class="stat-chip">'+s.km+' km</span>';
-    sitesHtml += '<span class="stat-chip">+'+s.dp+' m</span>';
-    sitesHtml += '<span class="stat-chip">'+s.dur+'</span>';
-    sitesHtml += '</div>';
-    if (s.tip) sitesHtml += '<div style="font-size:.62rem;color:var(--accent);margin-top:.6rem;font-style:italic">'+s.tip+'</div>';
-    sitesHtml += '</div>';
-  });
-  document.getElementById('trainingSites').innerHTML = sitesHtml;
-
-  /* ═══════════════════════════════════════
-     HISTORIQUE ENTRAÎNEMENTS
-  ═══════════════════════════════════════ */
-  var trainings = JSON.parse(localStorage.getItem('gr20_training')||'[]');
-
-  function saveTrainings() { localStorage.setItem('gr20_training', JSON.stringify(trainings)); }
-
-  function addTraining() {
-    var date = document.getElementById('tf-date').value;
-    var lieu = document.getElementById('tf-lieu').value;
-    if (!date || !lieu) { alert('Date et lieu requis.'); return; }
-    trainings.unshift({
-      date: date,
-      lieu: lieu,
-      km:   parseFloat(document.getElementById('tf-km').value)||0,
-      dp:   parseInt(document.getElementById('tf-dp').value)||0,
-      dur:  document.getElementById('tf-dur').value,
-      sac:  parseFloat(document.getElementById('tf-sac').value)||0,
-      note: document.getElementById('tf-note').value
-    });
-    saveTrainings();
-    document.getElementById('tf-km').value='';
-    document.getElementById('tf-dp').value='';
-    document.getElementById('tf-dur').value='';
-    document.getElementById('tf-sac').value='';
-    document.getElementById('tf-note').value='';
-    renderTrainings();
-  }
-
-  function deleteTraining(idx) {
-    trainings.splice(idx, 1);
-    saveTrainings();
-    renderTrainings();
-  }
-
-  function renderTrainings() {
-    if (!trainings.length) {
-      document.getElementById('trainingHistory').innerHTML = '<div style="font-size:.7rem;color:var(--rock);padding:1rem 0">Aucune sortie enregistrée encore.</div>';
-      document.getElementById('trainingTotals').innerHTML = '';
-      return;
-    }
-    var html = '';
-    var totalKm=0, totalDp=0;
-    trainings.forEach(function(t, i) {
-      totalKm += t.km; totalDp += t.dp;
-      var d = new Date(t.date+'T12:00:00');
-      var dateStr = d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear();
-      html += '<div class="training-entry">';
-      html += '<div class="entry-date">'+dateStr+'</div>';
-      html += '<div class="entry-body">';
-      html += '<div class="entry-lieu">'+t.lieu+(t.sac?' · sac '+t.sac+' kg':'')+'</div>';
-      html += '<div class="entry-stats">';
-      if (t.km) html += '<span class="stat-chip">'+t.km+' km</span>';
-      if (t.dp) html += '<span class="stat-chip">+'+t.dp+' m</span>';
-      if (t.dur) html += '<span class="stat-chip">'+t.dur+'</span>';
-      html += '</div>';
-      if (t.note) html += '<div class="entry-note">'+t.note+'</div>';
-      html += '</div>';
-      html += '<button class="entry-del" onclick="deleteTraining('+i+')" title="Supprimer">×</button>';
-      html += '</div>';
-    });
-    document.getElementById('trainingHistory').innerHTML = html;
-    document.getElementById('trainingTotals').innerHTML =
-      '<div class="total-block"><div class="total-val">'+trainings.length+'</div><div class="total-lbl">Sorties</div></div>'+
-      '<div class="total-block"><div class="total-val">'+totalKm.toFixed(0)+'</div><div class="total-lbl">Km parcourus</div></div>'+
-      '<div class="total-block"><div class="total-val">'+totalDp+'</div><div class="total-lbl">D+ cumulé (m)</div></div>';
-  }
-  renderTrainings();
-
-  /* ═══════════════════════════════════════
-     RÉSERVATIONS
-  ═══════════════════════════════════════ */
-  var resaData = JSON.parse(localStorage.getItem('gr20_reservations')||'null');
-  if (!resaData) {
-    resaData = RESA_REFUGES.map(function(r, i) {
-      var d = new Date(DEPART);
-      d.setDate(d.getDate() + i);
-      return { refuge:r, date:d.toISOString().split('T')[0], status:'todo', ref:'', note:'' };
-    });
-  }
-
-  function saveResa() { localStorage.setItem('gr20_reservations', JSON.stringify(resaData)); }
-
-  function cycleResaStatus(i) {
-    var states = ['todo','pending','done'];
-    var idx = states.indexOf(resaData[i].status);
-    resaData[i].status = states[(idx+1)%3];
-    saveResa();
+  function cycleResaDetailStatus(j){
+    cycleResaItinerary(j);
     renderResa();
   }
 
-  function updateResaField(i, field, val) {
-    resaData[i][field] = val;
-    saveResa();
+  /* ═══════════════════════════════
+     MÉTÉO
+  ═══════════════════════════════ */
+  function wmoIcon(code){ return WMO_ICONS[code]||WMO_ICONS[Math.floor(code/10)*10]||'🌡️'; }
+
+  function loadMeteo(loc, btn){
+    if(btn){
+      document.querySelectorAll('.meteo-tab').forEach(function(t){ t.classList.remove('active'); });
+      btn.classList.add('active');
+    }
+    if(meteoCache[loc]){ renderMeteo(meteoCache[loc]); return; }
+    document.getElementById('meteoGrid').className='meteo-loading';
+    document.getElementById('meteoGrid').textContent='Chargement météo…';
+    document.getElementById('meteoAlert').innerHTML='';
+    var l=METEO_LOCS[loc];
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+l.lat+'&longitude='+l.lon
+      +'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,weathercode'
+      +'&timezone=Europe%2FParis&forecast_days=7')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        meteoCache[loc]=d;
+        renderMeteo(d);
+        if(loc==='vizzavona') updateHeroPill(d);
+      })
+      .catch(function(){ document.getElementById('meteoGrid').textContent='Impossible de charger la météo.'; });
   }
 
-  var resaStatusLabels = { todo:'À réserver', pending:'En attente', done:'Confirmé' };
+  function renderMeteo(d){
+    var daily=d.daily;
+    var hasOrage=daily.weathercode.some(function(c){ return c>=95; });
+    document.getElementById('meteoAlert').innerHTML=hasOrage
+      ?'<div class="alert-orage">⚠ Risque orage prévu sur les 7 prochains jours — vérifier Météo France Montagne avant départ</div>':'';
+    var html='<div class="meteo-grid">';
+    for(var i=0;i<7;i++){
+      var date=new Date(daily.time[i]);
+      var icon=wmoIcon(daily.weathercode[i]);
+      var tmax=Math.round(daily.temperature_2m_max[i]);
+      var tmin=Math.round(daily.temperature_2m_min[i]);
+      var rain=daily.precipitation_sum[i]?daily.precipitation_sum[i].toFixed(1)+' mm':'';
+      var wind=Math.round(daily.windspeed_10m_max[i])+' km/h';
+      html+='<div class="meteo-card">';
+      html+='<div class="meteo-day">'+DAYS_FR[date.getDay()]+' '+date.getDate()+' '+MONTHS_FR[date.getMonth()]+'</div>';
+      html+='<div class="meteo-icon">'+icon+'</div>';
+      html+='<div class="meteo-temps">'+tmax+'° <span>/ '+tmin+'°</span></div>';
+      html+='<div class="meteo-wind">💨 '+wind+'</div>';
+      if(rain) html+='<div class="meteo-rain">💧 '+rain+'</div>';
+      html+='</div>';
+    }
+    html+='</div>';
+    document.getElementById('meteoGrid').className='';
+    document.getElementById('meteoGrid').innerHTML=html;
+  }
 
-  function renderResa() {
-    var html = '';
-    resaData.forEach(function(r, i) {
-      var d = new Date(r.date+'T12:00:00');
-      var dateStr = d.getDate()+' '+MONTHS_FR[d.getMonth()];
-      html += '<tr>';
-      html += '<td style="font-family:var(--font-c);font-size:1.1rem;font-weight:300;color:var(--ink2)">N'+(i+1)+'</td>';
-      html += '<td style="font-weight:500;font-size:.76rem">'+r.refuge+'</td>';
-      html += '<td style="font-size:.72rem;color:var(--ink2)">'+dateStr+'</td>';
-      html += '<td><span class="status-badge '+r.status+'" onclick="cycleResaStatus('+i+')" style="cursor:pointer" title="Cliquer pour changer">'+resaStatusLabels[r.status]+'</span></td>';
-      html += '<td><input class="resa-input" value="'+r.ref+'" placeholder="—" onchange="updateResaField('+i+',\'ref\',this.value)"></td>';
-      html += '<td><input class="resa-input" value="'+r.note+'" placeholder="—" onchange="updateResaField('+i+',\'note\',this.value)"></td>';
-      html += '</tr>';
+  function updateHeroPill(d){
+    var icon=wmoIcon(d.daily.weathercode[0]);
+    var tmax=Math.round(d.daily.temperature_2m_max[0]);
+    var tmin=Math.round(d.daily.temperature_2m_min[0]);
+    document.getElementById('heroPillIcon').textContent=icon;
+    document.getElementById('heroPillText').textContent='Vizzavona aujourd\'hui · '+tmax+'° / '+tmin+'°';
+    document.getElementById('heroPill').style.display='';
+    document.getElementById('topbarWeather').textContent=icon+' '+tmax+'°';
+  }
+
+  /* ═══════════════════════════════
+     SAC — CHECKLIST
+  ═══════════════════════════════ */
+  function saveChecklistItems(){ localStorage.setItem('gr20_checklist_items',JSON.stringify(checklistData)); }
+  function saveCheckState(){ localStorage.setItem('gr20_checklist',JSON.stringify(checkState)); }
+  function saveTargetWeight(val){
+    targetWeight=parseFloat(val)||8;
+    localStorage.setItem('gr20_target_weight',String(targetWeight));
+    updateWeightStats();
+  }
+
+  function setSacView(v){
+    sacView=v;
+    localStorage.setItem('gr20_sac_view',v);
+    document.getElementById('viewListeBtn').classList.toggle('active',v==='liste');
+    document.getElementById('viewResumeBtn').classList.toggle('active',v==='resume');
+    document.getElementById('viewListe').style.display=v==='liste'?'':'none';
+    document.getElementById('viewResume').style.display=v==='resume'?'':'none';
+    if(v==='resume') renderResume();
+  }
+
+  function toggleCheck(id){
+    checkState[id]=!checkState[id];
+    saveCheckState();
+    updateWeightStats();
+    // Just update the item visually
+    var item=document.querySelector('.check-item[data-id="'+id+'"]');
+    if(item) item.classList.toggle('checked',!!checkState[id]);
+    if(sacView==='resume') renderResume();
+  }
+
+  function updateWeightStats(){
+    var total=0, checked=0, weightTotal=0, weightAll=0;
+    checklistData.forEach(function(cat){
+      cat.items.forEach(function(item){
+        total++;
+        weightAll+=item.g;
+        if(checkState[item.id]){ checked++; weightTotal+=item.g; }
+      });
     });
-    document.getElementById('resaBody').innerHTML = html;
+    document.getElementById('sacChecked').textContent=checked;
+    document.getElementById('sacTotal').textContent=total;
+    var target=targetWeight*1000;
+    var pct=target>0?Math.min(100,Math.round(weightTotal/target*100)):0;
+    document.getElementById('weightFill').style.width=pct+'%';
+    var bar=document.getElementById('weightBar');
+    bar.classList.toggle('weight-over',weightTotal>target);
+    var wDisp=weightTotal>=1000?(weightTotal/1000).toFixed(2)+' kg':weightTotal+' g';
+    document.getElementById('sacWeightDisplay').textContent=wDisp;
+    renderHomeStats();
   }
-  renderResa();
-  </script>
 
+  function editWeight(catIdx, itemIdx, el){
+    var item=checklistData[catIdx].items[itemIdx];
+    var inp=document.createElement('input');
+    inp.type='number'; inp.className='weight-edit-input'; inp.value=item.g; inp.min=0; inp.step=10;
+    el.replaceWith(inp);
+    inp.focus(); inp.select();
+    function commit(){
+      var val=Math.max(0,parseInt(inp.value)||0);
+      item.g=val;
+      saveChecklistItems();
+      updateWeightStats();
+      renderChecklist();
+    }
+    inp.addEventListener('blur',commit);
+    inp.addEventListener('keydown',function(e){ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ inp.value=item.g; inp.blur(); } });
+  }
+
+  function deleteItem(catIdx, itemIdx){
+    var id=checklistData[catIdx].items[itemIdx].id;
+    delete checkState[id];
+    checklistData[catIdx].items.splice(itemIdx,1);
+    if(!checklistData[catIdx].items.length) checklistData.splice(catIdx,1);
+    saveChecklistItems(); saveCheckState();
+    renderChecklist(); updateWeightStats();
+  }
+
+  function addItem(){
+    var label=document.getElementById('af-label').value.trim();
+    var catName=document.getElementById('af-cat').value;
+    var g=Math.max(0,parseInt(document.getElementById('af-weight').value)||0);
+    if(!label){ document.getElementById('af-label').focus(); return; }
+    var id='item_'+Date.now();
+    var cat=checklistData.find(function(c){ return c.cat===catName; });
+    if(cat){ cat.items.push({id:id,l:label,g:g}); }
+    else { checklistData.push({cat:catName,items:[{id:id,l:label,g:g}]}); }
+    saveChecklistItems();
+    document.getElementById('af-label').value='';
+    document.getElementById('af-weight').value='';
+    renderChecklist(); updateWeightStats();
+    populateCatDropdown();
+  }
+
+  function populateCatDropdown(){
+    var sel=document.getElementById('af-cat');
+    var cur=sel.value;
+    sel.innerHTML=checklistData.map(function(c){ return '<option'+(c.cat===cur?' selected':'')+'>'+c.cat+'</option>'; }).join('');
+  }
+
+  function checkAll(){
+    checklistData.forEach(function(cat){ cat.items.forEach(function(item){ checkState[item.id]=true; }); });
+    saveCheckState(); renderChecklist(); updateWeightStats();
+  }
+  function checkNone(){
+    checkState={}; saveCheckState(); renderChecklist(); updateWeightStats();
+  }
+
+  function renderChecklist(){
+    var html='';
+    checklistData.forEach(function(cat,ci){
+      html+='<div class="checklist-category"><div class="cat-title">'+cat.cat+'</div>';
+      cat.items.forEach(function(item,ii){
+        var ck=!!checkState[item.id];
+        var wLabel=item.g ? item.g+' g' : '—';
+        html+='<div class="check-item'+(ck?' checked':'')+'" data-id="'+item.id+'">';
+        html+='<div class="check-box" onclick="toggleCheck(\''+item.id+'\')"></div>';
+        html+='<span class="check-label" onclick="toggleCheck(\''+item.id+'\')">'+item.l+'</span>';
+        html+='<span class="check-weight" onclick="editWeight('+ci+','+ii+',this)" title="Modifier le poids">'+wLabel+'</span>';
+        html+='<button class="item-del" onclick="deleteItem('+ci+','+ii+')" title="Supprimer">×</button>';
+        html+='</div>';
+      });
+      html+='</div>';
+    });
+    document.getElementById('checklistContainer').innerHTML=html;
+  }
+
+  function renderResume(){
+    var allItems=[];
+    checklistData.forEach(function(cat){
+      cat.items.forEach(function(item){
+        allItems.push({l:item.l,cat:cat.cat,g:item.g,checked:!!checkState[item.id]});
+      });
+    });
+    allItems.sort(function(a,b){ return b.g-a.g; });
+    var totalAll=0, totalChecked=0;
+    allItems.forEach(function(i){ totalAll+=i.g; if(i.checked) totalChecked+=i.g; });
+    var html='';
+    allItems.forEach(function(item){
+      html+='<tr>';
+      html+='<td>'+item.l+'</td>';
+      html+='<td style="font-size:.65rem;color:var(--ink2)">'+item.cat+'</td>';
+      html+='<td><span class="stat-chip">'+(item.g?item.g+' g':'—')+'</span></td>';
+      html+='<td style="font-size:.8rem">'+(item.checked?'✓':'')+'</td>';
+      html+='</tr>';
+    });
+    html+='<tr class="resume-total">';
+    html+='<td colspan="2">Total général</td>';
+    html+='<td><span class="stat-chip">'+(totalAll>=1000?(totalAll/1000).toFixed(2)+' kg':totalAll+' g')+'</span></td>';
+    html+='<td style="font-size:.65rem;color:var(--ink2)">'+(totalChecked>=1000?(totalChecked/1000).toFixed(2)+'kg':totalChecked+'g')+' coché</td>';
+    html+='</tr>';
+    document.getElementById('resumeBody').innerHTML=html;
+  }
+
+  /* ═══════════════════════════════
+     TRAINING
+  ═══════════════════════════════ */
+  function addTraining(){
+    var date=document.getElementById('tf-date').value;
+    var lieu=document.getElementById('tf-lieu').value;
+    if(!date||!lieu){ return; }
+    trainings.unshift({
+      date:date, lieu:lieu,
+      km:parseFloat(document.getElementById('tf-km').value)||0,
+      dp:parseInt(document.getElementById('tf-dp').value)||0,
+      dur:document.getElementById('tf-dur').value,
+      sac:parseFloat(document.getElementById('tf-sac').value)||0,
+      note:document.getElementById('tf-note').value
+    });
+    localStorage.setItem('gr20_training',JSON.stringify(trainings));
+    ['tf-km','tf-dp','tf-dur','tf-sac','tf-note'].forEach(function(id){ document.getElementById(id).value=''; });
+    renderTrainings();
+  }
+
+  function deleteTraining(idx){
+    trainings.splice(idx,1);
+    localStorage.setItem('gr20_training',JSON.stringify(trainings));
+    renderTrainings();
+  }
+
+  function renderTrainings(){
+    if(!trainings.length){
+      document.getElementById('trainingHistory').innerHTML='<div style="font-size:.7rem;color:var(--rock);padding:.8rem 0">Aucune sortie enregistrée encore.</div>';
+      document.getElementById('trainingTotals').innerHTML='';
+      renderHomeStats(); return;
+    }
+    var html=''; var totalKm=0,totalDp=0;
+    trainings.forEach(function(t,i){
+      totalKm+=t.km; totalDp+=t.dp;
+      var d=new Date(t.date+'T12:00:00');
+      var ds=d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear();
+      html+='<div class="training-entry">';
+      html+='<div class="entry-date">'+ds+'</div>';
+      html+='<div><div class="entry-lieu">'+t.lieu+(t.sac?' · sac '+t.sac+' kg':'')+'</div>';
+      html+='<div class="entry-stats">';
+      if(t.km) html+='<span class="stat-chip">'+t.km+' km</span>';
+      if(t.dp) html+='<span class="stat-chip">+'+t.dp+' m</span>';
+      if(t.dur) html+='<span class="stat-chip">'+t.dur+'</span>';
+      html+='</div>';
+      if(t.note) html+='<div class="entry-note">'+t.note+'</div>';
+      html+='</div>';
+      html+='<button class="entry-del" onclick="deleteTraining('+i+')" title="Supprimer">×</button>';
+      html+='</div>';
+    });
+    document.getElementById('trainingHistory').innerHTML=html;
+    document.getElementById('trainingTotals').innerHTML=
+      '<div class="total-block"><div class="total-val">'+trainings.length+'</div><div class="total-lbl">Sorties</div></div>'+
+      '<div class="total-block"><div class="total-val">'+totalKm.toFixed(0)+'</div><div class="total-lbl">Km parcourus</div></div>'+
+      '<div class="total-block"><div class="total-val">'+totalDp+'</div><div class="total-lbl">D+ cumulé (m)</div></div>';
+    renderHomeStats();
+  }
+
+  /* ═══════════════════════════════
+     SITES
+  ═══════════════════════════════ */
+  function renderSites(){
+    var html='';
+    SITES.forEach(function(s){
+      html+='<div class="site-card">';
+      html+='<div class="site-name">'+s.name+'</div>';
+      html+='<div class="site-region">'+s.region+' · '+s.route+'</div>';
+      html+='<div class="site-desc">'+s.terrain+'</div>';
+      html+='<div class="site-stats"><span class="stat-chip">'+s.km+' km</span><span class="stat-chip">+'+s.dp+' m</span><span class="stat-chip">'+s.dur+'</span></div>';
+      if(s.tip) html+='<div style="font-size:.6rem;color:var(--accent);margin-top:.55rem;font-style:italic">'+s.tip+'</div>';
+      html+='</div>';
+    });
+    document.getElementById('trainingSites').innerHTML=html;
+  }
+
+  /* ═══════════════════════════════
+     RÉSERVATIONS
+  ═══════════════════════════════ */
+  var resaStatusLabels={todo:'À réserver',pending:'En attente',done:'Confirmé'};
+
+  function cycleResaStatus(i){
+    var states=['todo','pending','done'];
+    resaData[i].status=states[(states.indexOf(resaData[i].status)+1)%3];
+    resaState[i+1]=resaData[i].status;
+    localStorage.setItem('gr20_reservations',JSON.stringify(resaData));
+    localStorage.setItem('gr20_resa_status',JSON.stringify(resaState));
+    renderResa(); renderItinerary();
+  }
+
+  function updateResaField(i,field,val){
+    resaData[i][field]=val;
+    localStorage.setItem('gr20_reservations',JSON.stringify(resaData));
+  }
+
+  function renderResa(){
+    var html='';
+    resaData.forEach(function(r,i){
+      var d=new Date(r.date+'T12:00:00');
+      var ds=d.getDate()+' '+MONTHS_FR[d.getMonth()];
+      html+='<tr>';
+      html+='<td style="font-family:var(--font-c);font-size:1.05rem;font-weight:300;color:var(--ink2)">N°'+(i+1)+'</td>';
+      html+='<td style="font-weight:500;font-size:.74rem">'+r.refuge+'</td>';
+      html+='<td style="font-size:.7rem;color:var(--ink2)">'+ds+'</td>';
+      html+='<td><span class="status-badge '+r.status+'" onclick="cycleResaStatus('+i+')" title="Cliquer pour changer">'+resaStatusLabels[r.status]+'</span></td>';
+      html+='<td><input class="resa-input" value="'+r.ref+'" placeholder="—" onchange="updateResaField('+i+',\'ref\',this.value)"></td>';
+      html+='<td><input class="resa-input" value="'+r.note+'" placeholder="—" onchange="updateResaField('+i+',\'note\',this.value)"></td>';
+      html+='</tr>';
+    });
+    document.getElementById('resaBody').innerHTML=html;
+  }
+
+  /* ═══════════════════════════════
+     INIT
+  ═══════════════════════════════ */
+  updateCountdown();
+  setInterval(updateCountdown,30000);
+
+  document.getElementById('targetInput').value=targetWeight;
+
+  renderChecklist();
+  updateWeightStats();
+  populateCatDropdown();
+  setSacView(sacView);
+
+  renderItinerary();
+  buildStageSelector();
+  renderResa();
+  renderTrainings();
+  renderSites();
+  renderHomeStats();
+
+  loadMeteo('vizzavona', document.querySelector('.meteo-tab'));
+
+  // Restore last tab
+  var savedTab = localStorage.getItem('gr20_tab')||'home';
+  var savedBtn = document.querySelector('.bn-item[data-tab="'+savedTab+'"]');
+  if(savedTab!=='home') showTab(savedTab, savedBtn);
+
+  </script>
 </body>
 </html>
