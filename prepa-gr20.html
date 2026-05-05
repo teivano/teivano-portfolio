@@ -217,6 +217,11 @@
     .weight-edit-input{width:52px;font-family:var(--font-s);font-size:.62rem;padding:.1rem .25rem;background:var(--bg);border:1px solid var(--ink);color:var(--ink);outline:none}
     .item-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:.9rem;padding:0 .2rem;transition:color .15s;flex-shrink:0}
     .item-del:hover{color:var(--danger)}
+    .btn-insac{background:none;border:1px solid var(--ink3);cursor:pointer;color:var(--ink3);font-size:.6rem;padding:.1rem .35rem;transition:background .15s,color .15s,border-color .15s;flex-shrink:0;line-height:1.4;font-family:var(--font-s)}
+    .btn-insac.active{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+    .btn-insac:hover:not(.active){border-color:var(--ink2);color:var(--ink2)}
+    .sac-weight-detail{display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.6rem;color:var(--ink2);margin-top:.3rem}
+    .sac-weight-detail strong{color:var(--ink)}
     /* Add item form — layout colonne, jamais overflow */
     .add-item-form{background:var(--bg2);padding:.9rem 1rem;margin-top:1rem}
     .add-form-title{font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);font-weight:500;margin-bottom:.7rem}
@@ -490,7 +495,12 @@
         <div class="sac-stats">
           <div class="sac-stat"><strong id="sacChecked">0</strong> / <span id="sacTotal">0</span> items</div>
           <div class="weight-bar" id="weightBar"><div class="weight-fill" id="weightFill" style="width:0%"></div></div>
-          <div class="total-weight-display"><span id="sacWeightDisplay">0</span> <span>coché</span></div>
+          <div class="total-weight-display"><span id="sacWeightDisplay">0</span> <span>sac</span></div>
+        </div>
+        <div class="sac-weight-detail">
+          <span>Dans le sac&nbsp;<strong id="sacWeightKg">—</strong></span>
+          <span>Sur moi&nbsp;<strong id="porteWeightKg">—</strong></span>
+          <span>Total&nbsp;<strong id="totalWeightKg">—</strong></span>
         </div>
         <div class="sac-actions">
           <button class="btn-sm" onclick="checkAll()">Tout cocher</button>
@@ -689,6 +699,9 @@
   var DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   var MONTHS_FR=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
 
+  /* Items portés sur soi, pas dans le sac → ne comptent pas dans le poids du sac */
+  var DEFAULT_NOT_IN_SAC=['f1','f2','b1','h1','a1','a2','a3','a6','y5','y6'];
+
   /* Slides onboarding — chaque slide active un onglet réel */
   var OB_SLIDES=[
     {tab:'home',    step:'Accueil',   title:'Bienvenue',        desc:'Ton tableau de bord : countdown avant le départ, stats de préparation en temps réel, météo live et accès rapide à tous les outils.'},
@@ -703,6 +716,7 @@
   ═══════════════════════ */
   var checklistData=(function(){var s=localStorage.getItem('gr20_checklist_items');if(s){try{return JSON.parse(s);}catch(e){}}return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST));})();
   var checkState=JSON.parse(localStorage.getItem('gr20_checklist')||'{}');
+  var inSac=(function(){var s=localStorage.getItem('gr20_inSac');if(s){try{return JSON.parse(s);}catch(e){}}var d={};checklistData.forEach(function(cat){cat.items.forEach(function(item){d[item.id]=DEFAULT_NOT_IN_SAC.indexOf(item.id)===-1;});});return d;})();
   var targetWeight=parseFloat(localStorage.getItem('gr20_target_weight')||'8');
   var stageNotes=JSON.parse(localStorage.getItem('gr20_stage_notes')||'{}');
   var trainings=JSON.parse(localStorage.getItem('gr20_training')||'[]');
@@ -802,14 +816,14 @@
   function renderHomeStats(){
     var totalKm=0,totalDp=0;
     trainings.forEach(function(t){totalKm+=t.km;totalDp+=t.dp;});
-    var allItems=0,checked=0,weightTotal=0;
-    checklistData.forEach(function(cat){cat.items.forEach(function(item){allItems++;if(checkState[item.id]){checked++;weightTotal+=item.g;}});});
+    var allItems=0,checked=0,sacWeight=0;
+    checklistData.forEach(function(cat){cat.items.forEach(function(item){allItems++;if(checkState[item.id])checked++;if(inSac[item.id])sacWeight+=item.g;});});
     var pct=allItems?Math.round(checked/allItems*100):0;
     document.getElementById('homeStats').innerHTML=
       '<div class="hstat"><div class="hstat-val">'+trainings.length+'</div><div class="hstat-lbl">Sorties</div></div>'+
       '<div class="hstat"><div class="hstat-val">'+totalKm.toFixed(0)+'</div><div class="hstat-lbl">Km prépa</div></div>'+
       '<div class="hstat"><div class="hstat-val">'+totalDp+'</div><div class="hstat-lbl">D+ cumulé (m)</div></div>'+
-      '<div class="hstat"><div class="hstat-val">'+(weightTotal>=1000?(weightTotal/1000).toFixed(1)+'kg':weightTotal+'g')+'</div><div class="hstat-lbl">Poids sac coché</div></div>';
+      '<div class="hstat"><div class="hstat-val">'+(sacWeight>=1000?(sacWeight/1000).toFixed(1)+'kg':sacWeight+'g')+'</div><div class="hstat-lbl">Poids sac</div></div>';
     document.getElementById('homeSacPct').textContent=pct+'%';
     document.getElementById('homeSacBar').style.width=pct+'%';
   }
@@ -970,6 +984,13 @@
   ═══════════════════════ */
   function saveChecklistItems(){localStorage.setItem('gr20_checklist_items',JSON.stringify(checklistData));}
   function saveCheckState(){localStorage.setItem('gr20_checklist',JSON.stringify(checkState));}
+  function saveInSac(){localStorage.setItem('gr20_inSac',JSON.stringify(inSac));}
+  function toggleInSac(id){
+    inSac[id]=!inSac[id];saveInSac();updateWeightStats();
+    var btn=document.querySelector('.btn-insac[data-id="'+id+'"]');
+    if(btn)btn.classList.toggle('active',!!inSac[id]);
+    if(sacView==='resume')renderResume();
+  }
   function saveTargetWeight(val){targetWeight=parseFloat(val)||8;localStorage.setItem('gr20_target_weight',String(targetWeight));updateWeightStats();}
   function setSacView(v){
     sacView=v;localStorage.setItem('gr20_sac_view',v);
@@ -985,15 +1006,22 @@
     if(item)item.classList.toggle('checked',!!checkState[id]);
     if(sacView==='resume')renderResume();
   }
+  function fmtW(g){return g>=1000?(g/1000).toFixed(2)+' kg':g+' g';}
   function updateWeightStats(){
-    var total=0,checked=0,weightTotal=0;
-    checklistData.forEach(function(cat){cat.items.forEach(function(item){total++;if(checkState[item.id]){checked++;weightTotal+=item.g;}});});
+    var total=0,checked=0,sacW=0,porteW=0;
+    checklistData.forEach(function(cat){cat.items.forEach(function(item){
+      total++;if(checkState[item.id])checked++;
+      if(inSac[item.id])sacW+=item.g;else porteW+=item.g;
+    });});
     document.getElementById('sacChecked').textContent=checked;
     document.getElementById('sacTotal').textContent=total;
-    var target=targetWeight*1000,pct=target>0?Math.min(100,Math.round(weightTotal/target*100)):0;
+    var target=targetWeight*1000,pct=target>0?Math.min(100,Math.round(sacW/target*100)):0;
     document.getElementById('weightFill').style.width=pct+'%';
-    document.getElementById('weightBar').classList.toggle('weight-over',weightTotal>target);
-    document.getElementById('sacWeightDisplay').textContent=weightTotal>=1000?(weightTotal/1000).toFixed(2)+' kg':weightTotal+' g';
+    document.getElementById('weightBar').classList.toggle('weight-over',sacW>target);
+    document.getElementById('sacWeightDisplay').textContent=fmtW(sacW);
+    document.getElementById('sacWeightKg').textContent=fmtW(sacW);
+    document.getElementById('porteWeightKg').textContent=fmtW(porteW);
+    document.getElementById('totalWeightKg').textContent=fmtW(sacW+porteW);
     renderHomeStats();
   }
   function editWeight(catIdx,itemIdx,el){
@@ -1006,10 +1034,10 @@
     inp.addEventListener('keydown',function(e){if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=item.g;inp.blur();}});
   }
   function deleteItem(catIdx,itemIdx){
-    var id=checklistData[catIdx].items[itemIdx].id;delete checkState[id];
+    var id=checklistData[catIdx].items[itemIdx].id;delete checkState[id];delete inSac[id];
     checklistData[catIdx].items.splice(itemIdx,1);
     if(!checklistData[catIdx].items.length)checklistData.splice(catIdx,1);
-    saveChecklistItems();saveCheckState();renderChecklist();updateWeightStats();populateCatDropdown();
+    saveChecklistItems();saveCheckState();saveInSac();renderChecklist();updateWeightStats();populateCatDropdown();
   }
   function addItem(){
     var label=document.getElementById('af-label').value.trim();
@@ -1017,6 +1045,7 @@
     var g=Math.max(0,parseInt(document.getElementById('af-weight').value)||0);
     if(!label){document.getElementById('af-label').focus();return;}
     var id='item_'+Date.now();
+    inSac[id]=true;saveInSac();
     var cat=checklistData.find(function(c){return c.cat===catName;});
     if(cat){cat.items.push({id:id,l:label,g:g});}
     else{checklistData.push({cat:catName,items:[{id:id,l:label,g:g}]});}
@@ -1035,11 +1064,12 @@
     checklistData.forEach(function(cat,ci){
       html+='<div class="checklist-category"><div class="cat-title">'+cat.cat+'</div>';
       cat.items.forEach(function(item,ii){
-        var ck=!!checkState[item.id];
+        var ck=!!checkState[item.id],inB=!!inSac[item.id];
         html+='<div class="check-item'+(ck?' checked':'')+'" data-id="'+item.id+'">'+
           '<div class="check-box" onclick="toggleCheck(\''+item.id+'\')"></div>'+
           '<span class="check-label" onclick="toggleCheck(\''+item.id+'\')">'+item.l+'</span>'+
           '<span class="check-weight" onclick="editWeight('+ci+','+ii+',this)" title="Modifier le poids">'+(item.g?item.g+' g':'—')+'</span>'+
+          '<button class="btn-insac'+(inB?' active':'')+'" data-id="'+item.id+'" onclick="toggleInSac(\''+item.id+'\')" title="'+(inB?'Dans le sac':'Sur moi / hors sac')+'">'+(inB?'sac':'porté')+'</button>'+
           '<button class="item-del" onclick="deleteItem('+ci+','+ii+')" title="Supprimer">×</button>'+
           '</div>';
       });
@@ -1048,19 +1078,30 @@
     document.getElementById('checklistContainer').innerHTML=html;
   }
   function renderResume(){
-    var allItems=[];
-    checklistData.forEach(function(cat){cat.items.forEach(function(item){allItems.push({l:item.l,cat:cat.cat,g:item.g,checked:!!checkState[item.id]});});});
-    allItems.sort(function(a,b){return b.g-a.g;});
-    var totalAll=0,totalChecked=0;
-    allItems.forEach(function(i){totalAll+=i.g;if(i.checked)totalChecked+=i.g;});
-    var html=allItems.map(function(item){
+    var sacItems=[],porteItems=[];
+    checklistData.forEach(function(cat){cat.items.forEach(function(item){
+      var obj={l:item.l,cat:cat.cat,g:item.g,checked:!!checkState[item.id]};
+      if(inSac[item.id])sacItems.push(obj);else porteItems.push(obj);
+    });});
+    sacItems.sort(function(a,b){return b.g-a.g;});
+    porteItems.sort(function(a,b){return b.g-a.g;});
+    function rows(arr){return arr.map(function(item){
       return'<tr><td>'+item.l+'</td><td style="font-size:.63rem;color:var(--ink2)">'+item.cat+'</td>'+
         '<td><span class="stat-chip">'+(item.g?item.g+' g':'—')+'</span></td>'+
         '<td style="font-size:.8rem">'+(item.checked?'✓':'')+'</td></tr>';
-    }).join('');
-    html+='<tr class="resume-total"><td colspan="2">Total général</td>'+
-      '<td><span class="stat-chip">'+(totalAll>=1000?(totalAll/1000).toFixed(2)+' kg':totalAll+' g')+'</span></td>'+
-      '<td style="font-size:.63rem;color:var(--ink2)">'+(totalChecked>=1000?(totalChecked/1000).toFixed(2)+'kg':totalChecked+'g')+' coché</td></tr>';
+    }).join('');}
+    var sacTotal=sacItems.reduce(function(s,i){return s+i.g;},0);
+    var porteTotal=porteItems.reduce(function(s,i){return s+i.g;},0);
+    var html='<tr><td colspan="4" style="font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);padding-top:.8rem;padding-bottom:.3rem">Dans le sac</td></tr>';
+    html+=rows(sacItems);
+    html+='<tr class="resume-total"><td colspan="2">Sous-total sac</td>'+
+      '<td><span class="stat-chip">'+fmtW(sacTotal)+'</span></td><td></td></tr>';
+    html+='<tr><td colspan="4" style="font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);padding-top:1.2rem;padding-bottom:.3rem">Sur moi</td></tr>';
+    html+=rows(porteItems);
+    html+='<tr class="resume-total"><td colspan="2">Sous-total porté</td>'+
+      '<td><span class="stat-chip">'+fmtW(porteTotal)+'</span></td><td></td></tr>';
+    html+='<tr class="resume-total" style="border-top:2px solid var(--ink)"><td colspan="2">Total général</td>'+
+      '<td><span class="stat-chip">'+fmtW(sacTotal+porteTotal)+'</span></td><td></td></tr>';
     document.getElementById('resumeBody').innerHTML=html;
   }
 
