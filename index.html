@@ -55,53 +55,6 @@
       animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1.2s both;
     }
 
-    /* ── Hamburger → croix ── */
-    .ham {
-      position: fixed; top: 1.5rem; right: 1.8rem;
-      z-index: 1001;
-      width: 26px; height: 17px;
-      cursor: pointer; border: none; background: none; padding: 0;
-      display: flex; flex-direction: column; justify-content: space-between;
-      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1s both;
-    }
-    .ham-line {
-      display: block; width: 100%; height: 1.5px;
-      background: var(--ink);
-      transform-origin: center;
-      transition: background .3s ease, transform .3s cubic-bezier(.16,1,.3,1), opacity .25s ease;
-    }
-    .ham.open .ham-line               { background: var(--bg); }
-    .ham.open .ham-line:nth-child(1)  { transform: translateY(7.25px) rotate(45deg); }
-    .ham.open .ham-line:nth-child(2)  { opacity: 0; transform: scaleX(0); }
-    .ham.open .ham-line:nth-child(3)  { transform: translateY(-8.25px) rotate(-45deg); }
-
-    /* ── Nav overlay — items gauche + séparateurs ── */
-    .tlb-nav { width: 100%; max-width: 680px; }
-    .tlb-nav-item {
-      display: flex; flex-direction: column; gap: .45rem;
-      padding: 1.8rem 0;
-      border-top: 1px solid rgba(255,255,255,.12);
-      text-decoration: none;
-      transition: opacity .2s;
-    }
-    .tlb-nav-item:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
-    .tlb-nav-item:hover { opacity: .65; }
-    .tlb-nav-title {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: clamp(2rem, 5.5vw, 3.8rem);
-      font-weight: 300;
-      color: var(--bg);
-      letter-spacing: -.02em;
-      line-height: 1;
-    }
-    .tlb-nav-desc {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: .65rem;
-      font-weight: 300;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.38);
-    }
   </style>
 </head>
 <body>
@@ -133,13 +86,6 @@
   <!-- Stripes -->
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
-  <!-- Hamburger -->
-  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
-    <span class="ham-line"></span>
-    <span class="ham-line"></span>
-    <span class="ham-line"></span>
-  </button>
-
   <!-- 2026 coin haut-gauche -->
   <p class="tlb-year" aria-hidden="true">2026</p>
 
@@ -147,32 +93,6 @@
   <main class="main">
     <h1 class="tlb-logo">TLB</h1>
   </main>
-
-  <!-- Overlay nav -->
-  <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
-    <nav class="tlb-nav">
-      <a class="tlb-nav-item" href="/transports.html">
-        <span class="tlb-nav-title">Métros</span>
-        <span class="tlb-nav-desc">Lignes A & B · temps réel</span>
-      </a>
-      <a class="tlb-nav-item" href="/demo-api.html">
-        <span class="tlb-nav-title">Tests API</span>
-        <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
-      </a>
-      <a class="tlb-nav-item" href="/evenements.html">
-        <span class="tlb-nav-title">Événements</span>
-        <span class="tlb-nav-desc">Agenda culturel · Rennes · OpenAgenda</span>
-      </a>
-      <a class="tlb-nav-item" href="#" data-pin="https://w.teivano.fr">
-        <span class="tlb-nav-title">Workout Tracker</span>
-        <span class="tlb-nav-desc">Suivi d'entraînement personnel</span>
-      </a>
-      <a class="tlb-nav-item" href="#" data-pin="/prepa-gr20.html" data-pin-hash="20ee235b5de5b36244da6f9aa1cbdd032a90867ba92276ccc8c38c0d0d57fcec">
-        <span class="tlb-nav-title">Prépa GR20</span>
-        <span class="tlb-nav-desc">Starter pack · matériel · itinéraire · météo</span>
-      </a>
-    </nav>
-  </div>
 
   <script>
     // Stripes
@@ -193,25 +113,6 @@
       }
     })();
 
-    // Nav overlay
-    var overlay=document.getElementById('tlbOverlay');
-    var hamBtn=document.getElementById('hamBtn');
-    function openNav(){
-      overlay.classList.add('open');
-      hamBtn.classList.add('open');
-      hamBtn.setAttribute('aria-expanded','true');
-    }
-    function closeNav(){
-      overlay.classList.remove('open');
-      hamBtn.classList.remove('open');
-      hamBtn.setAttribute('aria-expanded','false');
-    }
-    hamBtn.addEventListener('click', function(){
-      hamBtn.classList.contains('open') ? closeNav() : openNav();
-    });
-    overlay.addEventListener('click',function(e){ if(e.target===overlay) closeNav(); });
-    document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeNav(); });
-
     // Horloge
     (function(){
       var el=document.getElementById('tlbClock');
@@ -229,6 +130,7 @@
 
   </script>
 
+  <script src="/nav.js"></script>
   <script src="/pin-guard.js"></script>
 </body>
 </html>
