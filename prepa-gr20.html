@@ -257,9 +257,11 @@
     .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
     .kpi{background:#fff;color:#111;padding:.7rem .85rem;display:flex;flex-direction:column;gap:.35rem}
     .kpi-lbl{font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:#7a7a7a;font-weight:600}
-    .kpi-val{font-family:var(--font-s);font-size:1.65rem;font-weight:700;line-height:1;color:#111;font-variant-numeric:tabular-nums;letter-spacing:-.015em;display:flex;align-items:baseline}
+    .kpi-row{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+    .kpi-val{font-family:var(--font-s);font-size:1.65rem;font-weight:700;line-height:1;color:#111;font-variant-numeric:tabular-nums;letter-spacing:-.015em;display:inline-flex;align-items:baseline}
     .kpi-val.muted{color:#c5c5c5;font-weight:500;font-size:1.2rem}
     .kpi-unit{font-size:.7rem;font-weight:500;color:#888;margin-left:.3rem;letter-spacing:.02em}
+    .kpi-ic{width:18px;height:18px;color:#c5c5c5;flex-shrink:0}
     .tcard-sac{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:.75rem;font-weight:500}
     .tcard-note{font-size:.65rem;color:var(--ink2);margin-top:.65rem;padding-top:.55rem;border-top:1px dashed var(--ink3);font-style:italic;line-height:1.5}
     .training-totals{display:flex;gap:1.8rem;flex-wrap:wrap;padding:1rem 0;border-top:1px solid var(--ink3);margin-top:.8rem}
@@ -686,6 +688,14 @@
   var WMO_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌦️',82:'🌧️',85:'❄️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
   var DAYS_FR=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   var MONTHS_FR=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  var KPI_ICONS={
+    clock:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12,7 12,12 15,14"/></svg>',
+    dist:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="8,7 4,12 8,17"/><polyline points="16,7 20,12 16,17"/></svg>',
+    pace:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16a8 8 0 0 1 16 0"/><line x1="12" y1="16" x2="16" y2="11"/></svg>',
+    mountain:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,20 9,11 13,16 17,9 21,20"/></svg>',
+    up:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="6"/><polyline points="14,6 20,6 20,12"/></svg>',
+    down:'<svg class="kpi-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="20"/><polyline points="14,20 20,20 20,14"/></svg>'
+  };
 
   /* Items portés sur soi, pas dans le sac → ne comptent pas dans le poids du sac */
   var DEFAULT_NOT_IN_SAC=['f1','f2','b1','h1','a1','a2','a3','a6','y5','y6'];
@@ -1152,17 +1162,17 @@
       var durMin=_trParseDurMin(t.dur);
       var allure=(t.km&&durMin)?(t.km/(durMin/60)):null;
       var kpis=[
-        {lbl:'Durée',num:t.dur||null,unit:''},
-        {lbl:'Distance',num:t.km?_trFmtFR(t.km,1):null,unit:'km'},
-        {lbl:'Allure',num:allure?_trFmtFR(allure,1):null,unit:'km/h'},
-        {lbl:'Alt. max',num:t.altMax?String(t.altMax):null,unit:'m'},
-        {lbl:'Déniv. +',num:t.dp?'+'+t.dp:null,unit:'m'},
-        {lbl:'Déniv. −',num:t.dn?'−'+t.dn:null,unit:'m'}
+        {lbl:'Durée',ic:'clock',num:t.dur||null,unit:''},
+        {lbl:'Distance',ic:'dist',num:t.km?_trFmtFR(t.km,1):null,unit:'km'},
+        {lbl:'Allure',ic:'pace',num:allure?_trFmtFR(allure,1):null,unit:'km/h'},
+        {lbl:'Alt. max',ic:'mountain',num:t.altMax?String(t.altMax):null,unit:'m'},
+        {lbl:'Déniv. +',ic:'up',num:t.dp?'+'+t.dp:null,unit:'m'},
+        {lbl:'Déniv. −',ic:'down',num:t.dn?'−'+t.dn:null,unit:'m'}
       ];
       html+='<div class="tcard">'+
         '<button class="tcard-del" onclick="deleteTraining('+i+')" aria-label="Supprimer">×</button>'+
         '<div class="tcard-head"><span class="tcard-when">'+d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear()+'</span><span class="tcard-lieu">'+t.lieu+'</span></div>'+
-        '<div class="kpi-grid">'+kpis.map(function(k){return '<div class="kpi"><span class="kpi-lbl">'+k.lbl+'</span><span class="kpi-val'+(k.num?'':' muted')+'">'+(k.num||'—')+(k.num&&k.unit?'<span class="kpi-unit">'+k.unit+'</span>':'')+'</span></div>';}).join('')+'</div>'+
+        '<div class="kpi-grid">'+kpis.map(function(k){return '<div class="kpi"><span class="kpi-lbl">'+k.lbl+'</span><div class="kpi-row"><span class="kpi-val'+(k.num?'':' muted')+'">'+(k.num||'—')+(k.num&&k.unit?'<span class="kpi-unit">'+k.unit+'</span>':'')+'</span>'+(KPI_ICONS[k.ic]||'')+'</div></div>';}).join('')+'</div>'+
         (t.sac?'<div class="tcard-sac">Sac · '+t.sac+' kg</div>':'')+
         (t.note?'<div class="tcard-note">'+t.note+'</div>':'')+
         '</div>';
