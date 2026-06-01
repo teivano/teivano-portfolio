@@ -247,14 +247,21 @@
     .form-field input,.form-field select,.form-field textarea{font-family:var(--font-s);font-size:.74rem;padding:.42rem .55rem;background:var(--bg);border:1px solid var(--ink3);color:var(--ink);outline:none;transition:border-color .15s}
     .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--ink)}
     .form-field textarea{resize:vertical;min-height:52px}
-    .training-history{display:flex;flex-direction:column;gap:.45rem}
-    .training-entry{background:var(--bg2);padding:.75rem .9rem;display:grid;grid-template-columns:auto 1fr auto;gap:.4rem .9rem;align-items:start}
-    .entry-date{font-family:var(--font-c);font-size:1.05rem;font-weight:300;color:var(--ink2);white-space:nowrap}
-    .entry-lieu{font-size:.76rem;font-weight:500}
-    .entry-stats{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.2rem}
-    .entry-note{font-size:.62rem;color:var(--ink2);margin-top:.18rem;font-style:italic}
-    .entry-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:.9rem;padding:0;transition:color .15s;align-self:center}
-    .entry-del:hover{color:var(--danger)}
+    .training-history{display:flex;flex-direction:column;gap:.7rem}
+    .tcard{background:var(--bg2);padding:1rem 1.1rem;position:relative}
+    .tcard-head{display:flex;justify-content:space-between;align-items:baseline;gap:.8rem;margin-bottom:.75rem;padding-bottom:.6rem;border-bottom:1px solid var(--ink3);padding-right:1.5rem}
+    .tcard-when{font-family:var(--font-c);font-size:1.1rem;font-weight:300;color:var(--ink2);white-space:nowrap}
+    .tcard-lieu{font-size:.78rem;font-weight:500;color:var(--ink);text-align:right;line-height:1.3}
+    .tcard-del{position:absolute;top:.7rem;right:.85rem;background:none;border:none;cursor:pointer;color:var(--ink3);font-size:1.1rem;line-height:1;padding:0;transition:color .15s}
+    .tcard-del:hover{color:var(--danger)}
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1rem}
+    .kpi{display:flex;flex-direction:column;gap:.15rem;padding:.3rem 0}
+    .kpi-lbl{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);font-weight:500;display:flex;align-items:center;gap:.4rem}
+    .kpi-ic{font-size:.7rem;color:var(--accent);opacity:.85}
+    .kpi-val{font-family:var(--font-c);font-size:1.4rem;font-weight:300;line-height:1.1;color:var(--ink)}
+    .kpi-val.muted{color:var(--ink3);font-size:1.1rem}
+    .tcard-sac{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:.75rem;font-weight:500}
+    .tcard-note{font-size:.65rem;color:var(--ink2);margin-top:.65rem;padding-top:.55rem;border-top:1px dashed var(--ink3);font-style:italic;line-height:1.5}
     .training-totals{display:flex;gap:1.8rem;flex-wrap:wrap;padding:1rem 0;border-top:1px solid var(--ink3);margin-top:.8rem}
     .total-block .total-val{font-family:var(--font-c);font-size:2.1rem;font-weight:300;line-height:1}
     .total-block .total-lbl{font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2)}
@@ -551,6 +558,8 @@
             </div>
             <div class="form-field"><label>Distance (km)</label><input type="number" id="tf-km" min="0" step="0.5" placeholder="12"></div>
             <div class="form-field"><label>D+ (m)</label><input type="number" id="tf-dp" min="0" step="10" placeholder="550"></div>
+            <div class="form-field"><label>D− (m)</label><input type="number" id="tf-dn" min="0" step="10" placeholder="550"></div>
+            <div class="form-field"><label>Alt. max (m)</label><input type="number" id="tf-altmax" min="0" step="1" placeholder="250"></div>
             <div class="form-field"><label>Durée (h:mm)</label><input type="text" id="tf-dur" placeholder="4h30"></div>
             <div class="form-field"><label>Sac (kg)</label><input type="number" id="tf-sac" min="0" step="0.5" placeholder="0"></div>
           </div>
@@ -702,9 +711,9 @@
   (function seedTrainingsMay2026(){
     if(localStorage.getItem('gr20_seed_may2026'))return;
     var seed=[
-      {date:'2026-05-08',lieu:'Suisse Normande',km:17.1,dp:474,dur:'3h24',sac:0,note:'Des montagnes en Normandie ? · alt. max 302 m · D− 470 m · allure 5 km/h'},
-      {date:'2026-05-09',lieu:'Suisse Normande (GR)',km:22.9,dp:733,dur:'5h00',sac:0,note:'Partie du GR de la Suisse Normande. Petite montée physique au début, +3 km de détours. · alt. max 215 m · D− 734 m · allure 4 km/h'},
-      {date:'2026-05-31',lieu:'Suisse Normande (8324)',km:13.6,dp:353,dur:'2h53',sac:0,note:'Plusieurs arbres tombés sur le chemin (signalé via FFRandonnée Calvados). · alt. max 247 m · D− 351 m · allure 4,7 km/h'}
+      {date:'2026-05-08',lieu:'Suisse Normande',km:17.1,dp:474,dn:470,altMax:302,dur:'3h24',sac:0,note:'Des montagnes en Normandie ?'},
+      {date:'2026-05-09',lieu:'Suisse Normande (GR)',km:22.9,dp:733,dn:734,altMax:215,dur:'5h00',sac:0,note:'Partie du GR de la Suisse Normande. Petite montée physique au début, +3 km de détours.'},
+      {date:'2026-05-31',lieu:'Suisse Normande (8324)',km:13.6,dp:353,dn:351,altMax:247,dur:'2h53',sac:0,note:'Plusieurs arbres tombés sur le chemin (signalé via FFRandonnée Calvados).'}
     ];
     seed.forEach(function(s){
       var dup=trainings.some(function(t){return t.date===s.date&&Math.abs((t.km||0)-s.km)<0.05;});
@@ -713,6 +722,21 @@
     trainings.sort(function(a,b){return b.date.localeCompare(a.date);});
     localStorage.setItem('gr20_training',JSON.stringify(trainings));
     localStorage.setItem('gr20_seed_may2026','1');
+  })();
+  (function migrateTrainingsV2(){
+    if(localStorage.getItem('gr20_training_v2'))return;
+    var patches={
+      '2026-05-08':{altMax:302,dn:470,note:'Des montagnes en Normandie ?'},
+      '2026-05-09':{altMax:215,dn:734,note:'Partie du GR de la Suisse Normande. Petite montée physique au début, +3 km de détours.'},
+      '2026-05-31':{altMax:247,dn:351,note:'Plusieurs arbres tombés sur le chemin (signalé via FFRandonnée Calvados).'}
+    };
+    var changed=false;
+    trainings.forEach(function(t){
+      var p=patches[t.date];
+      if(p&&t.altMax==null){t.altMax=p.altMax;t.dn=p.dn;t.note=p.note;changed=true;}
+    });
+    if(changed)localStorage.setItem('gr20_training',JSON.stringify(trainings));
+    localStorage.setItem('gr20_training_v2','1');
   })();
   var resaState=JSON.parse(localStorage.getItem('gr20_resa_status')||'{}');
   var sacView=localStorage.getItem('gr20_sac_view')||'liste';
@@ -1105,33 +1129,53 @@
   function addTraining(){
     var date=document.getElementById('tf-date').value,lieu=document.getElementById('tf-lieu').value;
     if(!date||!lieu)return;
-    trainings.unshift({date:date,lieu:lieu,km:parseFloat(document.getElementById('tf-km').value)||0,dp:parseInt(document.getElementById('tf-dp').value)||0,dur:document.getElementById('tf-dur').value,sac:parseFloat(document.getElementById('tf-sac').value)||0,note:document.getElementById('tf-note').value});
+    trainings.unshift({date:date,lieu:lieu,km:parseFloat(document.getElementById('tf-km').value)||0,dp:parseInt(document.getElementById('tf-dp').value)||0,dn:parseInt(document.getElementById('tf-dn').value)||0,altMax:parseInt(document.getElementById('tf-altmax').value)||0,dur:document.getElementById('tf-dur').value,sac:parseFloat(document.getElementById('tf-sac').value)||0,note:document.getElementById('tf-note').value});
     localStorage.setItem('gr20_training',JSON.stringify(trainings));
-    ['tf-km','tf-dp','tf-dur','tf-sac','tf-note'].forEach(function(id){document.getElementById(id).value='';});
+    ['tf-km','tf-dp','tf-dn','tf-altmax','tf-dur','tf-sac','tf-note'].forEach(function(id){document.getElementById(id).value='';});
     renderTrainings();
   }
   function deleteTraining(idx){trainings.splice(idx,1);localStorage.setItem('gr20_training',JSON.stringify(trainings));renderTrainings();}
+  function _trParseDurMin(s){if(!s)return 0;var m=String(s).trim().match(/^(\d+)\s*h\s*(\d*)$/i);if(!m)return 0;return parseInt(m[1])*60+(parseInt(m[2])||0);}
+  function _trFmtDurMin(min){if(!min)return null;var h=Math.floor(min/60),m=min%60;return h+'h'+(m<10?'0':'')+m;}
+  function _trFmtFR(n,dec){return (dec==null?String(n):n.toFixed(dec)).replace('.',',');}
   function renderTrainings(){
     if(!trainings.length){
       document.getElementById('trainingHistory').innerHTML='<div style="font-size:.7rem;color:var(--rock);padding:.8rem 0">Aucune sortie enregistrée encore.</div>';
       document.getElementById('trainingTotals').innerHTML='';renderHomeStats();return;
     }
-    var html='',totalKm=0,totalDp=0;
+    var html='',totalKm=0,totalDp=0,totalDn=0,totalMin=0,maxAlt=0;
     trainings.forEach(function(t,i){
-      totalKm+=t.km;totalDp+=t.dp;
+      totalKm+=t.km||0;totalDp+=t.dp||0;totalDn+=t.dn||0;
+      totalMin+=_trParseDurMin(t.dur);
+      if(t.altMax&&t.altMax>maxAlt)maxAlt=t.altMax;
       var d=new Date(t.date+'T12:00:00');
-      html+='<div class="training-entry">'+
-        '<div class="entry-date">'+d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear()+'</div>'+
-        '<div><div class="entry-lieu">'+t.lieu+(t.sac?' · sac '+t.sac+' kg':'')+'</div>'+
-        '<div class="entry-stats">'+(t.km?'<span class="stat-chip">'+t.km+' km</span>':'')+(t.dp?'<span class="stat-chip">+'+t.dp+' m</span>':'')+(t.dur?'<span class="stat-chip">'+t.dur+'</span>':'')+'</div>'+
-        (t.note?'<div class="entry-note">'+t.note+'</div>':'')+
-        '</div><button class="entry-del" onclick="deleteTraining('+i+')">×</button></div>';
+      var durMin=_trParseDurMin(t.dur);
+      var allure=(t.km&&durMin)?(t.km/(durMin/60)):null;
+      var kpis=[
+        {ic:'⏱',lbl:'Durée',val:t.dur||null},
+        {ic:'↔',lbl:'Distance',val:t.km?_trFmtFR(t.km,1)+' km':null},
+        {ic:'⌖',lbl:'Allure',val:allure?_trFmtFR(allure,1)+' km/h':null},
+        {ic:'▲',lbl:'Alt. max',val:t.altMax?t.altMax+' m':null},
+        {ic:'↗',lbl:'Déniv. +',val:t.dp?'+'+t.dp+' m':null},
+        {ic:'↘',lbl:'Déniv. −',val:t.dn?'−'+t.dn+' m':null}
+      ];
+      html+='<div class="tcard">'+
+        '<button class="tcard-del" onclick="deleteTraining('+i+')" aria-label="Supprimer">×</button>'+
+        '<div class="tcard-head"><span class="tcard-when">'+d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear()+'</span><span class="tcard-lieu">'+t.lieu+'</span></div>'+
+        '<div class="kpi-grid">'+kpis.map(function(k){return '<div class="kpi"><span class="kpi-lbl"><span class="kpi-ic">'+k.ic+'</span>'+k.lbl+'</span><span class="kpi-val'+(k.val?'':' muted')+'">'+(k.val||'—')+'</span></div>';}).join('')+'</div>'+
+        (t.sac?'<div class="tcard-sac">Sac · '+t.sac+' kg</div>':'')+
+        (t.note?'<div class="tcard-note">'+t.note+'</div>':'')+
+        '</div>';
     });
     document.getElementById('trainingHistory').innerHTML=html;
+    function _b(v,l){return '<div class="total-block"><div class="total-val">'+v+'</div><div class="total-lbl">'+l+'</div></div>';}
     document.getElementById('trainingTotals').innerHTML=
-      '<div class="total-block"><div class="total-val">'+trainings.length+'</div><div class="total-lbl">Sorties</div></div>'+
-      '<div class="total-block"><div class="total-val">'+totalKm.toFixed(0)+'</div><div class="total-lbl">Km parcourus</div></div>'+
-      '<div class="total-block"><div class="total-val">'+totalDp+'</div><div class="total-lbl">D+ cumulé (m)</div></div>';
+      _b(trainings.length,'Sorties')+
+      _b(totalKm.toFixed(0),'Km parcourus')+
+      _b('+'+totalDp,'D+ cumulé (m)')+
+      _b('−'+totalDn,'D− cumulé (m)')+
+      _b(_trFmtDurMin(totalMin)||'—','Durée totale')+
+      _b(maxAlt||'—','Alt. max (m)');
     renderHomeStats();
   }
   /* ═══════════════════════
