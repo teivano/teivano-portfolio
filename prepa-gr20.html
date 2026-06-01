@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='72' font-family='Georgia,serif' font-size='52' fill='%232C4A3E' text-anchor='middle'%3ETLB%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -254,12 +254,12 @@
     .tcard-lieu{font-size:.78rem;font-weight:500;color:var(--ink);text-align:right;line-height:1.3}
     .tcard-del{position:absolute;top:.7rem;right:.85rem;background:none;border:none;cursor:pointer;color:var(--ink3);font-size:1.1rem;line-height:1;padding:0;transition:color .15s}
     .tcard-del:hover{color:var(--danger)}
-    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1rem}
-    .kpi{display:flex;flex-direction:column;gap:.15rem;padding:.3rem 0}
-    .kpi-lbl{font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);font-weight:500;display:flex;align-items:center;gap:.4rem}
-    .kpi-ic{font-size:.7rem;color:var(--accent);opacity:.85}
-    .kpi-val{font-family:var(--font-c);font-size:1.4rem;font-weight:300;line-height:1.1;color:var(--ink)}
-    .kpi-val.muted{color:var(--ink3);font-size:1.1rem}
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    .kpi{background:#fff;color:#111;padding:.7rem .85rem;display:flex;flex-direction:column;gap:.35rem}
+    .kpi-lbl{font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:#7a7a7a;font-weight:600}
+    .kpi-val{font-family:var(--font-s);font-size:1.65rem;font-weight:700;line-height:1;color:#111;font-variant-numeric:tabular-nums;letter-spacing:-.015em;display:flex;align-items:baseline}
+    .kpi-val.muted{color:#c5c5c5;font-weight:500;font-size:1.2rem}
+    .kpi-unit{font-size:.7rem;font-weight:500;color:#888;margin-left:.3rem;letter-spacing:.02em}
     .tcard-sac{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:.75rem;font-weight:500}
     .tcard-note{font-size:.65rem;color:var(--ink2);margin-top:.65rem;padding-top:.55rem;border-top:1px dashed var(--ink3);font-style:italic;line-height:1.5}
     .training-totals{display:flex;gap:1.8rem;flex-wrap:wrap;padding:1rem 0;border-top:1px solid var(--ink3);margin-top:.8rem}
@@ -1152,17 +1152,17 @@
       var durMin=_trParseDurMin(t.dur);
       var allure=(t.km&&durMin)?(t.km/(durMin/60)):null;
       var kpis=[
-        {ic:'⏱',lbl:'Durée',val:t.dur||null},
-        {ic:'↔',lbl:'Distance',val:t.km?_trFmtFR(t.km,1)+' km':null},
-        {ic:'⌖',lbl:'Allure',val:allure?_trFmtFR(allure,1)+' km/h':null},
-        {ic:'▲',lbl:'Alt. max',val:t.altMax?t.altMax+' m':null},
-        {ic:'↗',lbl:'Déniv. +',val:t.dp?'+'+t.dp+' m':null},
-        {ic:'↘',lbl:'Déniv. −',val:t.dn?'−'+t.dn+' m':null}
+        {lbl:'Durée',num:t.dur||null,unit:''},
+        {lbl:'Distance',num:t.km?_trFmtFR(t.km,1):null,unit:'km'},
+        {lbl:'Allure',num:allure?_trFmtFR(allure,1):null,unit:'km/h'},
+        {lbl:'Alt. max',num:t.altMax?String(t.altMax):null,unit:'m'},
+        {lbl:'Déniv. +',num:t.dp?'+'+t.dp:null,unit:'m'},
+        {lbl:'Déniv. −',num:t.dn?'−'+t.dn:null,unit:'m'}
       ];
       html+='<div class="tcard">'+
         '<button class="tcard-del" onclick="deleteTraining('+i+')" aria-label="Supprimer">×</button>'+
         '<div class="tcard-head"><span class="tcard-when">'+d.getDate()+' '+MONTHS_FR[d.getMonth()]+' '+d.getFullYear()+'</span><span class="tcard-lieu">'+t.lieu+'</span></div>'+
-        '<div class="kpi-grid">'+kpis.map(function(k){return '<div class="kpi"><span class="kpi-lbl"><span class="kpi-ic">'+k.ic+'</span>'+k.lbl+'</span><span class="kpi-val'+(k.val?'':' muted')+'">'+(k.val||'—')+'</span></div>';}).join('')+'</div>'+
+        '<div class="kpi-grid">'+kpis.map(function(k){return '<div class="kpi"><span class="kpi-lbl">'+k.lbl+'</span><span class="kpi-val'+(k.num?'':' muted')+'">'+(k.num||'—')+(k.num&&k.unit?'<span class="kpi-unit">'+k.unit+'</span>':'')+'</span></div>';}).join('')+'</div>'+
         (t.sac?'<div class="tcard-sac">Sac · '+t.sac+' kg</div>':'')+
         (t.note?'<div class="tcard-note">'+t.note+'</div>':'')+
         '</div>';
