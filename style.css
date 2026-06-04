@@ -61,6 +61,40 @@
 }
 .tlb-overlay.open { opacity: 1; pointer-events: all; }
 
+/* Indicateur de scroll : fade + chevron qui rebondit */
+.tlb-overlay::after {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 90px;
+  background: linear-gradient(to top, var(--ink) 20%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: 1;
+}
+.tlb-overlay.open.scrollable::after { opacity: 1; }
+.tlb-overlay.at-bottom::after { opacity: 0; }
+
+.tlb-scroll-cue {
+  position: fixed;
+  left: 50%; bottom: 1.4rem;
+  width: 18px; height: 18px;
+  border-right: 1.5px solid rgba(255,255,255,.55);
+  border-bottom: 1.5px solid rgba(255,255,255,.55);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+  z-index: 2;
+  animation: tlb-scroll-bounce 1.8s ease-in-out infinite;
+}
+.tlb-overlay.open.scrollable .tlb-scroll-cue { opacity: .7; }
+.tlb-overlay.at-bottom .tlb-scroll-cue { opacity: 0; }
+@keyframes tlb-scroll-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0)   rotate(45deg); }
+  50%      { transform: translateX(-50%) translateY(5px) rotate(45deg); }
+}
+
 .tlb-overlay-link {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(2.5rem, 8vw, 5rem);

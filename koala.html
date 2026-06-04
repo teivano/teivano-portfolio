@@ -19,12 +19,6 @@
       --ink: #E8DBC4;
       --ink2: rgba(232, 219, 196, 0.55);
       --ink3: rgba(232, 219, 196, 0.18);
-      --eucalypt: #7FA38B;
-      --eucalypt-dark: #5E8473;
-      --eucalypt-light: #97B8A0;
-      --trunk: #5a6b5f;
-      --hammock: #E8DBC4;
-      --hammock-dark: #c4b8a0;
     }
 
     html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
@@ -73,23 +67,6 @@
       box-shadow: 0 0 28px rgba(244,236,216,0.22), 0 0 60px rgba(244,236,216,0.1);
       pointer-events: none;
       z-index: 2;
-    }
-
-    /* ── Titre ── */
-    .title {
-      position: fixed;
-      top: 1.45rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 4vw, 1.35rem);
-      font-style: italic;
-      font-weight: 300;
-      letter-spacing: 0.02em;
-      color: var(--ink2);
-      white-space: nowrap;
-      z-index: 10;
-      pointer-events: none;
     }
 
     /* ── Collection ── */
@@ -146,53 +123,25 @@
       100% { transform: scale(1); }
     }
 
-    /* ── Scène : arbres + hamac + koala ── */
-    .scene {
-      position: fixed;
-      left: 50%;
-      bottom: -2vh;
-      transform: translateX(-50%);
-      width: min(100vw, 560px);
-      aspect-ratio: 400/480;
-      max-height: 82vh;
-      z-index: 3;
-      pointer-events: none;
-    }
-    .scene-svg { width: 100%; height: 100%; display: block; }
-
-    .tree-left  { transform-box: fill-box; transform-origin: 50% 100%; animation: sway-l  9.5s ease-in-out infinite alternate; }
-    .tree-right { transform-box: fill-box; transform-origin: 50% 100%; animation: sway-r 10.8s ease-in-out infinite alternate; }
-    @keyframes sway-l { from { transform: rotate(-0.4deg); } to { transform: rotate(0.5deg); } }
-    @keyframes sway-r { from { transform: rotate(0.4deg); }  to { transform: rotate(-0.5deg); } }
-
-    .hammock-group {
-      transform-box: fill-box;
-      transform-origin: 50% 0%;
-      animation: hammock-swing 5.5s ease-in-out infinite alternate;
-    }
-    @keyframes hammock-swing {
-      from { transform: rotate(-1deg); }
-      to   { transform: rotate(1.2deg); }
-    }
-
     /* ── Koala ── */
     .koala-pos {
-      position: absolute;
+      position: fixed;
       left: 50%;
-      top: 73%;
+      top: 62%;
       transform: translate(-50%, -50%);
       pointer-events: none;
+      z-index: 3;
     }
     .koala {
       display: inline-block;
-      font-size: clamp(2.8rem, 11.5vw, 4.8rem);
+      font-size: clamp(3.5rem, 14vw, 5.8rem);
       pointer-events: auto;
       cursor: pointer;
       animation: breathe 3.6s ease-in-out infinite;
       transform-origin: center;
-      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.45));
-      padding: 10px;
-      margin: -10px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+      padding: 12px;
+      margin: -12px;
       line-height: 1;
       font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     }
@@ -207,42 +156,41 @@
       55%  { transform: scaleX(-1) rotate(10deg); }
       100% { transform: scaleX(-1) rotate(0); }
     }
+    .koala.shushing { animation: shushWiggle 0.45s ease-in-out 3; }
+    @keyframes shushWiggle {
+      0%, 100% { transform: scale(1.05) rotate(0); }
+      30%      { transform: scale(1.05) rotate(-5deg); }
+      70%      { transform: scale(1.05) rotate(5deg); }
+    }
 
-    /* ── Bulle "chuuut" ── */
-    .shush-bubble {
-      position: absolute;
-      bottom: 92%;
-      left: 56%;
-      background: var(--hammock);
-      color: var(--bg-deep);
-      padding: 0.4rem 0.85rem 0.45rem;
-      border-radius: 18px;
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-weight: 400;
-      font-size: clamp(0.9rem, 3vw, 1.1rem);
+    /* ── ZZ et !! qui émanent ── */
+    .zzz {
+      position: fixed;
+      transform: translate(-50%, -50%);
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
       opacity: 0;
-      transform: scale(0.4) translateY(12px);
-      transform-origin: bottom left;
-      transition: opacity 0.28s ease, transform 0.4s cubic-bezier(.18,1.4,.4,1);
       pointer-events: none;
-      white-space: nowrap;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-      z-index: 6;
+      z-index: 4;
+      animation: zzz-float 3.6s ease-out forwards;
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35));
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+      line-height: 1;
     }
-    .shush-bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 14px;
-      width: 0; height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 10px solid var(--hammock);
+    @keyframes zzz-float {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      20%  { opacity: 0.85; transform: translate(calc(-50% + 6px), calc(-50% - 20px)) scale(1); }
+      60%  { opacity: 0.85; transform: translate(calc(-50% + 18px), calc(-50% - 60px)) scale(1.05); }
+      100% { opacity: 0; transform: translate(calc(-50% + 30px), calc(-50% - 100px)) scale(1.1); }
     }
-    .shush-bubble.show {
-      opacity: 1;
-      transform: scale(1) translateY(0);
+    .zzz.bang {
+      font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+      animation: bang-pop 1.5s ease-out forwards;
+    }
+    @keyframes bang-pop {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+      18%  { opacity: 1; transform: translate(-50%, calc(-50% - 18px)) scale(1.25); }
+      70%  { opacity: 1; transform: translate(-50%, calc(-50% - 38px)) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, calc(-50% - 55px)) scale(0.9); }
     }
 
     /* ── Bulles de rêves ── */
@@ -278,25 +226,20 @@
       animation: caught 0.45s cubic-bezier(.5,1.6,.5,1) forwards;
       pointer-events: none;
     }
-    .dream.poof {
-      animation: poof 0.55s ease-out forwards;
-      pointer-events: none;
-    }
 
+    /* La fin de floatUp = "éclatement" de la bulle près du haut */
     @keyframes floatUp {
       0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
-      8%   { transform: translate(-50%, calc(-50% - 30px)) scale(1); opacity: 1; }
-      30%  { transform: translate(calc(-50% + var(--sway, 14px)), calc(-50% - 28vh)) scale(1); opacity: 1; }
-      60%  { transform: translate(calc(-50% - var(--sway, 14px)), calc(-50% - 58vh)) scale(1); opacity: 1; }
-      100% { transform: translate(-50%, calc(-50% - 110vh)) scale(1); opacity: 0.95; }
+      6%   { transform: translate(-50%, calc(-50% - 25px)) scale(1); opacity: 1; }
+      28%  { transform: translate(calc(-50% + var(--sway, 14px)), calc(-50% - 20vh)) scale(1); opacity: 1; }
+      55%  { transform: translate(calc(-50% - var(--sway, 14px)), calc(-50% - 40vh)) scale(1); opacity: 1; }
+      82%  { transform: translate(-50%, calc(-50% - 55vh)) scale(1); opacity: 1; }
+      89%  { transform: translate(-50%, calc(-50% - 55vh)) scale(1.6); opacity: 0.75; filter: blur(1px); }
+      100% { transform: translate(-50%, calc(-50% - 55vh)) scale(2.1); opacity: 0; filter: blur(5px); }
     }
     @keyframes caught {
       0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
       100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
-    }
-    @keyframes poof {
-      0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(0); }
-      100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; filter: blur(4px); }
     }
 
     /* ── Particules de capture ── */
@@ -403,7 +346,6 @@
 
     @media (max-height: 620px) {
       .collection { top: 3.5rem; }
-      .title { font-size: 0.9rem; }
       .hint { font-size: 0.55rem; }
     }
   </style>
@@ -412,52 +354,13 @@
   <div class="stars" aria-hidden="true"></div>
   <div class="moon" aria-hidden="true"></div>
 
-  <div class="title">les rêves du koala</div>
-
   <div class="collection" id="collection" aria-label="Rêves collectés"></div>
 
-  <div class="scene" aria-hidden="true">
-    <svg class="scene-svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMax meet">
-      <!-- Eucalyptus gauche -->
-      <g class="tree-left">
-        <path d="M 72 480 Q 66 320 70 140" stroke="#5a6b5f" stroke-width="13" fill="none" stroke-linecap="round"/>
-        <ellipse cx="70"  cy="130" rx="48" ry="58" fill="#7FA38B"/>
-        <ellipse cx="42"  cy="95"  rx="32" ry="38" fill="#97B8A0" opacity=".85"/>
-        <ellipse cx="98"  cy="98"  rx="30" ry="36" fill="#5E8473" opacity=".9"/>
-        <ellipse cx="60"  cy="178" rx="36" ry="28" fill="#7FA38B" opacity=".8"/>
-      </g>
-      <!-- Eucalyptus droit -->
-      <g class="tree-right">
-        <path d="M 328 480 Q 334 320 330 140" stroke="#5a6b5f" stroke-width="13" fill="none" stroke-linecap="round"/>
-        <ellipse cx="330" cy="130" rx="48" ry="58" fill="#7FA38B"/>
-        <ellipse cx="358" cy="95"  rx="32" ry="38" fill="#97B8A0" opacity=".85"/>
-        <ellipse cx="302" cy="98"  rx="30" ry="36" fill="#5E8473" opacity=".9"/>
-        <ellipse cx="340" cy="178" rx="36" ry="28" fill="#7FA38B" opacity=".8"/>
-      </g>
-      <!-- Hamac -->
-      <g class="hammock-group">
-        <path d="M 80 240 L 95 272"  stroke="#E8DBC4" stroke-width="2" opacity=".7" fill="none"/>
-        <path d="M 320 240 L 305 272" stroke="#E8DBC4" stroke-width="2" opacity=".7" fill="none"/>
-        <path d="M 95 272 Q 200 288, 305 272 Q 200 412, 95 272 Z" fill="#E8DBC4"/>
-        <path d="M 95 272 Q 200 288, 305 272" stroke="#c4b8a0" stroke-width="1.5" fill="none" opacity=".55"/>
-        <g stroke="#c4b8a0" stroke-width="1" opacity=".4" fill="none">
-          <path d="M 120 284 Q 122 322, 122 352"/>
-          <path d="M 150 288 Q 152 342, 152 382"/>
-          <path d="M 180 292 Q 182 352, 182 398"/>
-          <path d="M 220 292 Q 218 352, 218 398"/>
-          <path d="M 250 288 Q 248 342, 248 382"/>
-          <path d="M 280 284 Q 278 322, 278 352"/>
-        </g>
-      </g>
-    </svg>
-
-    <div class="koala-pos">
-      <span class="koala" id="koala" role="button" aria-label="Koala endormi">🐨</span>
-      <div class="shush-bubble" id="shushBubble">chuuut…</div>
-    </div>
+  <div class="koala-pos">
+    <span class="koala" id="koala" role="button" aria-label="Koala endormi">🐨</span>
   </div>
 
-  <div class="hint" id="hint">tape les rêves · pas le koala</div>
+  <div class="hint" id="hint">attrape les rêves du koala</div>
 
   <div class="end-msg" id="endMsg" role="dialog" aria-modal="true">
     <p class="end-msg-title">Tu connais maintenant ses rêves.</p>
@@ -478,20 +381,29 @@
         { id: 'tlb',      text:  'TLB' }
       ];
 
-      const koalaEl      = document.getElementById('koala');
-      const shushEl      = document.getElementById('shushBubble');
-      const colEl        = document.getElementById('collection');
-      const hintEl       = document.getElementById('hint');
-      const endEl        = document.getElementById('endMsg');
-      const endStatsEl   = document.getElementById('endStats');
-      const endReplayEl  = document.getElementById('endReplay');
+      const koalaEl     = document.getElementById('koala');
+      const colEl       = document.getElementById('collection');
+      const hintEl      = document.getElementById('hint');
+      const endEl       = document.getElementById('endMsg');
+      const endStatsEl  = document.getElementById('endStats');
+      const endReplayEl = document.getElementById('endReplay');
 
       let found      = new Set();
       let live       = [];
       let frozen     = false;
       let stopped    = false;
       let spawnTimer = 0;
+      let zzzTimer   = 0;
       let stats      = { caught: 0, missed: 0, shushed: 0 };
+
+      /* ── Position de la tête du koala ── */
+      function koalaHead() {
+        const rect = koalaEl.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height * 0.18
+        };
+      }
 
       /* ── Slots de collection ── */
       function buildCollection() {
@@ -528,9 +440,9 @@
         if (frozen) { scheduleNext(); return; }
 
         const dream = pickDream();
-        const rect  = koalaEl.getBoundingClientRect();
-        const startX = rect.left + rect.width / 2 + (Math.random() * 30 - 15);
-        const startY = rect.top + 10;
+        const head  = koalaHead();
+        const startX = head.x + (Math.random() * 30 - 15);
+        const startY = head.y;
 
         const el = document.createElement('div');
         el.className = 'dream';
@@ -596,14 +508,12 @@
         }
       }
 
-      /* ── Raté ── */
+      /* ── Raté : éclatement déjà inclus dans floatUp, on nettoie ── */
       function onMissed(item) {
         const idx = live.indexOf(item);
         if (idx >= 0) live.splice(idx, 1);
         stats.missed++;
-
-        item.el.classList.add('poof');
-        setTimeout(function () { item.el.remove(); }, 560);
+        item.el.remove();
 
         koalaEl.classList.remove('turning');
         void koalaEl.offsetWidth;
@@ -611,20 +521,59 @@
         setTimeout(function () { koalaEl.classList.remove('turning'); }, 860);
       }
 
-      /* ── Chuuut ── */
+      /* ── ZZ (sommeil) ── */
+      function spawnZzz() {
+        clearTimeout(zzzTimer);
+        if (stopped || frozen) return;
+        const head = koalaHead();
+        const z = document.createElement('div');
+        z.className = 'zzz';
+        z.textContent = '💤';
+        z.style.left = (head.x + (Math.random() * 16 - 4)) + 'px';
+        z.style.top  = (head.y - 6) + 'px';
+        document.body.appendChild(z);
+        setTimeout(function () { z.remove(); }, 3700);
+        zzzTimer = setTimeout(spawnZzz, 1500 + Math.random() * 800);
+      }
+
+      /* ── !! (réveil) ── */
+      function spawnBangs(count) {
+        const head = koalaHead();
+        for (let i = 0; i < count; i++) {
+          setTimeout(function () {
+            const b = document.createElement('div');
+            b.className = 'zzz bang';
+            b.textContent = '❗';
+            b.style.left = (head.x + (Math.random() * 40 - 20)) + 'px';
+            b.style.top  = (head.y - 10) + 'px';
+            document.body.appendChild(b);
+            setTimeout(function () { b.remove(); }, 1600);
+          }, i * 130);
+        }
+      }
+
+      /* ── Chuuut (tap koala) ── */
       function triggerShush() {
         if (frozen || stopped) return;
         frozen = true;
         stats.shushed++;
         document.body.classList.add('frozen');
-        shushEl.classList.add('show');
         clearTimeout(spawnTimer);
+        clearTimeout(zzzTimer);
+
+        koalaEl.classList.remove('shushing');
+        void koalaEl.offsetWidth;
+        koalaEl.classList.add('shushing');
+
+        spawnBangs(3);
+        setTimeout(function () { spawnBangs(2); }, 500);
 
         setTimeout(function () {
           frozen = false;
           document.body.classList.remove('frozen');
-          shushEl.classList.remove('show');
+          koalaEl.classList.remove('shushing');
           scheduleNext();
+          spawnZzz();
         }, 2000);
       }
 
@@ -664,6 +613,7 @@
       function triggerEnd() {
         stopped = true;
         clearTimeout(spawnTimer);
+        clearTimeout(zzzTimer);
 
         const star = document.createElement('div');
         star.className = 'shooting-star';
@@ -689,7 +639,6 @@
         stopped = false;
         frozen = false;
         document.body.classList.remove('frozen');
-        shushEl.classList.remove('show');
         live.forEach(function (item) { item.el.remove(); });
         live = [];
         buildCollection();
@@ -697,18 +646,22 @@
         hintEl.classList.remove('hidden');
         setTimeout(function () { hintEl.classList.add('hidden'); }, 8000);
         scheduleNext();
+        spawnZzz();
       });
 
       /* ── Init ── */
       buildCollection();
       setTimeout(spawnBubble, 1400);
+      setTimeout(spawnZzz, 700);
       setTimeout(function () { hintEl.classList.add('hidden'); }, 8000);
 
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) {
           clearTimeout(spawnTimer);
+          clearTimeout(zzzTimer);
         } else if (!stopped && !frozen) {
           scheduleNext();
+          spawnZzz();
         }
       });
     })();

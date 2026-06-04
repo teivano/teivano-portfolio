@@ -55,6 +55,18 @@
       animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1.2s both;
     }
 
+    /* ── Version bas-droite ── */
+    .tlb-version {
+      position: fixed; bottom: 1.5rem; right: 1.8rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(.55rem, 1vw, .68rem);
+      font-weight: 300;
+      letter-spacing: .22em;
+      color: var(--ink2);
+      z-index: 10;
+      animation: tlbFadeUp .9s cubic-bezier(.16,1,.3,1) 1.3s both;
+    }
+
   </style>
 </head>
 <body>
@@ -83,6 +95,9 @@
   <!-- Horloge -->
   <div class="tlb-clock" id="tlbClock" aria-live="off" aria-label="Heure"></div>
 
+  <!-- Version -->
+  <div class="tlb-version" id="tlbVersion" aria-label="Version du site"></div>
+
   <!-- Stripes -->
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
@@ -94,6 +109,7 @@
     <h1 class="tlb-logo">TLB</h1>
   </main>
 
+  <script src="/version.js"></script>
   <script>
     // Stripes
     (function(){
@@ -126,6 +142,12 @@
         el.textContent=h+':'+m+':'+s+' · '+dd+' '+MOIS[d.getMonth()];
       }
       tick(); setInterval(tick,1000);
+    })();
+
+    // Version
+    (function(){
+      var el=document.getElementById('tlbVersion');
+      if (el) el.textContent = (window.SITE_VERSION || 'dev');
     })();
 
   </script>

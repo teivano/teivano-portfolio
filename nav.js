@@ -13,6 +13,13 @@
     '.ham.open .ham-line:nth-child(3){transform:translateY(-8.25px) rotate(-45deg);}',
     '.tlb-overlay{position:fixed;inset:0;background:var(--ink,#6B1A1A);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:clamp(5rem,12vh,8rem) clamp(2rem,8vw,8rem) clamp(3rem,8vh,6rem);opacity:0;pointer-events:none;transition:opacity .35s ease;}',
     '.tlb-overlay.open{opacity:1;pointer-events:all;}',
+    '.tlb-overlay::after{content:"";position:fixed;left:0;right:0;bottom:0;height:90px;background:linear-gradient(to top,var(--ink,#6B1A1A) 20%,transparent);pointer-events:none;opacity:0;transition:opacity .3s ease;z-index:1;}',
+    '.tlb-overlay.open.scrollable::after{opacity:1;}',
+    '.tlb-overlay.at-bottom::after{opacity:0;}',
+    '.tlb-scroll-cue{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%);width:18px;height:18px;border-right:1.5px solid rgba(255,255,255,.55);border-bottom:1.5px solid rgba(255,255,255,.55);transform-origin:center;pointer-events:none;opacity:0;transition:opacity .3s ease;z-index:2;animation:tlb-scroll-bounce 1.8s ease-in-out infinite;}',
+    '.tlb-overlay.open.scrollable .tlb-scroll-cue{opacity:.7;}',
+    '.tlb-overlay.at-bottom .tlb-scroll-cue{opacity:0;}',
+    '@keyframes tlb-scroll-bounce{0%,100%{transform:translateX(-50%) translateY(0) rotate(45deg);}50%{transform:translateX(-50%) translateY(5px) rotate(45deg);}}',
     '.tlb-nav{width:100%;max-width:680px;margin:0 auto;}',
     '.tlb-nav-item{display:flex;flex-direction:column;gap:.45rem;padding:1.8rem 0;border-top:1px solid rgba(255,255,255,.12);text-decoration:none;transition:opacity .2s;}',
     '.tlb-nav-item:last-child{border-bottom:1px solid rgba(255,255,255,.12);}',
@@ -37,7 +44,7 @@
     { href:'/evenements.html', url:'/evenements.html', title:'Événements',     desc:'Agenda culturel · Rennes · OpenAgenda' },
     { href:'#',                pin:'https://w.teivano.fr', title:'Workout Tracker', desc:'Suivi d\'entraînement personnel' },
     { href:'#',                pin:'/prepa-gr20.html',  pinHash:'20ee235b5de5b36244da6f9aa1cbdd032a90867ba92276ccc8c38c0d0d57fcec', title:'Prépa GR20', desc:'Starter pack · matériel · itinéraire · météo' },
-    { href:'#',                pin:'/koala.html',      pinHash:'07aa2015d482734372d4a9a1c07c8290198526b9ce1fd2e2dcff4d05f6792a29', title:'Koala', emoji:'🐨', desc:'Accès protégé · code à 4 chiffres' },
+    { href:'#',                pin:'/koala.html',      url:'/koala.html', pinHash:'07aa2015d482734372d4a9a1c07c8290198526b9ce1fd2e2dcff4d05f6792a29', title:'', emoji:'🐨', desc:'Accès protégé · code à 4 chiffres' },
   ];
 
   /* ── Hamburger ── */
@@ -84,13 +91,31 @@
   });
 
   overlay.appendChild(nav);
+
+  /* ── Indicateur de scroll (chevron + fade) ── */
+  var scrollCue = document.createElement('div');
+  scrollCue.className = 'tlb-scroll-cue';
+  scrollCue.setAttribute('aria-hidden', 'true');
+  overlay.appendChild(scrollCue);
+
   document.body.appendChild(overlay);
+
+  function checkScroll() {
+    var needs = overlay.scrollHeight > overlay.clientHeight + 6;
+    overlay.classList.toggle('scrollable', needs);
+    var atBottom = overlay.scrollTop + overlay.clientHeight >= overlay.scrollHeight - 6;
+    overlay.classList.toggle('at-bottom', atBottom);
+  }
+  overlay.addEventListener('scroll', checkScroll, { passive: true });
+  window.addEventListener('resize', checkScroll);
 
   /* ── Logique open / close ── */
   function openNav() {
     overlay.classList.add('open');
     ham.classList.add('open');
     ham.setAttribute('aria-expanded', 'true');
+    overlay.scrollTop = 0;
+    requestAnimationFrame(checkScroll);
   }
   function closeNav() {
     overlay.classList.remove('open');

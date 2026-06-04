@@ -1,0 +1,31 @@
+#!/bin/bash
+# Bump SITE_VERSION dans version.js — 2026.MMxx (XX 01..99, reset au changement de mois)
+# Active via : git config core.hooksPath .githooks
+
+set +e
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -z "$REPO_ROOT" ] && exit 0
+
+FILE="$REPO_ROOT/version.js"
+[ ! -f "$FILE" ] && exit 0
+
+CURRENT=$(grep -oE "'[0-9]{4}\.[0-9]{4}'" "$FILE" | tr -d "'" | head -1)
+[ -z "$CURRENT" ] && exit 0
+
+NOW_MONTH=$(date +%Y.%m)
+CUR_MONTH="${CURRENT:0:7}"
+CUR_NUM="${CURRENT:7:2}"
+
+if [ "$NOW_MONTH" = "$CUR_MONTH" ]; then
+  NEW_NUM=$(printf "%02d" $((10#$CUR_NUM + 1)))
+  NEW="${CUR_MONTH}${NEW_NUM}"
+else
+  NEW="${NOW_MONTH}01"
+fi
+
+# macOS sed compat
+sed -i.bak "s/'${CURRENT}'/'${NEW}'/" "$FILE" && rm -f "$FILE.bak"
+git add "$FILE"
+
+exit 0
