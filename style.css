@@ -42,7 +42,7 @@
   transform-origin: center;
   transition: background .3s ease, transform .3s cubic-bezier(.16,1,.3,1), opacity .25s ease;
 }
-.ham.open .ham-line               { background: var(--bg); }
+.ham.open .ham-line               { background: var(--overlay-fg, var(--bg)); }
 .ham.open .ham-line:nth-child(1)  { transform: translateY(7.25px) rotate(45deg); }
 .ham.open .ham-line:nth-child(2)  { opacity: 0; transform: scaleX(0); }
 .ham.open .ham-line:nth-child(3)  { transform: translateY(-8.25px) rotate(-45deg); }
@@ -50,7 +50,7 @@
 /* ── Overlay nav ── */
 .tlb-overlay {
   position: fixed; inset: 0;
-  background: var(--ink);
+  background: var(--overlay-bg, var(--ink));
   z-index: 1000;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -67,7 +67,7 @@
   position: fixed;
   left: 0; right: 0; bottom: 0;
   height: 90px;
-  background: linear-gradient(to top, var(--ink) 20%, transparent);
+  background: linear-gradient(to top, var(--overlay-bg, var(--ink)) 20%, transparent);
   pointer-events: none;
   opacity: 0;
   transition: opacity .3s ease;
@@ -131,7 +131,7 @@
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: clamp(2rem, 5.5vw, 3.8rem);
   font-weight: 300;
-  color: var(--bg);
+  color: var(--overlay-fg, var(--bg));
   letter-spacing: -.02em;
   line-height: 1;
 }

@@ -185,39 +185,6 @@
   <!-- Map -->
   <div id="map"></div>
 
-  <!-- Header -->
-  <!-- Overlay nav -->
-  <div class="tlb-overlay" id="tlbOverlay" role="dialog" aria-modal="true" aria-label="Navigation">
-    <nav class="tlb-nav">
-      <a class="tlb-nav-item" href="/">
-        <span class="tlb-nav-title">Accueil</span>
-        <span class="tlb-nav-desc">TLB · Portfolio</span>
-      </a>
-      <a class="tlb-nav-item" href="/transports.html">
-        <span class="tlb-nav-title">Métros</span>
-        <span class="tlb-nav-desc">Lignes A &amp; B · temps réel</span>
-      </a>
-      <a class="tlb-nav-item" href="/demo-api.html">
-        <span class="tlb-nav-title">Tests API</span>
-        <span class="tlb-nav-desc">APIs ouvertes — transports, carburant, satellites</span>
-      </a>
-      <a class="tlb-nav-item" href="/evenements.html">
-        <span class="tlb-nav-title">Événements</span>
-        <span class="tlb-nav-desc">Agenda culturel · Rennes · OpenAgenda</span>
-      </a>
-      <a class="tlb-nav-item" href="#" data-pin="https://w.teivano.fr">
-        <span class="tlb-nav-title">Workout Tracker</span>
-        <span class="tlb-nav-desc">Suivi d'entraînement personnel</span>
-      </a>
-    </nav>
-  </div>
-
-  <button class="ham" id="hamBtn" aria-label="Menu" aria-expanded="false">
-    <span class="ham-line"></span>
-    <span class="ham-line"></span>
-    <span class="ham-line"></span>
-  </button>
-
   <header class="t-header" role="banner">
     <span class="t-title">Métros · Rennes</span>
     <span class="t-sep"></span>
@@ -609,17 +576,6 @@
   </script>
 
   <script>
-    // Nav overlay
-    (function(){
-      var overlay=document.getElementById('tlbOverlay');
-      var hamBtn=document.getElementById('hamBtn');
-      function openNav(){ overlay.classList.add('open'); hamBtn.classList.add('open'); hamBtn.setAttribute('aria-expanded','true'); }
-      function closeNav(){ overlay.classList.remove('open'); hamBtn.classList.remove('open'); hamBtn.setAttribute('aria-expanded','false'); }
-      hamBtn.addEventListener('click', function(){ hamBtn.classList.contains('open') ? closeNav() : openNav(); });
-      overlay.addEventListener('click', function(e){ if(e.target===overlay) closeNav(); });
-      document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeNav(); });
-    })();
-
     // Stripes
     (function(){
       var el=document.getElementById('stripes');
