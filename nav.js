@@ -11,14 +11,15 @@
     '.ham.open .ham-line:nth-child(1){transform:translateY(7.25px) rotate(45deg);}',
     '.ham.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0);}',
     '.ham.open .ham-line:nth-child(3){transform:translateY(-8.25px) rotate(-45deg);}',
-    '.tlb-overlay{position:fixed;inset:0;background:var(--ink,#6B1A1A);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .35s ease;}',
+    '.tlb-overlay{position:fixed;inset:0;background:var(--ink,#6B1A1A);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:clamp(5rem,12vh,8rem) clamp(2rem,8vw,8rem) clamp(3rem,8vh,6rem);opacity:0;pointer-events:none;transition:opacity .35s ease;}',
     '.tlb-overlay.open{opacity:1;pointer-events:all;}',
-    '.tlb-nav{width:100%;max-width:680px;padding:0 2rem;}',
+    '.tlb-nav{width:100%;max-width:680px;margin:0 auto;}',
     '.tlb-nav-item{display:flex;flex-direction:column;gap:.45rem;padding:1.8rem 0;border-top:1px solid rgba(255,255,255,.12);text-decoration:none;transition:opacity .2s;}',
     '.tlb-nav-item:last-child{border-bottom:1px solid rgba(255,255,255,.12);}',
     '.tlb-nav-item:hover{opacity:.65;}',
     '.tlb-nav-item.current{opacity:.35;pointer-events:none;}',
     '.tlb-nav-title{font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(2rem,5.5vw,3.8rem);font-weight:300;color:var(--bg,#F5F0E8);letter-spacing:-.02em;line-height:1;}',
+    '.tlb-nav-emoji{display:inline-block;margin-right:.25em;font-style:normal;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}',
     '.tlb-nav-desc{font-family:"Space Grotesk",sans-serif;font-size:.65rem;font-weight:300;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.38);}',
   ].join('');
 
@@ -36,6 +37,7 @@
     { href:'/evenements.html', url:'/evenements.html', title:'Événements',     desc:'Agenda culturel · Rennes · OpenAgenda' },
     { href:'#',                pin:'https://w.teivano.fr', title:'Workout Tracker', desc:'Suivi d\'entraînement personnel' },
     { href:'#',                pin:'/prepa-gr20.html',  pinHash:'20ee235b5de5b36244da6f9aa1cbdd032a90867ba92276ccc8c38c0d0d57fcec', title:'Prépa GR20', desc:'Starter pack · matériel · itinéraire · météo' },
+    { href:'#',                pin:'/koala.html',      pinHash:'07aa2015d482734372d4a9a1c07c8290198526b9ce1fd2e2dcff4d05f6792a29', title:'Koala', emoji:'🐨', desc:'Accès protégé · code à 4 chiffres' },
   ];
 
   /* ── Hamburger ── */
@@ -73,8 +75,9 @@
       a.href = link.href;
     }
 
+    var emojiHtml = link.emoji ? '<span class="tlb-nav-emoji" aria-hidden="true">' + link.emoji + '</span>' : '';
     a.innerHTML =
-      '<span class="tlb-nav-title">' + link.title + '</span>' +
+      '<span class="tlb-nav-title">' + emojiHtml + link.title + '</span>' +
       '<span class="tlb-nav-desc">'  + link.desc  + '</span>';
 
     nav.appendChild(a);

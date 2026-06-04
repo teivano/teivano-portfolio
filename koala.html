@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Koala — TLB</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='75' font-size='72' text-anchor='middle'%3E%F0%9F%90%A8%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&family=Great+Vibes&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1F2540;
+      --bg-deep: #161A2F;
+      --bg-top: #2B2A4F;
+      --ink: #E8DBC4;
+      --ink2: rgba(232, 219, 196, 0.55);
+      --ink3: rgba(232, 219, 196, 0.18);
+      --eucalypt: #7FA38B;
+      --eucalypt-dark: #5E8473;
+      --eucalypt-light: #97B8A0;
+      --trunk: #5a6b5f;
+      --hammock: #E8DBC4;
+      --hammock-dark: #c4b8a0;
+    }
+
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: var(--ink);
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      background:
+        radial-gradient(ellipse at top, var(--bg-top) 0%, transparent 55%),
+        radial-gradient(ellipse at bottom, var(--bg-deep) 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 50%, var(--bg-deep) 100%);
+    }
+
+    /* ── Étoiles ── */
+    .stars {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(1px 1px at 10% 12%, rgba(232,219,196,.6), transparent 60%),
+        radial-gradient(1px 1px at 22% 8%,  rgba(232,219,196,.4), transparent 60%),
+        radial-gradient(1.5px 1.5px at 40% 15%, rgba(232,219,196,.8), transparent 60%),
+        radial-gradient(1px 1px at 65% 6%,  rgba(232,219,196,.5), transparent 60%),
+        radial-gradient(1px 1px at 80% 18%, rgba(232,219,196,.7), transparent 60%),
+        radial-gradient(1px 1px at 92% 10%, rgba(232,219,196,.4), transparent 60%),
+        radial-gradient(1px 1px at 15% 24%, rgba(232,219,196,.35), transparent 60%),
+        radial-gradient(1.5px 1.5px at 55% 28%, rgba(232,219,196,.6), transparent 60%),
+        radial-gradient(1px 1px at 78% 32%, rgba(232,219,196,.4), transparent 60%),
+        radial-gradient(1px 1px at 32% 36%, rgba(232,219,196,.35), transparent 60%);
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { 0% { opacity: .55; } 100% { opacity: 1; } }
+
+    /* ── Lune ── */
+    .moon {
+      position: fixed;
+      top: clamp(2rem, 7vh, 5rem);
+      right: clamp(2rem, 10vw, 6rem);
+      width: clamp(44px, 9vw, 70px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 32%, #f4ecd8, #d6c8a8 70%, #b8aa86);
+      box-shadow: 0 0 28px rgba(244,236,216,0.22), 0 0 60px rgba(244,236,216,0.1);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── Titre ── */
+    .title {
+      position: fixed;
+      top: 1.45rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1rem, 4vw, 1.35rem);
+      font-style: italic;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--ink2);
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* ── Collection ── */
+    .collection {
+      position: fixed;
+      top: clamp(3.8rem, 9.5vh, 5.2rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: clamp(0.3rem, 1.4vw, 0.55rem);
+      z-index: 10;
+      padding: 0 1rem;
+      pointer-events: none;
+    }
+    .col-slot {
+      width: clamp(32px, 8.5vw, 42px);
+      height: clamp(32px, 8.5vw, 42px);
+      border: 1.5px solid var(--ink3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.55;
+      background: rgba(232,219,196,0.02);
+      transition: all 0.5s cubic-bezier(.16,1,.3,1);
+    }
+    .col-icon {
+      display: block;
+      font-size: clamp(0.95rem, 3.2vw, 1.2rem);
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    .col-icon.col-tlb {
+      font-family: 'Great Vibes', cursive;
+      font-size: clamp(1.1rem, 3.8vw, 1.55rem);
+      transform: scale(0.3) translateY(-0.05em);
+    }
+    .col-slot.found {
+      opacity: 1;
+      border-color: rgba(232,219,196,0.55);
+      background: rgba(232,219,196,0.1);
+      transform: scale(1.08);
+    }
+    .col-slot.found .col-icon {
+      opacity: 1;
+      transform: scale(1);
+      animation: pop 0.65s cubic-bezier(.5,1.6,.5,1.05);
+    }
+    .col-slot.found .col-icon.col-tlb {
+      transform: scale(1) translateY(-0.05em);
+    }
+    @keyframes pop {
+      0%   { transform: scale(0.3); opacity: 0; }
+      55%  { transform: scale(1.35); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    /* ── Scène : arbres + hamac + koala ── */
+    .scene {
+      position: fixed;
+      left: 50%;
+      bottom: -2vh;
+      transform: translateX(-50%);
+      width: min(100vw, 560px);
+      aspect-ratio: 400/480;
+      max-height: 82vh;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .scene-svg { width: 100%; height: 100%; display: block; }
+
+    .tree-left  { transform-box: fill-box; transform-origin: 50% 100%; animation: sway-l  9.5s ease-in-out infinite alternate; }
+    .tree-right { transform-box: fill-box; transform-origin: 50% 100%; animation: sway-r 10.8s ease-in-out infinite alternate; }
+    @keyframes sway-l { from { transform: rotate(-0.4deg); } to { transform: rotate(0.5deg); } }
+    @keyframes sway-r { from { transform: rotate(0.4deg); }  to { transform: rotate(-0.5deg); } }
+
+    .hammock-group {
+      transform-box: fill-box;
+      transform-origin: 50% 0%;
+      animation: hammock-swing 5.5s ease-in-out infinite alternate;
+    }
+    @keyframes hammock-swing {
+      from { transform: rotate(-1deg); }
+      to   { transform: rotate(1.2deg); }
+    }
+
+    /* ── Koala ── */
+    .koala-pos {
+      position: absolute;
+      left: 50%;
+      top: 73%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .koala {
+      display: inline-block;
+      font-size: clamp(2.8rem, 11.5vw, 4.8rem);
+      pointer-events: auto;
+      cursor: pointer;
+      animation: breathe 3.6s ease-in-out infinite;
+      transform-origin: center;
+      filter: drop-shadow(0 3px 8px rgba(0,0,0,0.45));
+      padding: 10px;
+      margin: -10px;
+      line-height: 1;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.97); }
+      50%      { transform: scale(1.03); }
+    }
+    .koala.turning { animation: turnOver 0.85s ease-in-out; }
+    @keyframes turnOver {
+      0%   { transform: scaleX(1)  rotate(0); }
+      30%  { transform: scaleX(1)  rotate(-14deg); }
+      55%  { transform: scaleX(-1) rotate(10deg); }
+      100% { transform: scaleX(-1) rotate(0); }
+    }
+
+    /* ── Bulle "chuuut" ── */
+    .shush-bubble {
+      position: absolute;
+      bottom: 92%;
+      left: 56%;
+      background: var(--hammock);
+      color: var(--bg-deep);
+      padding: 0.4rem 0.85rem 0.45rem;
+      border-radius: 18px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(0.9rem, 3vw, 1.1rem);
+      opacity: 0;
+      transform: scale(0.4) translateY(12px);
+      transform-origin: bottom left;
+      transition: opacity 0.28s ease, transform 0.4s cubic-bezier(.18,1.4,.4,1);
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      z-index: 6;
+    }
+    .shush-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 14px;
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 10px solid var(--hammock);
+    }
+    .shush-bubble.show {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    /* ── Bulles de rêves ── */
+    .dream {
+      position: fixed;
+      transform: translate(-50%, -50%);
+      font-size: clamp(2rem, 7vw, 2.6rem);
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      z-index: 5;
+      animation: floatUp 6.8s linear forwards;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35));
+      will-change: transform, opacity;
+      padding: 14px;
+      line-height: 1;
+      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    }
+    .dream-tlb {
+      font-family: 'Great Vibes', cursive;
+      font-size: clamp(2.6rem, 9vw, 3.6rem);
+      color: var(--ink);
+      letter-spacing: 0.02em;
+      text-shadow: 0 0 14px rgba(232,219,196,0.45), 0 2px 6px rgba(0,0,0,0.3);
+      display: inline-block;
+      line-height: 1;
+    }
+    body.frozen .dream {
+      animation-play-state: paused;
+      pointer-events: none;
+    }
+    .dream.caught {
+      animation: caught 0.45s cubic-bezier(.5,1.6,.5,1) forwards;
+      pointer-events: none;
+    }
+    .dream.poof {
+      animation: poof 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+      8%   { transform: translate(-50%, calc(-50% - 30px)) scale(1); opacity: 1; }
+      30%  { transform: translate(calc(-50% + var(--sway, 14px)), calc(-50% - 28vh)) scale(1); opacity: 1; }
+      60%  { transform: translate(calc(-50% - var(--sway, 14px)), calc(-50% - 58vh)) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, calc(-50% - 110vh)) scale(1); opacity: 0.95; }
+    }
+    @keyframes caught {
+      0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+    }
+    @keyframes poof {
+      0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(0); }
+      100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; filter: blur(4px); }
+    }
+
+    /* ── Particules de capture ── */
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      font-size: 0.85rem;
+      color: var(--ink);
+      z-index: 6;
+      will-change: transform, opacity;
+      text-shadow: 0 0 6px rgba(232,219,196,0.6);
+    }
+
+    /* ── Indice ── */
+    .hint {
+      position: fixed;
+      bottom: 1.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      opacity: 1;
+      transition: opacity 0.8s ease;
+      z-index: 10;
+      pointer-events: none;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .hint.hidden { opacity: 0; }
+
+    /* ── Fin de partie ── */
+    .end-msg {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      background: rgba(22, 26, 47, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease;
+      z-index: 50;
+      text-align: center;
+      padding: 2rem;
+    }
+    .end-msg.show { opacity: 1; pointer-events: all; }
+    .end-msg-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(1.6rem, 6vw, 2.4rem);
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      line-height: 1.3;
+      max-width: 22ch;
+    }
+    .end-msg-stats {
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink2);
+    }
+    .end-replay {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink);
+      border: 1px solid var(--ink3);
+      background: transparent;
+      padding: 0.85rem 1.7rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .end-replay:hover, .end-replay:active {
+      background: rgba(232,219,196,0.1);
+      border-color: rgba(232,219,196,0.45);
+    }
+
+    /* ── Étoile filante ── */
+    .shooting-star {
+      position: fixed;
+      top: 12%; left: -12%;
+      width: 120px; height: 2px;
+      background: linear-gradient(to right, transparent, rgba(232,219,196,.85) 70%, #fff);
+      border-radius: 2px;
+      transform: rotate(20deg);
+      pointer-events: none;
+      animation: shoot 1.8s ease-out forwards;
+      z-index: 40;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.7));
+    }
+    @keyframes shoot {
+      0%   { transform: translate(0, 0) rotate(20deg); opacity: 0; }
+      12%  { opacity: 1; }
+      100% { transform: translate(140vw, 50vh) rotate(20deg); opacity: 0; }
+    }
+
+    @media (max-height: 620px) {
+      .collection { top: 3.5rem; }
+      .title { font-size: 0.9rem; }
+      .hint { font-size: 0.55rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="moon" aria-hidden="true"></div>
+
+  <div class="title">les rêves du koala</div>
+
+  <div class="collection" id="collection" aria-label="Rêves collectés"></div>
+
+  <div class="scene" aria-hidden="true">
+    <svg class="scene-svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMax meet">
+      <!-- Eucalyptus gauche -->
+      <g class="tree-left">
+        <path d="M 72 480 Q 66 320 70 140" stroke="#5a6b5f" stroke-width="13" fill="none" stroke-linecap="round"/>
+        <ellipse cx="70"  cy="130" rx="48" ry="58" fill="#7FA38B"/>
+        <ellipse cx="42"  cy="95"  rx="32" ry="38" fill="#97B8A0" opacity=".85"/>
+        <ellipse cx="98"  cy="98"  rx="30" ry="36" fill="#5E8473" opacity=".9"/>
+        <ellipse cx="60"  cy="178" rx="36" ry="28" fill="#7FA38B" opacity=".8"/>
+      </g>
+      <!-- Eucalyptus droit -->
+      <g class="tree-right">
+        <path d="M 328 480 Q 334 320 330 140" stroke="#5a6b5f" stroke-width="13" fill="none" stroke-linecap="round"/>
+        <ellipse cx="330" cy="130" rx="48" ry="58" fill="#7FA38B"/>
+        <ellipse cx="358" cy="95"  rx="32" ry="38" fill="#97B8A0" opacity=".85"/>
+        <ellipse cx="302" cy="98"  rx="30" ry="36" fill="#5E8473" opacity=".9"/>
+        <ellipse cx="340" cy="178" rx="36" ry="28" fill="#7FA38B" opacity=".8"/>
+      </g>
+      <!-- Hamac -->
+      <g class="hammock-group">
+        <path d="M 80 240 L 95 272"  stroke="#E8DBC4" stroke-width="2" opacity=".7" fill="none"/>
+        <path d="M 320 240 L 305 272" stroke="#E8DBC4" stroke-width="2" opacity=".7" fill="none"/>
+        <path d="M 95 272 Q 200 288, 305 272 Q 200 412, 95 272 Z" fill="#E8DBC4"/>
+        <path d="M 95 272 Q 200 288, 305 272" stroke="#c4b8a0" stroke-width="1.5" fill="none" opacity=".55"/>
+        <g stroke="#c4b8a0" stroke-width="1" opacity=".4" fill="none">
+          <path d="M 120 284 Q 122 322, 122 352"/>
+          <path d="M 150 288 Q 152 342, 152 382"/>
+          <path d="M 180 292 Q 182 352, 182 398"/>
+          <path d="M 220 292 Q 218 352, 218 398"/>
+          <path d="M 250 288 Q 248 342, 248 382"/>
+          <path d="M 280 284 Q 278 322, 278 352"/>
+        </g>
+      </g>
+    </svg>
+
+    <div class="koala-pos">
+      <span class="koala" id="koala" role="button" aria-label="Koala endormi">🐨</span>
+      <div class="shush-bubble" id="shushBubble">chuuut…</div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">tape les rêves · pas le koala</div>
+
+  <div class="end-msg" id="endMsg" role="dialog" aria-modal="true">
+    <p class="end-msg-title">Tu connais maintenant ses rêves.</p>
+    <p class="end-msg-stats" id="endStats"></p>
+    <button class="end-replay" id="endReplay">Rejouer</button>
+  </div>
+
+  <script src="/pin-guard.js"></script>
+  <script src="nav.js"></script>
+  <script>
+    (function () {
+      const POOL = [
+        { id: 'tiare',    emoji: '🌺' },
+        { id: 'palmier',  emoji: '🌴' },
+        { id: 'coco',     emoji: '🥥' },
+        { id: 'vague',    emoji: '🌊' },
+        { id: 'coquille', emoji: '🐚' },
+        { id: 'tlb',      text:  'TLB' }
+      ];
+
+      const koalaEl      = document.getElementById('koala');
+      const shushEl      = document.getElementById('shushBubble');
+      const colEl        = document.getElementById('collection');
+      const hintEl       = document.getElementById('hint');
+      const endEl        = document.getElementById('endMsg');
+      const endStatsEl   = document.getElementById('endStats');
+      const endReplayEl  = document.getElementById('endReplay');
+
+      let found      = new Set();
+      let live       = [];
+      let frozen     = false;
+      let stopped    = false;
+      let spawnTimer = 0;
+      let stats      = { caught: 0, missed: 0, shushed: 0 };
+
+      /* ── Slots de collection ── */
+      function buildCollection() {
+        colEl.innerHTML = '';
+        POOL.forEach(function (d) {
+          const slot = document.createElement('div');
+          slot.className = 'col-slot';
+          slot.dataset.id = d.id;
+          const icon = document.createElement('span');
+          icon.className = 'col-icon' + (d.text ? ' col-tlb' : '');
+          icon.textContent = d.text || d.emoji;
+          slot.appendChild(icon);
+          colEl.appendChild(slot);
+        });
+      }
+
+      function markFound(id) {
+        const slot = colEl.querySelector('.col-slot[data-id="' + id + '"]');
+        if (slot) slot.classList.add('found');
+      }
+
+      /* ── Choix d'un rêve ── */
+      function pickDream() {
+        const remaining = POOL.filter(function (p) { return !found.has(p.id); });
+        if (remaining.length > 0 && Math.random() < 0.78) {
+          return remaining[Math.floor(Math.random() * remaining.length)];
+        }
+        return POOL[Math.floor(Math.random() * POOL.length)];
+      }
+
+      /* ── Spawn d'une bulle ── */
+      function spawnBubble() {
+        if (stopped) return;
+        if (frozen) { scheduleNext(); return; }
+
+        const dream = pickDream();
+        const rect  = koalaEl.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2 + (Math.random() * 30 - 15);
+        const startY = rect.top + 10;
+
+        const el = document.createElement('div');
+        el.className = 'dream';
+        el.style.left = startX + 'px';
+        el.style.top  = startY + 'px';
+        const swayAmp = 8 + Math.random() * 22;
+        const swayDir = Math.random() < 0.5 ? -1 : 1;
+        el.style.setProperty('--sway', (swayAmp * swayDir) + 'px');
+
+        if (dream.text) {
+          const span = document.createElement('span');
+          span.className = 'dream-tlb';
+          span.textContent = dream.text;
+          el.appendChild(span);
+        } else {
+          el.textContent = dream.emoji;
+        }
+
+        const item = { el: el, dream: dream };
+        live.push(item);
+
+        el.addEventListener('pointerdown', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          onCaught(item);
+        }, { passive: false });
+
+        el.addEventListener('animationend', function (e) {
+          if (e.animationName === 'floatUp') onMissed(item);
+        });
+
+        document.body.appendChild(el);
+        scheduleNext();
+      }
+
+      function scheduleNext() {
+        clearTimeout(spawnTimer);
+        if (stopped) return;
+        const delay = 2400 + Math.random() * 1500;
+        spawnTimer = setTimeout(spawnBubble, delay);
+      }
+
+      /* ── Capture ── */
+      function onCaught(item) {
+        const idx = live.indexOf(item);
+        if (idx >= 0) live.splice(idx, 1);
+
+        const isNew = !found.has(item.dream.id);
+        if (isNew) {
+          found.add(item.dream.id);
+          markFound(item.dream.id);
+        }
+        stats.caught++;
+
+        spawnConfetti(item.el);
+        item.el.classList.add('caught');
+        setTimeout(function () { item.el.remove(); }, 460);
+
+        hintEl.classList.add('hidden');
+
+        if (found.size === POOL.length) {
+          setTimeout(triggerEnd, 950);
+        }
+      }
+
+      /* ── Raté ── */
+      function onMissed(item) {
+        const idx = live.indexOf(item);
+        if (idx >= 0) live.splice(idx, 1);
+        stats.missed++;
+
+        item.el.classList.add('poof');
+        setTimeout(function () { item.el.remove(); }, 560);
+
+        koalaEl.classList.remove('turning');
+        void koalaEl.offsetWidth;
+        koalaEl.classList.add('turning');
+        setTimeout(function () { koalaEl.classList.remove('turning'); }, 860);
+      }
+
+      /* ── Chuuut ── */
+      function triggerShush() {
+        if (frozen || stopped) return;
+        frozen = true;
+        stats.shushed++;
+        document.body.classList.add('frozen');
+        shushEl.classList.add('show');
+        clearTimeout(spawnTimer);
+
+        setTimeout(function () {
+          frozen = false;
+          document.body.classList.remove('frozen');
+          shushEl.classList.remove('show');
+          scheduleNext();
+        }, 2000);
+      }
+
+      koalaEl.addEventListener('pointerdown', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        triggerShush();
+      }, { passive: false });
+
+      /* ── Confetti ── */
+      function spawnConfetti(originEl) {
+        const rect = originEl.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top  + rect.height / 2;
+        const marks = ['✦', '·', '✧', '·', '✦', '✺'];
+        const N = 7;
+        for (let i = 0; i < N; i++) {
+          const p = document.createElement('div');
+          p.className = 'confetti';
+          p.textContent = marks[Math.floor(Math.random() * marks.length)];
+          p.style.left = cx + 'px';
+          p.style.top  = cy + 'px';
+          const angle = (Math.PI * 2 * i) / N + Math.random() * 0.4;
+          const dist  = 38 + Math.random() * 42;
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist - 18;
+          p.animate([
+            { transform: 'translate(-50%, -50%) translate(0, 0) scale(1)', opacity: 1 },
+            { transform: 'translate(-50%, -50%) translate(' + dx + 'px, ' + dy + 'px) scale(0.4)', opacity: 0 }
+          ], { duration: 720, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' });
+          document.body.appendChild(p);
+          setTimeout(function () { p.remove(); }, 740);
+        }
+      }
+
+      /* ── Fin ── */
+      function triggerEnd() {
+        stopped = true;
+        clearTimeout(spawnTimer);
+
+        const star = document.createElement('div');
+        star.className = 'shooting-star';
+        document.body.appendChild(star);
+        setTimeout(function () { star.remove(); }, 1900);
+
+        let line;
+        if (stats.shushed === 0 && stats.missed <= 1) {
+          line = 'sommeil parfait';
+        } else if (stats.shushed === 0) {
+          line = stats.missed + ' rêve' + (stats.missed > 1 ? 's' : '') + ' perdu' + (stats.missed > 1 ? 's' : '') + ' dans la nuit';
+        } else {
+          line = stats.shushed + ' réveil' + (stats.shushed > 1 ? 's' : '') + ' · ' + stats.missed + ' rêve' + (stats.missed > 1 ? 's' : '') + ' perdu' + (stats.missed > 1 ? 's' : '');
+        }
+        endStatsEl.textContent = line;
+
+        setTimeout(function () { endEl.classList.add('show'); }, 750);
+      }
+
+      endReplayEl.addEventListener('click', function () {
+        found.clear();
+        stats = { caught: 0, missed: 0, shushed: 0 };
+        stopped = false;
+        frozen = false;
+        document.body.classList.remove('frozen');
+        shushEl.classList.remove('show');
+        live.forEach(function (item) { item.el.remove(); });
+        live = [];
+        buildCollection();
+        endEl.classList.remove('show');
+        hintEl.classList.remove('hidden');
+        setTimeout(function () { hintEl.classList.add('hidden'); }, 8000);
+        scheduleNext();
+      });
+
+      /* ── Init ── */
+      buildCollection();
+      setTimeout(spawnBubble, 1400);
+      setTimeout(function () { hintEl.classList.add('hidden'); }, 8000);
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          clearTimeout(spawnTimer);
+        } else if (!stopped && !frozen) {
+          scheduleNext();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
