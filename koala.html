@@ -99,9 +99,11 @@
       transform: scale(0.3);
     }
     .col-icon.col-tlb {
-      font-family: 'Great Vibes', cursive;
-      font-size: clamp(1.1rem, 3.8vw, 1.55rem);
-      transform: scale(0.3) translateY(-0.05em);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      letter-spacing: 0.02em;
     }
     .col-slot.found {
       opacity: 1;
@@ -115,7 +117,7 @@
       animation: pop 0.65s cubic-bezier(.5,1.6,.5,1.05);
     }
     .col-slot.found .col-icon.col-tlb {
-      transform: scale(1) translateY(-0.05em);
+      transform: scale(1);
     }
     @keyframes pop {
       0%   { transform: scale(0.3); opacity: 0; }
@@ -165,6 +167,7 @@
 
     /* ── ZZ et !! qui émanent ── */
     .zzz {
+      --dir: 1;
       position: fixed;
       transform: translate(-50%, -50%);
       font-size: clamp(1.1rem, 3vw, 1.4rem);
@@ -176,11 +179,12 @@
       font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
       line-height: 1;
     }
+    /* Drift latéral diagonal (gauche ou droite via --dir) */
     @keyframes zzz-float {
       0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-      20%  { opacity: 0.85; transform: translate(calc(-50% + 6px), calc(-50% - 20px)) scale(1); }
-      60%  { opacity: 0.85; transform: translate(calc(-50% + 18px), calc(-50% - 60px)) scale(1.05); }
-      100% { opacity: 0; transform: translate(calc(-50% + 30px), calc(-50% - 100px)) scale(1.1); }
+      18%  { opacity: 0.85; transform: translate(calc(-50% + 30px * var(--dir)), calc(-50% + 4px)) scale(1); }
+      60%  { opacity: 0.85; transform: translate(calc(-50% + 90px * var(--dir)), calc(-50% + 14px)) scale(1.05); }
+      100% { opacity: 0; transform: translate(calc(-50% + 140px * var(--dir)), calc(-50% + 24px)) scale(1.1); }
     }
     .zzz.bang {
       font-size: clamp(1.4rem, 4.5vw, 1.9rem);
@@ -210,8 +214,10 @@
       font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     }
     .dream-tlb {
-      font-family: 'Great Vibes', cursive;
-      font-size: clamp(2.6rem, 9vw, 3.6rem);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.8rem, 6.5vw, 2.5rem);
       color: var(--ink);
       letter-spacing: 0.02em;
       text-shadow: 0 0 14px rgba(232,219,196,0.45), 0 2px 6px rgba(0,0,0,0.3);
@@ -363,9 +369,7 @@
   <div class="hint" id="hint">attrape les rêves du koala</div>
 
   <div class="end-msg" id="endMsg" role="dialog" aria-modal="true">
-    <p class="end-msg-title">Tu connais maintenant ses rêves.</p>
-    <p class="end-msg-stats" id="endStats"></p>
-    <button class="end-replay" id="endReplay">Rejouer</button>
+    <p class="end-msg-title">bien vu bg</p>
   </div>
 
   <script src="/pin-guard.js"></script>
@@ -381,12 +385,10 @@
         { id: 'tlb',      text:  'TLB' }
       ];
 
-      const koalaEl     = document.getElementById('koala');
-      const colEl       = document.getElementById('collection');
-      const hintEl      = document.getElementById('hint');
-      const endEl       = document.getElementById('endMsg');
-      const endStatsEl  = document.getElementById('endStats');
-      const endReplayEl = document.getElementById('endReplay');
+      const koalaEl = document.getElementById('koala');
+      const colEl   = document.getElementById('collection');
+      const hintEl  = document.getElementById('hint');
+      const endEl   = document.getElementById('endMsg');
 
       let found      = new Set();
       let live       = [];
@@ -521,7 +523,8 @@
         setTimeout(function () { koalaEl.classList.remove('turning'); }, 860);
       }
 
-      /* ── ZZ (sommeil) ── */
+      /* ── ZZ (sommeil) — drift latéral alterné ── */
+      let zzzSide = 1;
       function spawnZzz() {
         clearTimeout(zzzTimer);
         if (stopped || frozen) return;
@@ -529,8 +532,12 @@
         const z = document.createElement('div');
         z.className = 'zzz';
         z.textContent = '💤';
-        z.style.left = (head.x + (Math.random() * 16 - 4)) + 'px';
-        z.style.top  = (head.y - 6) + 'px';
+        zzzSide = -zzzSide;
+        const dir = zzzSide + (Math.random() * 0.2 - 0.1); // léger jitter
+        z.style.setProperty('--dir', dir);
+        // décale légèrement le point de départ du même côté que la trajectoire
+        z.style.left = (head.x + 14 * zzzSide + (Math.random() * 10 - 5)) + 'px';
+        z.style.top  = (head.y + 4) + 'px';
         document.body.appendChild(z);
         setTimeout(function () { z.remove(); }, 3700);
         zzzTimer = setTimeout(spawnZzz, 1500 + Math.random() * 800);
@@ -620,34 +627,8 @@
         document.body.appendChild(star);
         setTimeout(function () { star.remove(); }, 1900);
 
-        let line;
-        if (stats.shushed === 0 && stats.missed <= 1) {
-          line = 'sommeil parfait';
-        } else if (stats.shushed === 0) {
-          line = stats.missed + ' rêve' + (stats.missed > 1 ? 's' : '') + ' perdu' + (stats.missed > 1 ? 's' : '') + ' dans la nuit';
-        } else {
-          line = stats.shushed + ' réveil' + (stats.shushed > 1 ? 's' : '') + ' · ' + stats.missed + ' rêve' + (stats.missed > 1 ? 's' : '') + ' perdu' + (stats.missed > 1 ? 's' : '');
-        }
-        endStatsEl.textContent = line;
-
         setTimeout(function () { endEl.classList.add('show'); }, 750);
       }
-
-      endReplayEl.addEventListener('click', function () {
-        found.clear();
-        stats = { caught: 0, missed: 0, shushed: 0 };
-        stopped = false;
-        frozen = false;
-        document.body.classList.remove('frozen');
-        live.forEach(function (item) { item.el.remove(); });
-        live = [];
-        buildCollection();
-        endEl.classList.remove('show');
-        hintEl.classList.remove('hidden');
-        setTimeout(function () { hintEl.classList.add('hidden'); }, 8000);
-        scheduleNext();
-        spawnZzz();
-      });
 
       /* ── Init ── */
       buildCollection();
