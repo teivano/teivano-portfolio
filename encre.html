@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Encre — TLB</title>
+  <meta name="description" content="TLB — portfolio personnel à Rennes. Pages live, expérimentations, jeux d'APIs.">
+  <meta property="og:title" content="TLB">
+  <meta property="og:description" content="Portfolio personnel · Rennes · 2026.">
+  <meta property="og:image" content="https://teivano.fr/og-image.png">
+  <meta property="og:url" content="https://teivano.fr/encre.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='8' y='8' width='84' height='84' fill='%23f4ecd6'/%3E%3Ccircle cx='50' cy='40' r='8' fill='%230a0a18'/%3E%3Cpath d='M50 48 Q 45 60 50 80' stroke='%230a0a18' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --wood-dark:    #2c1810;
+      --wood-mid:     #4a2e1a;
+      --wood-light:   #6a4220;
+      --brass:        #c9a96a;
+      --brass-dark:   #8a7040;
+      --metal-light:  #b8b8b8;
+      --metal:        #8a8a8a;
+      --metal-dark:   #4a4a4a;
+      --metal-shadow: #2a2a2a;
+      --led-red-off:  #3a0808;
+      --led-red:      #ff3030;
+
+      --paper:        #f4ecd6;
+      --paper-edge:   #e0d0a8;
+      --paper-dark:   #c8b888;
+      --grid-thin:    #8a9abf;
+      --ink:          #0a0a18;
+      --ink-soft:     rgba(10,10,24,0.5);
+      --win-green:    #3a8a3a;
+
+      --overlay-bg: #6B1A1A;
+      --overlay-fg: #F5F0E8;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--wood-dark);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: #e8d8b8;
+    }
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      background:
+        radial-gradient(ellipse at center, rgba(255,200,120,0.05), transparent 70%),
+        linear-gradient(180deg, var(--wood-dark) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
+    }
+
+    /* Frame bois */
+    .encre-frame {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      background:
+        repeating-linear-gradient(92deg,
+          rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px,
+          transparent 1px, transparent 5px),
+        repeating-linear-gradient(90deg,
+          rgba(120,70,30,0.08) 0px, rgba(120,70,30,0.08) 2px,
+          transparent 2px, transparent 7px),
+        linear-gradient(180deg, var(--wood-light) 0%, var(--wood-mid) 60%, var(--wood-dark) 100%);
+      box-shadow:
+        inset 0 0 80px rgba(0,0,0,0.7),
+        inset 0 4px 8px rgba(255,200,120,0.08);
+      padding: clamp(10px, 2.5vw, 18px);
+      gap: clamp(8px, 1.6vw, 14px);
+    }
+
+    .screw {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f4d088, var(--brass) 50%, var(--brass-dark) 90%);
+      box-shadow:
+        inset 0 -1px 1px rgba(0,0,0,0.4),
+        0 1px 2px rgba(0,0,0,0.6);
+      pointer-events: none;
+      z-index: 50;
+    }
+    .screw::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      background: linear-gradient(45deg, transparent 45%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.35) 55%, transparent 55%);
+      border-radius: 50%;
+    }
+    .screw.tl { top: 10px; left: 10px; }
+    .screw.tr { top: 10px; right: 10px; }
+    .screw.bl { bottom: 10px; left: 10px; }
+    .screw.br { bottom: 10px; right: 10px; }
+
+    /* Panneau métal */
+    .control-panel {
+      background:
+        repeating-linear-gradient(0deg,
+          rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px,
+          rgba(0,0,0,0.04) 1px, rgba(0,0,0,0.04) 2px),
+        linear-gradient(180deg, var(--metal-light) 0%, var(--metal) 50%, var(--metal-dark) 100%);
+      border-radius: 8px;
+      padding: clamp(8px, 1.6vw, 12px) clamp(12px, 2.5vw, 18px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.4),
+        inset 0 0 0 1px rgba(0,0,0,0.2),
+        0 2px 4px rgba(0,0,0,0.4);
+      display: flex; align-items: center;
+      gap: clamp(10px, 2vw, 16px);
+    }
+
+    .brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      color: #0a0a0a;
+      letter-spacing: 0.05em;
+      text-transform: lowercase;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+      flex: 1;
+      text-align: left;
+    }
+    .brand-sub {
+      font-size: 0.52rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.65);
+      margin-top: 3px;
+      font-weight: 500;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+    }
+
+    .score-display {
+      display: flex; align-items: center;
+      gap: 8px;
+      background: linear-gradient(180deg, var(--metal-shadow), #1a1a1a);
+      padding: 6px 12px;
+      border-radius: 5px;
+      box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.7),
+        0 1px 0 rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .score-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      color: var(--led-red);
+      text-shadow: 0 0 6px rgba(255,48,48,0.5);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+      min-width: 5ch;
+      text-align: right;
+    }
+
+    .menu-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px;
+      flex-shrink: 0;
+      background:
+        radial-gradient(circle at 30% 30%, var(--metal-light), var(--metal) 60%, var(--metal-dark) 100%);
+      border: 1px solid rgba(0,0,0,0.5);
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.3),
+        0 2px 4px rgba(0,0,0,0.6);
+      transition: all 0.1s ease;
+      padding: 0;
+      font-family: inherit;
+    }
+    .menu-btn:active { box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transform: translateY(1px); }
+    .menu-btn-icon { display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+    .menu-btn-icon span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--metal-shadow);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.5);
+      border-radius: 1px;
+    }
+
+    /* Play area + papier */
+    .play-area {
+      flex: 1;
+      position: relative;
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0.3), rgba(0,0,0,0.1)),
+        linear-gradient(180deg, var(--wood-dark), #1a0e08);
+      border-radius: 8px;
+      padding: clamp(10px, 2vw, 18px);
+      box-shadow:
+        inset 0 4px 12px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+    .paper {
+      position: absolute; inset: clamp(10px, 2vw, 18px);
+      background: linear-gradient(180deg, var(--paper) 0%, var(--paper-edge) 100%);
+      border-radius: 4px;
+      box-shadow:
+        inset 0 0 60px rgba(120,80,30,0.18),
+        inset 0 0 0 1px var(--paper-dark),
+        0 6px 18px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    #game {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* Overlays sur le papier */
+    .paper-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      background: rgba(244,236,214,0.85);
+      backdrop-filter: blur(2px);
+      z-index: 10;
+    }
+    .paper-overlay[hidden] { display: none; }
+
+    .overlay-card {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 18px;
+      text-align: center;
+      max-width: 380px;
+    }
+    .overlay-h {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.8rem, 7vw, 2.5rem);
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      text-transform: lowercase;
+    }
+    .overlay-instruction {
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .overlay-distance {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(2.5rem, 10vw, 3.8rem);
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .overlay-distance-unit {
+      font-size: 0.55em;
+      font-weight: 500;
+      color: var(--ink-soft);
+      letter-spacing: 0.1em;
+      margin-left: 4px;
+    }
+    .overlay-best {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .record-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--win-green);
+      color: #fff;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 700;
+      border-radius: 14px;
+      box-shadow: 0 2px 6px rgba(58,138,58,0.4);
+    }
+    .record-badge[hidden] { display: none; }
+
+    .action-btn {
+      padding: 12px 22px;
+      background:
+        radial-gradient(circle at 30% 30%, var(--metal-light), var(--metal) 60%, var(--metal-dark) 100%);
+      border: 1px solid rgba(0,0,0,0.5);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--metal-shadow);
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 2px 4px rgba(0,0,0,0.4);
+      transition: all 0.12s ease;
+    }
+    .action-btn:active {
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+      transform: translateY(1px);
+    }
+    .action-btn.primary {
+      background: linear-gradient(180deg, #d4a060, var(--brass-dark));
+      color: #fff;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    .overlay-actions {
+      display: flex; gap: 10px;
+    }
+
+    @media (max-height: 620px) {
+      .control-panel { padding: 6px 10px; }
+      .play-area { padding: 8px; }
+      .paper { inset: 8px; }
+    }
+  </style>
+</head>
+<body data-no-ham>
+  <div class="encre-frame">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+
+    <div class="control-panel">
+      <div class="brand">
+        encre
+        <div class="brand-sub">TLB · 03</div>
+      </div>
+      <div class="score-display">
+        <span class="score-value" id="scoreValue">0 m</span>
+      </div>
+      <button class="menu-btn" id="menuBtn" aria-label="Ouvrir le menu">
+        <span class="menu-btn-icon"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+
+    <div class="play-area">
+      <div class="paper">
+        <canvas id="game"></canvas>
+
+        <!-- Landing overlay -->
+        <div class="paper-overlay" id="landingOverlay">
+          <div class="overlay-card">
+            <h2 class="overlay-h">encre</h2>
+            <p class="overlay-instruction">Glisse pour guider la goutte</p>
+            <p class="overlay-best" id="landingBest"></p>
+            <button class="action-btn primary" id="startBtn">Commencer</button>
+          </div>
+        </div>
+
+        <!-- Game over overlay -->
+        <div class="paper-overlay" id="gameOverOverlay" hidden>
+          <div class="overlay-card">
+            <h2 class="overlay-h">fin</h2>
+            <p class="overlay-distance">
+              <span id="finalDistance">0</span><span class="overlay-distance-unit">m</span>
+            </p>
+            <p class="overlay-best" id="gameOverBest"></p>
+            <span class="record-badge" id="recordBadge" hidden>Nouveau record</span>
+            <div class="overlay-actions">
+              <button class="action-btn primary" id="restartBtn">Rejouer</button>
+              <button class="action-btn" id="quitBtn">Quitter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/pin-guard.js"></script>
+  <script src="/nav.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════════════════
+       ENCRE — endless ink drop falling on infinite paper
+    ════════════════════════════════════════════════════════════════ */
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('scoreValue');
+    const landingOverlay = document.getElementById('landingOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const finalDistanceEl = document.getElementById('finalDistance');
+    const gameOverBestEl = document.getElementById('gameOverBest');
+    const landingBestEl = document.getElementById('landingBest');
+    const recordBadge = document.getElementById('recordBadge');
+
+    /* ── State ── */
+    let gameW = 0, gameH = 0;
+    let state = 'landing'; // landing | playing | gameOver
+    let worldY = 0;
+    let scrollSpeed = 200;
+    let trail = [];        // [{worldY, x}]
+    let segments = [];     // [{startY, endY, startLeft, endLeft, startRight, endRight}]
+    let obstacles = [];    // [{worldY, x, radius}]
+    let drop = { x: 0, screenY: 0, targetX: 0, radius: 7 };
+    let pointing = false;
+    let lastT = 0;
+    let rafId = 0;
+
+    /* ── Canvas DPR sizing ── */
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      gameW = rect.width;
+      gameH = rect.height;
+      canvas.width = Math.round(gameW * dpr);
+      canvas.height = Math.round(gameH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drop.screenY = gameH * 0.4;
+      if (state === 'landing') {
+        drop.x = gameW / 2;
+        drop.targetX = gameW / 2;
+      }
+    }
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 0);
+
+    /* ── Best score ── */
+    function getBest() { return parseInt(localStorage.getItem('encre_best') || '0', 10); }
+    function setBest(v) { localStorage.setItem('encre_best', String(v)); }
+    function updateBestDisplays() {
+      const b = getBest();
+      landingBestEl.textContent  = b > 0 ? ('Best · ' + b + ' m') : '';
+      gameOverBestEl.textContent = b > 0 ? ('Best · ' + b + ' m') : '';
+    }
+
+    /* ── Procedural margin segments ── */
+    const SEG_LEN = 220;
+    function pushSegment() {
+      const last = segments[segments.length - 1];
+      const startY = last ? last.endY : -gameH * 0.5;
+      const endY = startY + SEG_LEN;
+
+      const distance = Math.floor(worldY / 10);
+      // Width as fraction of gameW: from 0.85 → 0.35
+      const targetFrac = Math.max(0.35, 0.85 - distance * 0.00018);
+      const centerOffset = (Math.random() - 0.5) * 0.12 * gameW;
+      const halfW = (targetFrac * gameW) / 2;
+      const targetLeft  = gameW / 2 - halfW + centerOffset;
+      const targetRight = gameW / 2 + halfW + centerOffset;
+
+      const startLeft  = last ? last.endLeft  : gameW * 0.075;
+      const startRight = last ? last.endRight : gameW * 0.925;
+
+      segments.push({
+        startY, endY,
+        startLeft, endLeft: targetLeft,
+        startRight, endRight: targetRight
+      });
+    }
+    function ensureSegments() {
+      while (segments.length === 0 || segments[segments.length - 1].endY < worldY + gameH * 1.5) {
+        pushSegment();
+      }
+      while (segments.length > 0 && segments[0].endY < worldY - gameH * 0.6) {
+        segments.shift();
+      }
+    }
+    function getMarginAt(wy) {
+      for (let i = 0; i < segments.length; i++) {
+        const s = segments[i];
+        if (wy >= s.startY && wy < s.endY) {
+          const t = (wy - s.startY) / (s.endY - s.startY);
+          const ts = 0.5 - 0.5 * Math.cos(Math.PI * t); // smooth ease
+          return {
+            left:  s.startLeft  + (s.endLeft  - s.startLeft)  * ts,
+            right: s.startRight + (s.endRight - s.startRight) * ts
+          };
+        }
+      }
+      return { left: 0, right: gameW };
+    }
+
+    /* ── Obstacles ── */
+    let nextObstacleY = 0;
+    function maybeSpawnObstacle() {
+      const distance = Math.floor(worldY / 10);
+      if (distance < 80) return; // no obstacles in first 80m
+
+      let interval = 600;
+      if (distance > 500) interval = 420;
+      if (distance > 1500) interval = 280;
+      if (distance > 3000) interval = 200;
+
+      while (nextObstacleY < worldY + gameH * 1.6) {
+        const spawnY = nextObstacleY;
+        const m = getMarginAt(spawnY);
+        const radius = 18 + Math.random() * 14;
+        const pad = radius + 20;
+        const playW = m.right - m.left - 2 * pad;
+        if (playW > 50) {
+          const x = m.left + pad + Math.random() * playW;
+          obstacles.push({ worldY: spawnY, x, radius });
+        }
+        nextObstacleY += interval * (0.7 + Math.random() * 0.6);
+      }
+      // Trim
+      obstacles = obstacles.filter(o => o.worldY > worldY - gameH * 0.5);
+    }
+
+    /* ── Collision ── */
+    function checkCollision() {
+      const wy = worldY; // drop at world Y = worldY
+      const m = getMarginAt(wy);
+      if (drop.x - drop.radius < m.left)  return true;
+      if (drop.x + drop.radius > m.right) return true;
+      for (const o of obstacles) {
+        const dy = o.worldY - wy;
+        if (Math.abs(dy) > o.radius + drop.radius + 5) continue;
+        const dx = o.x - drop.x;
+        const dist2 = dx*dx + dy*dy;
+        const r = o.radius + drop.radius;
+        if (dist2 < r*r) return true;
+      }
+      return false;
+    }
+
+    /* ── Rendering ── */
+    function render() {
+      ctx.clearRect(0, 0, gameW, gameH);
+
+      // Margins (cahier-style faded blue lines)
+      ctx.strokeStyle = 'rgba(138,154,191,0.45)';
+      ctx.lineWidth = 1.5;
+      // Left
+      ctx.beginPath();
+      for (let y = 0; y <= gameH; y += 8) {
+        const wy = worldY + (y - drop.screenY);
+        const m = getMarginAt(wy);
+        if (y === 0) ctx.moveTo(m.left, y);
+        else ctx.lineTo(m.left, y);
+      }
+      ctx.stroke();
+      // Right
+      ctx.beginPath();
+      for (let y = 0; y <= gameH; y += 8) {
+        const wy = worldY + (y - drop.screenY);
+        const m = getMarginAt(wy);
+        if (y === 0) ctx.moveTo(m.right, y);
+        else ctx.lineTo(m.right, y);
+      }
+      ctx.stroke();
+
+      // Trail
+      if (trail.length > 1) {
+        ctx.strokeStyle = '#0a0a18';
+        ctx.lineWidth = 4.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < trail.length; i++) {
+          const p = trail[i];
+          const sy = drop.screenY + (p.worldY - worldY);
+          if (i === 0) ctx.moveTo(p.x, sy);
+          else ctx.lineTo(p.x, sy);
+        }
+        ctx.lineTo(drop.x, drop.screenY);
+        ctx.stroke();
+      }
+
+      // Obstacles
+      for (const o of obstacles) {
+        const sy = drop.screenY + (o.worldY - worldY);
+        if (sy < -40 || sy > gameH + 40) continue;
+        // halo
+        const g = ctx.createRadialGradient(o.x, sy, 0, o.x, sy, o.radius * 1.7);
+        g.addColorStop(0, 'rgba(10,10,24,0.7)');
+        g.addColorStop(0.6, 'rgba(10,10,24,0.25)');
+        g.addColorStop(1, 'rgba(10,10,24,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(o.x, sy, o.radius * 1.7, 0, Math.PI * 2);
+        ctx.fill();
+        // solid
+        ctx.fillStyle = '#0a0a18';
+        ctx.beginPath();
+        ctx.arc(o.x, sy, o.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Drop
+      if (state !== 'landing') {
+        // soft shadow under
+        const dg = ctx.createRadialGradient(drop.x, drop.screenY, 0, drop.x, drop.screenY, drop.radius * 2.2);
+        dg.addColorStop(0, 'rgba(10,10,24,0.3)');
+        dg.addColorStop(1, 'rgba(10,10,24,0)');
+        ctx.fillStyle = dg;
+        ctx.beginPath();
+        ctx.arc(drop.x, drop.screenY, drop.radius * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0a0a18';
+        ctx.beginPath();
+        ctx.arc(drop.x, drop.screenY, drop.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    /* ── Update ── */
+    function update(dt) {
+      if (state !== 'playing') return;
+
+      // Drop lerp toward target
+      drop.x += (drop.targetX - drop.x) * Math.min(1, dt * 14);
+
+      // Speed: progressive ramp
+      const distance = worldY / 10;
+      const targetSpeed = Math.min(720, 200 + distance * 0.18);
+      scrollSpeed += (targetSpeed - scrollSpeed) * Math.min(1, dt * 0.6);
+
+      worldY += scrollSpeed * dt;
+      ensureSegments();
+      maybeSpawnObstacle();
+
+      // Add trail point
+      trail.push({ worldY: worldY, x: drop.x });
+      // Trim trail (off-top)
+      const trimY = worldY - drop.screenY - 20;
+      while (trail.length > 0 && trail[0].worldY < trimY) trail.shift();
+
+      // Score
+      const score = Math.floor(worldY / 10);
+      scoreEl.textContent = score + ' m';
+
+      // Collision
+      if (checkCollision()) {
+        endGame();
+      }
+    }
+
+    /* ── Game loop ── */
+    function loop(t) {
+      if (!lastT) lastT = t;
+      const dt = Math.min(0.05, (t - lastT) / 1000);
+      lastT = t;
+      update(dt);
+      render();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    /* ── State transitions ── */
+    function startGame() {
+      state = 'playing';
+      worldY = 0;
+      scrollSpeed = 200;
+      trail = [];
+      segments = [];
+      obstacles = [];
+      nextObstacleY = 200;
+      drop.x = gameW / 2;
+      drop.targetX = gameW / 2;
+      drop.screenY = gameH * 0.4;
+      ensureSegments();
+      scoreEl.textContent = '0 m';
+      landingOverlay.hidden = true;
+      gameOverOverlay.hidden = true;
+      lastT = 0;
+    }
+    function endGame() {
+      state = 'gameOver';
+      const distance = Math.floor(worldY / 10);
+      const best = getBest();
+      let isRecord = false;
+      if (distance > best) {
+        setBest(distance);
+        isRecord = true;
+      }
+      finalDistanceEl.textContent = distance;
+      updateBestDisplays();
+      recordBadge.hidden = !isRecord;
+      gameOverOverlay.hidden = false;
+    }
+    function quitToLanding() {
+      state = 'landing';
+      landingOverlay.hidden = false;
+      gameOverOverlay.hidden = true;
+      updateBestDisplays();
+      scoreEl.textContent = '0 m';
+      worldY = 0;
+      trail = [];
+      segments = [];
+      obstacles = [];
+    }
+
+    /* ── Input ── */
+    function getPointerX(e) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      return Math.max(0, Math.min(gameW, cx - rect.left));
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (state === 'playing') {
+        drop.targetX = getPointerX(e);
+        pointing = true;
+        try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+      }
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (state === 'playing' && pointing) {
+        drop.targetX = getPointerX(e);
+      }
+    });
+    canvas.addEventListener('pointerup', () => { pointing = false; });
+    canvas.addEventListener('pointercancel', () => { pointing = false; });
+
+    /* ── Controls ── */
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('quitBtn').addEventListener('click', quitToLanding);
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      if (window.tlbOpenNav) window.tlbOpenNav();
+    });
+
+    /* ── Visibility ── */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state === 'playing') {
+        // End the game on pause (simpler than implementing pause)
+        endGame();
+      }
+    });
+
+    /* ── Init ── */
+    updateBestDisplays();
+    rafId = requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
