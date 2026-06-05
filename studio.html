@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Studio — TLB</title>
+  <meta name="description" content="TLB — portfolio personnel à Rennes. Pages live, expérimentations, jeux d'APIs.">
+  <meta property="og:title" content="TLB">
+  <meta property="og:description" content="Portfolio personnel · Rennes · 2026.">
+  <meta property="og:image" content="https://teivano.fr/og-image.png">
+  <meta property="og:url" content="https://teivano.fr/studio.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='75' font-size='72' text-anchor='middle'%3E%F0%9F%8E%B9%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500;600&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --wood-dark:    #2c1810;
+      --wood-mid:     #4a2e1a;
+      --wood-light:   #6a4220;
+      --wood-highlight:#8a5a2e;
+      --brass:        #c9a96a;
+      --brass-dark:   #8a7040;
+      --metal-light:  #b8b8b8;
+      --metal:        #8a8a8a;
+      --metal-dark:   #4a4a4a;
+      --metal-shadow: #2a2a2a;
+      --ivory:        #fff8e8;
+      --ivory-shade:  #e8dec0;
+      --ebony:        #1a1410;
+      --led-red-off:  #3a0808;
+      --led-red:      #ff3030;
+      --led-green-off:#0a2a0a;
+      --led-green:    #30ff60;
+      --felt:         #1a2a1a;
+      /* Override les tokens overlay nav.js */
+      --overlay-bg: #6B1A1A;
+      --overlay-fg: #F5F0E8;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--wood-dark);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: #e8d8b8;
+    }
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      background:
+        radial-gradient(ellipse at center, rgba(255,200,120,0.05), transparent 70%),
+        linear-gradient(180deg, var(--wood-dark) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
+    }
+
+    /* ── Frame bois ── */
+    .studio-frame {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      background:
+        repeating-linear-gradient(92deg,
+          rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px,
+          transparent 1px, transparent 5px),
+        repeating-linear-gradient(90deg,
+          rgba(120,70,30,0.08) 0px, rgba(120,70,30,0.08) 2px,
+          transparent 2px, transparent 7px),
+        linear-gradient(180deg, var(--wood-light) 0%, var(--wood-mid) 60%, var(--wood-dark) 100%);
+      box-shadow:
+        inset 0 0 80px rgba(0,0,0,0.7),
+        inset 0 4px 8px rgba(255,200,120,0.08);
+      padding: clamp(10px, 2.5vw, 18px);
+      gap: clamp(8px, 1.6vw, 14px);
+    }
+
+    /* Vis en laiton décoratives aux coins */
+    .screw {
+      position: absolute;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f4d088, var(--brass) 50%, var(--brass-dark) 90%);
+      box-shadow:
+        inset 0 -1px 1px rgba(0,0,0,0.4),
+        0 1px 2px rgba(0,0,0,0.6);
+      pointer-events: none;
+      z-index: 50;
+    }
+    .screw::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      background: linear-gradient(45deg, transparent 45%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.35) 55%, transparent 55%);
+      border-radius: 50%;
+    }
+    .screw.tl { top: 10px; left: 10px; }
+    .screw.tr { top: 10px; right: 10px; }
+    .screw.bl { bottom: 10px; left: 10px; }
+    .screw.br { bottom: 10px; right: 10px; }
+
+    /* ── Panneau métal du haut ── */
+    .control-panel {
+      background:
+        repeating-linear-gradient(0deg,
+          rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px,
+          rgba(0,0,0,0.04) 1px, rgba(0,0,0,0.04) 2px),
+        linear-gradient(180deg, var(--metal-light) 0%, var(--metal) 50%, var(--metal-dark) 100%);
+      border-radius: 8px;
+      padding: clamp(10px, 2vw, 14px) clamp(14px, 3vw, 20px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        inset 0 -1px 0 rgba(0,0,0,0.4),
+        inset 0 0 0 1px rgba(0,0,0,0.2),
+        0 2px 4px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 2vw, 14px);
+      position: relative;
+    }
+
+    .control-row {
+      display: flex; align-items: center;
+      gap: clamp(10px, 2vw, 16px);
+      flex-wrap: nowrap;
+    }
+
+    .brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(0.9rem, 3.2vw, 1.15rem);
+      color: var(--metal-shadow);
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+    .brand-sub {
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.5);
+      margin-top: 2px;
+    }
+
+    /* ── Toggle mode (segmented metal switch) ── */
+    .mode-toggle {
+      flex: 1;
+      display: flex;
+      background: linear-gradient(180deg, var(--metal-dark), var(--metal-shadow));
+      border-radius: 6px;
+      padding: 3px;
+      box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(0,0,0,0.4),
+        0 1px 0 rgba(255,255,255,0.2);
+      max-width: 260px;
+      margin: 0 auto;
+    }
+    .mode-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.4);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(0.65rem, 2.4vw, 0.78rem);
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.55rem 0.5rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+    .mode-btn.active {
+      background: linear-gradient(180deg, var(--metal-light), var(--metal));
+      color: var(--wood-dark);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 1px 2px rgba(0,0,0,0.5),
+        0 0 8px rgba(255,200,100,0.15);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    /* ── BPM ── */
+    .bpm-group {
+      display: flex; align-items: center;
+      gap: 6px;
+      background: linear-gradient(180deg, var(--metal-shadow), #1a1a1a);
+      padding: 6px 10px;
+      border-radius: 5px;
+      box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.7),
+        0 1px 0 rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .bpm-label {
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      color: var(--brass);
+      font-weight: 600;
+    }
+    .bpm-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: clamp(0.9rem, 3vw, 1.1rem);
+      color: var(--led-red);
+      text-shadow: 0 0 6px rgba(255,48,48,0.5);
+      font-variant-numeric: tabular-nums;
+      min-width: 2.3ch;
+      text-align: center;
+    }
+    .bpm-btn {
+      width: 22px; height: 22px;
+      border: 1px solid rgba(0,0,0,0.5);
+      background: linear-gradient(180deg, var(--metal-light), var(--metal));
+      color: var(--metal-shadow);
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.7rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 1px 2px rgba(0,0,0,0.4);
+      font-family: inherit;
+    }
+    .bpm-btn:active {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+      background: linear-gradient(180deg, var(--metal), var(--metal-dark));
+    }
+
+    /* ── Transport bar (REC / loop indicator) ── */
+    .transport {
+      display: flex; align-items: center;
+      gap: clamp(10px, 2vw, 16px);
+    }
+
+    .rec-btn {
+      display: flex; align-items: center;
+      gap: 6px;
+      background: linear-gradient(180deg, #b04040, #802020);
+      border: 1px solid rgba(0,0,0,0.5);
+      color: #fff;
+      padding: 0.45rem 0.85rem;
+      border-radius: 18px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        0 2px 4px rgba(0,0,0,0.5);
+      transition: all 0.15s ease;
+    }
+    .rec-btn:active {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .rec-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--led-red-off);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.7);
+      transition: all 0.2s ease;
+    }
+    .rec-btn.armed .rec-dot {
+      background: var(--led-red);
+      box-shadow:
+        inset 0 0 4px rgba(0,0,0,0.4),
+        0 0 8px var(--led-red);
+      animation: led-pulse 0.7s ease-in-out infinite alternate;
+    }
+    .rec-btn.recording .rec-dot {
+      background: var(--led-red);
+      box-shadow:
+        inset 0 0 4px rgba(0,0,0,0.4),
+        0 0 12px var(--led-red);
+    }
+    .rec-btn.playing .rec-dot {
+      background: var(--led-green);
+      box-shadow:
+        inset 0 0 4px rgba(0,0,0,0.4),
+        0 0 10px var(--led-green);
+    }
+    @keyframes led-pulse {
+      from { opacity: 0.5; }
+      to   { opacity: 1; }
+    }
+
+    .loop-indicator {
+      flex: 1;
+      display: flex;
+      gap: 3px;
+      padding: 6px 10px;
+      background: linear-gradient(180deg, var(--metal-shadow), #1a1a1a);
+      border-radius: 4px;
+      box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.7),
+        0 1px 0 rgba(255,255,255,0.2);
+      overflow: hidden;
+    }
+    .beat-dot {
+      flex: 1;
+      height: 14px;
+      max-width: 24px;
+      background: var(--led-green-off);
+      border-radius: 2px;
+      box-shadow:
+        inset 0 1px 1px rgba(0,0,0,0.6),
+        inset 0 0 0 1px rgba(0,0,0,0.5);
+      transition: background 0.05s linear, box-shadow 0.05s linear;
+    }
+    .beat-dot.bar-start { background: #1a1a1a; }
+    .beat-dot.bar-start.lit { background: var(--led-red); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5), 0 0 6px var(--led-red); }
+    .beat-dot.lit {
+      background: var(--led-green);
+      box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,0.5),
+        0 0 6px var(--led-green);
+    }
+
+    .clear-btn {
+      width: 30px; height: 30px;
+      border: 1px solid rgba(0,0,0,0.5);
+      background: linear-gradient(180deg, var(--metal-light), var(--metal));
+      color: var(--metal-shadow);
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 1px 2px rgba(0,0,0,0.4);
+      font-family: inherit;
+    }
+    .clear-btn:active {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    /* ── Play area (instrument) ── */
+    .play-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0.4), rgba(0,0,0,0.1)),
+        linear-gradient(180deg, var(--wood-dark), #1a0e08);
+      border-radius: 8px;
+      padding: clamp(10px, 2vw, 16px);
+      box-shadow:
+        inset 0 4px 12px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .mode-panel { display: none; flex: 1; flex-direction: column; }
+    .mode-panel.active { display: flex; }
+
+    /* ── PIANO ── */
+    .octave-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px;
+      padding: 6px 0 12px;
+    }
+    .oct-btn {
+      width: 36px; height: 30px;
+      border: 1px solid rgba(0,0,0,0.5);
+      background: linear-gradient(180deg, var(--metal-light), var(--metal));
+      color: var(--metal-shadow);
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 1px 2px rgba(0,0,0,0.4);
+      font-family: inherit;
+    }
+    .oct-btn:active {
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .oct-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--brass);
+      letter-spacing: 0.1em;
+      min-width: 3.5ch;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+
+    .piano-keyboard {
+      flex: 1;
+      position: relative;
+      display: flex;
+      background: linear-gradient(180deg, #2a1a10, var(--wood-dark));
+      border-radius: 4px;
+      padding: 6px 4px 4px;
+      box-shadow:
+        inset 0 2px 6px rgba(0,0,0,0.6);
+      min-height: 240px;
+    }
+
+    .key-white {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(180deg, var(--ivory) 0%, var(--ivory-shade) 100%);
+      border-right: 1px solid rgba(0,0,0,0.18);
+      border-radius: 0 0 6px 6px;
+      box-shadow:
+        inset 0 -10px 16px rgba(0,0,0,0.12),
+        inset 0 0 0 1px rgba(0,0,0,0.05),
+        0 2px 3px rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+      font-size: 0.55rem;
+      color: rgba(0,0,0,0.3);
+      letter-spacing: 0.15em;
+      transition: all 0.05s ease;
+    }
+    .key-white:last-child { border-right: none; }
+    .key-white.pressed {
+      background: linear-gradient(180deg, #d8ceb0 0%, #c8be9c 100%);
+      box-shadow:
+        inset 0 6px 12px rgba(0,0,0,0.25),
+        inset 0 -2px 4px rgba(0,0,0,0.1);
+      transform: translateY(1px);
+    }
+
+    .key-black {
+      position: absolute;
+      top: 6px;
+      width: 9.5%;
+      height: 62%;
+      background: linear-gradient(180deg, #2c2622 0%, #0e0a08 70%, #050402 100%);
+      border-radius: 0 0 4px 4px;
+      box-shadow:
+        inset 0 -3px 4px rgba(255,255,255,0.06),
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        inset 0 0 0 1px rgba(0,0,0,0.5),
+        0 4px 5px rgba(0,0,0,0.7);
+      cursor: pointer;
+      z-index: 2;
+      transition: all 0.05s ease;
+    }
+    .key-black.pressed {
+      background: linear-gradient(180deg, #1a1410 0%, #050402 100%);
+      box-shadow:
+        inset 0 4px 8px rgba(0,0,0,0.9),
+        inset 0 0 0 1px rgba(0,0,0,0.5);
+      transform: translateY(2px);
+    }
+
+    /* Positions des touches noires (7 blanches = C D E F G A B) */
+    .key-black[data-note="C#"] { left: calc(14.28% * 1 - 4.75%); }
+    .key-black[data-note="D#"] { left: calc(14.28% * 2 - 4.75%); }
+    .key-black[data-note="F#"] { left: calc(14.28% * 4 - 4.75%); }
+    .key-black[data-note="G#"] { left: calc(14.28% * 5 - 4.75%); }
+    .key-black[data-note="A#"] { left: calc(14.28% * 6 - 4.75%); }
+
+    /* ── DRUM ── */
+    .drum-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: clamp(8px, 1.6vw, 12px);
+      padding: clamp(4px, 1vw, 8px);
+    }
+
+    .drum-pad {
+      position: relative;
+      background:
+        radial-gradient(ellipse at center 25%, #6a6a6a 0%, var(--metal-dark) 60%, var(--metal-shadow) 100%);
+      border: 1px solid #0a0a0a;
+      border-radius: 10px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        inset 0 -4px 8px rgba(0,0,0,0.5),
+        0 4px 8px rgba(0,0,0,0.6);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 8px 6px;
+      transition: all 0.06s ease;
+    }
+    .drum-pad-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+    }
+    .drum-pad-led {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--led-red-off);
+      box-shadow:
+        inset 0 1px 1px rgba(0,0,0,0.7),
+        0 1px 0 rgba(255,255,255,0.1);
+      transition: all 0.08s ease;
+    }
+    .drum-pad.hit {
+      background:
+        radial-gradient(ellipse at center, #ff9090 0%, #d04040 50%, #802020 100%);
+      box-shadow:
+        inset 0 0 18px rgba(0,0,0,0.4),
+        0 0 18px rgba(255,80,80,0.4);
+      transform: scale(0.97);
+    }
+    .drum-pad.hit .drum-pad-led {
+      background: var(--led-red);
+      box-shadow:
+        inset 0 0 2px rgba(0,0,0,0.5),
+        0 0 8px var(--led-red);
+    }
+    .drum-pad.hit .drum-pad-label {
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* ── Audio nag (overlay tap to start) ── */
+    .audio-nag {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .audio-nag.show { opacity: 1; pointer-events: all; }
+    .audio-nag-msg {
+      background: linear-gradient(180deg, var(--metal-light), var(--metal));
+      color: var(--wood-dark);
+      padding: 1.2rem 2rem;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        0 4px 16px rgba(0,0,0,0.7);
+    }
+
+    /* Responsive: mobile portrait */
+    @media (max-height: 700px) {
+      .control-panel { padding: 8px 12px; gap: 8px; }
+      .control-row { gap: 8px; }
+      .piano-keyboard { min-height: 180px; }
+    }
+    @media (max-width: 500px) {
+      .brand-sub { display: none; }
+      .bpm-label { font-size: 0.5rem; }
+      .drum-pad-label { font-size: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="studio-frame">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+
+    <div class="control-panel">
+      <div class="control-row">
+        <div class="brand">
+          studio
+          <div class="brand-sub">TLB · 01</div>
+        </div>
+        <div class="mode-toggle" id="modeToggle">
+          <button class="mode-btn active" data-mode="piano">Piano</button>
+          <button class="mode-btn" data-mode="drum">Drum</button>
+        </div>
+        <div class="bpm-group">
+          <span class="bpm-label">BPM</span>
+          <button class="bpm-btn" id="bpmDown" aria-label="BPM moins">−</button>
+          <span class="bpm-display" id="bpmDisplay">90</span>
+          <button class="bpm-btn" id="bpmUp" aria-label="BPM plus">+</button>
+        </div>
+      </div>
+
+      <div class="transport">
+        <button class="rec-btn" id="recBtn" aria-label="Enregistrer">
+          <span class="rec-dot"></span> REC
+        </button>
+        <div class="loop-indicator" id="loopIndicator"></div>
+        <button class="clear-btn" id="clearBtn" aria-label="Effacer la boucle">×</button>
+      </div>
+    </div>
+
+    <div class="play-area">
+      <!-- PIANO -->
+      <div class="mode-panel active" id="pianoPanel">
+        <div class="octave-bar">
+          <button class="oct-btn" id="octDown" aria-label="Octave bas">◀</button>
+          <span class="oct-label" id="octLabel">C4</span>
+          <button class="oct-btn" id="octUp" aria-label="Octave haut">▶</button>
+        </div>
+        <div class="piano-keyboard" id="pianoKeys"></div>
+      </div>
+
+      <!-- DRUM -->
+      <div class="mode-panel" id="drumPanel">
+        <div class="drum-grid" id="drumGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="audio-nag" id="audioNag">
+    <div class="audio-nag-msg">Touche pour démarrer</div>
+  </div>
+
+  <script src="/pin-guard.js"></script>
+  <script src="/nav.js"></script>
+  <script>
+    /* ════════════════════════════════════════════════════════════════
+       AUDIO ENGINE
+    ════════════════════════════════════════════════════════════════ */
+    let ctx = null;
+    let masterGain = null;
+    function getCtx() {
+      if (!ctx) {
+        const C = window.AudioContext || window.webkitAudioContext;
+        ctx = new C();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = 0.7;
+        masterGain.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    /* ── Piano voice : sine fondamentale + harmoniques + ADSR ── */
+    const NOTE_FREQS = { C: 261.63, 'C#': 277.18, D: 293.66, 'D#': 311.13, E: 329.63,
+                         F: 349.23, 'F#': 369.99, G: 392.00, 'G#': 415.30, A: 440.00,
+                         'A#': 466.16, B: 493.88 };
+    function freqFor(noteName, octave) {
+      const baseOct = 4;
+      return NOTE_FREQS[noteName] * Math.pow(2, octave - baseOct);
+    }
+
+    const activeNotes = new Map(); // id → { oscs, gain }
+    function startPianoNote(id, freq) {
+      const ac = getCtx();
+      const now = ac.currentTime;
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.005);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.18);
+      gain.connect(masterGain);
+
+      const harm = [
+        { mul: 1,   amp: 1.0 },
+        { mul: 2,   amp: 0.32 },
+        { mul: 3,   amp: 0.16 },
+        { mul: 4.01, amp: 0.06 }
+      ];
+      const oscs = harm.map(h => {
+        const o = ac.createOscillator();
+        o.type = 'sine';
+        o.frequency.value = freq * h.mul;
+        const g = ac.createGain();
+        g.gain.value = h.amp;
+        o.connect(g).connect(gain);
+        o.start(now);
+        return o;
+      });
+      activeNotes.set(id, { oscs, gain });
+    }
+    function stopPianoNote(id) {
+      const note = activeNotes.get(id);
+      if (!note) return;
+      activeNotes.delete(id);
+      const ac = getCtx();
+      const now = ac.currentTime;
+      try {
+        note.gain.gain.cancelScheduledValues(now);
+        note.gain.gain.setValueAtTime(note.gain.gain.value, now);
+        note.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+        note.oscs.forEach(o => o.stop(now + 0.45));
+      } catch(e) {}
+    }
+    function playPianoOneshot(freq, dur) {
+      const id = 'oneshot-' + Math.random();
+      startPianoNote(id, freq);
+      setTimeout(() => stopPianoNote(id), Math.max(80, dur * 1000));
+    }
+
+    /* ── Drum synths ── */
+    function noiseBuffer(duration) {
+      const ac = getCtx();
+      const buf = ac.createBuffer(1, Math.max(1, Math.floor(duration * ac.sampleRate)), ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      return buf;
+    }
+    function envGain(initial, decay) {
+      const ac = getCtx();
+      const g = ac.createGain();
+      g.gain.setValueAtTime(initial, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + decay);
+      g.connect(masterGain);
+      return g;
+    }
+    const DRUMS = {
+      kick: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(150, now);
+        o.frequency.exponentialRampToValueAtTime(38, now + 0.12);
+        const g = envGain(0.9, 0.35);
+        o.connect(g); o.start(now); o.stop(now + 0.4);
+      },
+      snare: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.25);
+        const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1200;
+        const ng = envGain(0.55, 0.22);
+        n.connect(f).connect(ng); n.start(now);
+        const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = 210;
+        const og = envGain(0.45, 0.13);
+        o.connect(og); o.start(now); o.stop(now + 0.16);
+      },
+      clap: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        [0, 0.012, 0.024, 0.038].forEach(t => {
+          const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.18);
+          const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1400; f.Q.value = 0.6;
+          const g = ac.createGain();
+          g.gain.setValueAtTime(0, now + t);
+          g.gain.linearRampToValueAtTime(0.4, now + t + 0.001);
+          g.gain.exponentialRampToValueAtTime(0.001, now + t + 0.15);
+          g.connect(masterGain);
+          n.connect(f).connect(g); n.start(now + t);
+        });
+      },
+      rim: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = 950;
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 8;
+        const g = envGain(0.35, 0.06);
+        o.connect(f).connect(g); o.start(now); o.stop(now + 0.07);
+      },
+      hhClosed: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.08);
+        const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7000;
+        const g = envGain(0.3, 0.045);
+        n.connect(f).connect(g); n.start(now);
+      },
+      hhOpen: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.4);
+        const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 6500;
+        const g = envGain(0.28, 0.3);
+        n.connect(f).connect(g); n.start(now);
+      },
+      ride: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.6);
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 5500; f.Q.value = 2;
+        const g = envGain(0.22, 0.55);
+        n.connect(f).connect(g); n.start(now);
+        const bell = ac.createOscillator(); bell.type = 'square'; bell.frequency.value = 4200;
+        const bg = envGain(0.12, 0.2);
+        bell.connect(bg); bell.start(now); bell.stop(now + 0.25);
+      },
+      crash: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(1.6);
+        const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 4000;
+        const g = envGain(0.4, 1.4);
+        n.connect(f).connect(g); n.start(now);
+      },
+      tomLow: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(140, now);
+        o.frequency.exponentialRampToValueAtTime(75, now + 0.25);
+        const g = envGain(0.6, 0.3);
+        o.connect(g); o.start(now); o.stop(now + 0.35);
+      },
+      tomMid: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(220, now);
+        o.frequency.exponentialRampToValueAtTime(120, now + 0.22);
+        const g = envGain(0.55, 0.26);
+        o.connect(g); o.start(now); o.stop(now + 0.32);
+      },
+      tomHi: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(330, now);
+        o.frequency.exponentialRampToValueAtTime(180, now + 0.2);
+        const g = envGain(0.5, 0.22);
+        o.connect(g); o.start(now); o.stop(now + 0.28);
+      },
+      cowbell: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o1 = ac.createOscillator(); o1.type = 'square'; o1.frequency.value = 540;
+        const o2 = ac.createOscillator(); o2.type = 'square'; o2.frequency.value = 800;
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 5;
+        const g = envGain(0.3, 0.18);
+        o1.connect(f); o2.connect(f); f.connect(g);
+        o1.start(now); o2.start(now); o1.stop(now + 0.22); o2.stop(now + 0.22);
+      },
+      shaker: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const n = ac.createBufferSource(); n.buffer = noiseBuffer(0.12);
+        const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 5000;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(0.22, now + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        g.connect(masterGain);
+        n.connect(f).connect(g); n.start(now);
+      },
+      conga: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(260, now);
+        o.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+        const g = envGain(0.45, 0.22);
+        o.connect(g); o.start(now); o.stop(now + 0.28);
+      },
+      perc: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = 880;
+        const g = envGain(0.35, 0.08);
+        o.connect(g); o.start(now); o.stop(now + 0.1);
+      },
+      zap: () => {
+        const ac = getCtx(); const now = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(880, now);
+        o.frequency.exponentialRampToValueAtTime(120, now + 0.25);
+        const g = envGain(0.3, 0.25);
+        o.connect(g); o.start(now); o.stop(now + 0.32);
+      }
+    };
+
+    const DRUM_LAYOUT = [
+      { id: 'kick',     label: 'Kick' },     { id: 'snare', label: 'Snare' },    { id: 'clap', label: 'Clap' },     { id: 'rim', label: 'Rim' },
+      { id: 'hhClosed', label: 'HH·Cl' },    { id: 'hhOpen', label: 'HH·Op' },   { id: 'ride', label: 'Ride' },     { id: 'crash', label: 'Crash' },
+      { id: 'tomLow',   label: 'Tom·L' },    { id: 'tomMid', label: 'Tom·M' },   { id: 'tomHi', label: 'Tom·H' },   { id: 'cowbell', label: 'Cowbell' },
+      { id: 'shaker',   label: 'Shaker' },   { id: 'conga', label: 'Conga' },    { id: 'perc', label: 'Perc' },     { id: 'zap', label: 'Zap' }
+    ];
+
+    /* ════════════════════════════════════════════════════════════════
+       STATE + PERSISTENCE
+    ════════════════════════════════════════════════════════════════ */
+    const LS = {
+      mode:   () => localStorage.getItem('studio_mode') || 'piano',
+      setMode:(m) => localStorage.setItem('studio_mode', m),
+      oct:    () => parseInt(localStorage.getItem('studio_oct') || '4', 10),
+      setOct: (o) => localStorage.setItem('studio_oct', String(o)),
+      bpm:    () => parseInt(localStorage.getItem('studio_bpm') || '90', 10),
+      setBpm: (b) => localStorage.setItem('studio_bpm', String(b))
+    };
+
+    let currentMode  = LS.mode();
+    let currentOct   = Math.max(2, Math.min(6, LS.oct()));
+    let bpm          = Math.max(40, Math.min(200, LS.bpm()));
+
+    /* ════════════════════════════════════════════════════════════════
+       PIANO UI
+    ════════════════════════════════════════════════════════════════ */
+    const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const BLACK_NOTES = ['C#', 'D#', 'F#', 'G#', 'A#'];
+    const KEY_MAP = { 'a':'C', 's':'D', 'd':'E', 'f':'F', 'g':'G', 'h':'A', 'j':'B',
+                      'w':'C#', 'e':'D#', 't':'F#', 'y':'G#', 'u':'A#' };
+
+    const pianoKeysEl = document.getElementById('pianoKeys');
+    const octLabel    = document.getElementById('octLabel');
+
+    function buildPianoKeys() {
+      pianoKeysEl.innerHTML = '';
+      WHITE_NOTES.forEach((n) => {
+        const k = document.createElement('div');
+        k.className = 'key-white';
+        k.dataset.note = n;
+        k.innerHTML = '<span>' + n + '</span>';
+        pianoKeysEl.appendChild(k);
+      });
+      BLACK_NOTES.forEach((n) => {
+        const k = document.createElement('div');
+        k.className = 'key-black';
+        k.dataset.note = n;
+        pianoKeysEl.appendChild(k);
+      });
+      octLabel.textContent = 'C' + currentOct;
+    }
+    buildPianoKeys();
+
+    // Pointer handling for piano
+    const pointerToKey = new Map(); // pointerId → keyEl
+    pianoKeysEl.addEventListener('pointerdown', (e) => {
+      const key = e.target.closest('.key-white, .key-black');
+      if (!key) return;
+      e.preventDefault();
+      try { key.setPointerCapture(e.pointerId); } catch(_) {}
+      pressKey(key, e.pointerId);
+    });
+    pianoKeysEl.addEventListener('pointerup', (e) => {
+      releasePointer(e.pointerId);
+    });
+    pianoKeysEl.addEventListener('pointercancel', (e) => {
+      releasePointer(e.pointerId);
+    });
+    pianoKeysEl.addEventListener('pointerleave', (e) => {
+      releasePointer(e.pointerId);
+    });
+
+    function pressKey(keyEl, pointerId) {
+      const note = keyEl.dataset.note;
+      const freq = freqFor(note, currentOct);
+      const id = 'p-' + pointerId + '-' + note;
+      keyEl.classList.add('pressed');
+      startPianoNote(id, freq);
+      pointerToKey.set(pointerId, { keyEl, noteId: id });
+      recordEvent({ type: 'piano-start', freq, note, oct: currentOct, id });
+    }
+    function releasePointer(pointerId) {
+      const ref = pointerToKey.get(pointerId);
+      if (!ref) return;
+      pointerToKey.delete(pointerId);
+      ref.keyEl.classList.remove('pressed');
+      stopPianoNote(ref.noteId);
+      recordEvent({ type: 'piano-stop', id: ref.noteId });
+    }
+
+    // Keyboard (desktop)
+    const heldKeys = new Map();
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      const k = e.key.toLowerCase();
+      if (!KEY_MAP[k] || currentMode !== 'piano') return;
+      const note = KEY_MAP[k];
+      const keyEl = pianoKeysEl.querySelector('[data-note="' + CSS.escape(note) + '"]');
+      if (!keyEl) return;
+      const freq = freqFor(note, currentOct);
+      const id = 'kb-' + k;
+      heldKeys.set(k, { keyEl, id });
+      keyEl.classList.add('pressed');
+      startPianoNote(id, freq);
+      recordEvent({ type: 'piano-start', freq, note, oct: currentOct, id });
+    });
+    document.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      const ref = heldKeys.get(k);
+      if (!ref) return;
+      heldKeys.delete(k);
+      ref.keyEl.classList.remove('pressed');
+      stopPianoNote(ref.id);
+      recordEvent({ type: 'piano-stop', id: ref.id });
+    });
+
+    // Octave buttons
+    document.getElementById('octUp').addEventListener('click', () => {
+      if (currentOct < 6) { currentOct++; octLabel.textContent = 'C' + currentOct; LS.setOct(currentOct); }
+    });
+    document.getElementById('octDown').addEventListener('click', () => {
+      if (currentOct > 2) { currentOct--; octLabel.textContent = 'C' + currentOct; LS.setOct(currentOct); }
+    });
+
+    /* ════════════════════════════════════════════════════════════════
+       DRUM UI
+    ════════════════════════════════════════════════════════════════ */
+    const drumGrid = document.getElementById('drumGrid');
+    function buildDrumGrid() {
+      drumGrid.innerHTML = '';
+      DRUM_LAYOUT.forEach(d => {
+        const p = document.createElement('div');
+        p.className = 'drum-pad';
+        p.dataset.drum = d.id;
+        p.innerHTML = '<span class="drum-pad-led"></span><span class="drum-pad-label">' + d.label + '</span>';
+        drumGrid.appendChild(p);
+      });
+    }
+    buildDrumGrid();
+
+    drumGrid.addEventListener('pointerdown', (e) => {
+      const pad = e.target.closest('.drum-pad');
+      if (!pad) return;
+      e.preventDefault();
+      hitDrum(pad);
+    });
+    function hitDrum(pad) {
+      const id = pad.dataset.drum;
+      if (!DRUMS[id]) return;
+      DRUMS[id]();
+      pad.classList.add('hit');
+      setTimeout(() => pad.classList.remove('hit'), 90);
+      recordEvent({ type: 'drum', drum: id });
+    }
+
+    // Keyboard for drums (qwer / asdf / zxcv / 1234 row)
+    const DRUM_KEY_MAP = {
+      '1':0,'2':1,'3':2,'4':3,
+      'q':4,'w':5,'e':6,'r':7,
+      'a':8,'s':9,'d':10,'f':11,
+      'z':12,'x':13,'c':14,'v':15
+    };
+    document.addEventListener('keydown', (e) => {
+      if (e.repeat) return;
+      if (currentMode !== 'drum') return;
+      const k = e.key.toLowerCase();
+      if (DRUM_KEY_MAP[k] == null) return;
+      const pads = drumGrid.querySelectorAll('.drum-pad');
+      const pad = pads[DRUM_KEY_MAP[k]];
+      if (pad) hitDrum(pad);
+    });
+
+    /* ════════════════════════════════════════════════════════════════
+       MODE TOGGLE
+    ════════════════════════════════════════════════════════════════ */
+    const modeToggle = document.getElementById('modeToggle');
+    const pianoPanel = document.getElementById('pianoPanel');
+    const drumPanel  = document.getElementById('drumPanel');
+    function applyMode(m) {
+      currentMode = m;
+      LS.setMode(m);
+      modeToggle.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === m);
+      });
+      pianoPanel.classList.toggle('active', m === 'piano');
+      drumPanel .classList.toggle('active', m === 'drum');
+    }
+    modeToggle.addEventListener('click', (e) => {
+      const b = e.target.closest('.mode-btn');
+      if (b) applyMode(b.dataset.mode);
+    });
+    applyMode(currentMode);
+
+    /* ════════════════════════════════════════════════════════════════
+       BPM
+    ════════════════════════════════════════════════════════════════ */
+    const bpmDisplay = document.getElementById('bpmDisplay');
+    function setBpm(v) {
+      bpm = Math.max(40, Math.min(200, v));
+      bpmDisplay.textContent = bpm;
+      LS.setBpm(bpm);
+    }
+    setBpm(bpm);
+    document.getElementById('bpmUp').addEventListener('click', () => setBpm(bpm + 1));
+    document.getElementById('bpmDown').addEventListener('click', () => setBpm(bpm - 1));
+
+    /* ════════════════════════════════════════════════════════════════
+       RECORDING / LOOP (4 bars × 4 beats = 16 beats)
+    ════════════════════════════════════════════════════════════════ */
+    const recBtn        = document.getElementById('recBtn');
+    const clearBtn      = document.getElementById('clearBtn');
+    const loopIndicator = document.getElementById('loopIndicator');
+
+    // Build 16 beat dots
+    function buildIndicator() {
+      loopIndicator.innerHTML = '';
+      for (let i = 0; i < 16; i++) {
+        const d = document.createElement('div');
+        d.className = 'beat-dot' + (i % 4 === 0 ? ' bar-start' : '');
+        loopIndicator.appendChild(d);
+      }
+    }
+    buildIndicator();
+    const beatDots = () => Array.from(loopIndicator.querySelectorAll('.beat-dot'));
+
+    let state = 'idle'; // idle | armed | recording | playing
+    let recordedEvents = []; // [{ t, evt }]
+    let recordStartT = 0;
+    let loopLength = 0;
+    let playLoopTimer = null;
+    let scheduledTimeouts = [];
+    let beatRafId = null;
+
+    function beatLen() { return 60 / bpm; }
+    function loopLenSec() { return beatLen() * 16; }
+
+    function setRecState(s) {
+      state = s;
+      recBtn.classList.toggle('armed', s === 'armed');
+      recBtn.classList.toggle('recording', s === 'recording');
+      recBtn.classList.toggle('playing', s === 'playing');
+      recBtn.querySelector('.rec-dot');
+      // Update REC button label
+      const labelMap = { idle: 'REC', armed: 'ARM', recording: 'REC', playing: 'PLAY' };
+      // keep the dot + replace text node
+      const dot = recBtn.querySelector('.rec-dot');
+      recBtn.innerHTML = '';
+      recBtn.appendChild(dot);
+      recBtn.appendChild(document.createTextNode(' ' + labelMap[s]));
+      recBtn.classList.toggle('armed', s === 'armed');
+      recBtn.classList.toggle('recording', s === 'recording');
+      recBtn.classList.toggle('playing', s === 'playing');
+    }
+
+    function recordEvent(evt) {
+      if (state === 'recording') {
+        const ac = getCtx();
+        const t = ac.currentTime - recordStartT;
+        if (t >= loopLength) {
+          stopRecordingAndPlay();
+          return;
+        }
+        recordedEvents.push({ t, evt });
+      }
+    }
+
+    function startArm() {
+      if (state === 'recording' || state === 'playing') {
+        // toggle stop
+        stopAll();
+        return;
+      }
+      // armed → wait for first hit
+      setRecState('armed');
+      recordedEvents = [];
+      loopLength = loopLenSec();
+      // first event will trigger actual recording in armPreHit handler below
+    }
+
+    // Wrap recordEvent to also handle armed → recording transition
+    const _origRecord = recordEvent;
+    function armedFirstHit(evt) {
+      if (state === 'armed') {
+        getCtx(); // ensure ac
+        recordStartT = ctx.currentTime;
+        setRecState('recording');
+        startBeatAnimation(recordStartT);
+        recordedEvents.push({ t: 0, evt });
+        // Schedule auto-stop at end of loop
+        setTimeout(() => {
+          if (state === 'recording') stopRecordingAndPlay();
+        }, loopLength * 1000 + 20);
+      }
+    }
+    // Override
+    recordEvent = function(evt) {
+      if (state === 'armed') { armedFirstHit(evt); return; }
+      if (state === 'recording') {
+        const ac = getCtx();
+        const t = ac.currentTime - recordStartT;
+        if (t >= loopLength) {
+          stopRecordingAndPlay();
+          return;
+        }
+        recordedEvents.push({ t, evt });
+      }
+    };
+
+    function stopRecordingAndPlay() {
+      if (recordedEvents.length === 0) {
+        setRecState('idle');
+        stopBeatAnimation();
+        return;
+      }
+      startPlayback();
+    }
+
+    function startPlayback() {
+      setRecState('playing');
+      const ac = getCtx();
+      scheduleIteration(ac.currentTime);
+      startBeatAnimation(ac.currentTime);
+    }
+
+    function scheduleIteration(startTime) {
+      if (state !== 'playing') return;
+      const ac = getCtx();
+      // schedule each event
+      recordedEvents.forEach(({ t, evt }) => {
+        const when = startTime + t;
+        const delayMs = Math.max(0, (when - ac.currentTime) * 1000);
+        const to = setTimeout(() => {
+          if (state !== 'playing') return;
+          replayEvent(evt);
+        }, delayMs);
+        scheduledTimeouts.push(to);
+      });
+      // schedule next iteration
+      const nextStart = startTime + loopLength;
+      const nextDelay = Math.max(0, (nextStart - ac.currentTime) * 1000);
+      playLoopTimer = setTimeout(() => {
+        // restart beat anim sync
+        startBeatAnimation(getCtx().currentTime);
+        scheduleIteration(nextStart);
+      }, nextDelay);
+    }
+
+    function replayEvent(evt) {
+      switch (evt.type) {
+        case 'piano-start': {
+          startPianoNote(evt.id + '-r-' + Math.random(), evt.freq);
+          // we need to remember this generated id to stop it on the matching piano-stop
+          if (!replayActiveIds[evt.id]) replayActiveIds[evt.id] = [];
+          // For replay we issue stop via timing of the recorded piano-stop event;
+          // simpler approach: generate a fresh per-iteration id and stop based on duration
+          // — but we'd need to find matching stop. So we use a side channel:
+          break;
+        }
+        case 'piano-stop': {
+          // We'll handle by id linking — but simpler: piano notes during replay
+          // use one-shot with auto-decay. So we transform piano-start into oneshot
+          // at scheduling time below.
+          break;
+        }
+        case 'drum': {
+          if (DRUMS[evt.drum]) DRUMS[evt.drum]();
+          // visual flash
+          const pad = drumGrid.querySelector('[data-drum="' + evt.drum + '"]');
+          if (pad) {
+            pad.classList.add('hit');
+            setTimeout(() => pad.classList.remove('hit'), 90);
+          }
+          break;
+        }
+      }
+    }
+    const replayActiveIds = {};
+
+    // Simpler replay strategy: convert piano-start/stop pairs into pre-computed notes
+    // with durations at the start of playback. We re-process recordedEvents into a
+    // flat list of {t, type, ...} that's easier to schedule.
+    let flatEvents = [];
+    function flattenForPlayback() {
+      flatEvents = [];
+      const openNotes = {}; // id → tStart
+      recordedEvents.forEach(({ t, evt }) => {
+        if (evt.type === 'piano-start') {
+          openNotes[evt.id] = { t, freq: evt.freq };
+        } else if (evt.type === 'piano-stop') {
+          const op = openNotes[evt.id];
+          if (op) {
+            flatEvents.push({ t: op.t, type: 'piano', freq: op.freq, dur: Math.max(0.05, t - op.t) });
+            delete openNotes[evt.id];
+          }
+        } else if (evt.type === 'drum') {
+          flatEvents.push({ t, type: 'drum', drum: evt.drum });
+        }
+      });
+      // Notes never released: cap at loopLength
+      Object.entries(openNotes).forEach(([id, op]) => {
+        flatEvents.push({ t: op.t, type: 'piano', freq: op.freq, dur: Math.max(0.05, loopLength - op.t) });
+      });
+    }
+
+    // Replace scheduleIteration to use flatEvents
+    function scheduleIteration2(startTime) {
+      if (state !== 'playing') return;
+      const ac = getCtx();
+      flatEvents.forEach(ev => {
+        const when = startTime + ev.t;
+        const delayMs = Math.max(0, (when - ac.currentTime) * 1000);
+        const to = setTimeout(() => {
+          if (state !== 'playing') return;
+          if (ev.type === 'piano') {
+            playPianoOneshot(ev.freq, ev.dur);
+          } else if (ev.type === 'drum' && DRUMS[ev.drum]) {
+            DRUMS[ev.drum]();
+            const pad = drumGrid.querySelector('[data-drum="' + ev.drum + '"]');
+            if (pad) {
+              pad.classList.add('hit');
+              setTimeout(() => pad.classList.remove('hit'), 90);
+            }
+          }
+        }, delayMs);
+        scheduledTimeouts.push(to);
+      });
+      const nextStart = startTime + loopLength;
+      const nextDelay = Math.max(0, (nextStart - ac.currentTime) * 1000);
+      playLoopTimer = setTimeout(() => {
+        startBeatAnimation(getCtx().currentTime);
+        scheduleIteration2(nextStart);
+      }, nextDelay);
+    }
+
+    // Override startPlayback to use flatEvents path
+    function startPlayback() {
+      flattenForPlayback();
+      if (flatEvents.length === 0) {
+        setRecState('idle');
+        stopBeatAnimation();
+        return;
+      }
+      setRecState('playing');
+      const ac = getCtx();
+      scheduleIteration2(ac.currentTime);
+      startBeatAnimation(ac.currentTime);
+    }
+
+    function stopAll() {
+      // Stop scheduled events + loop
+      scheduledTimeouts.forEach(t => clearTimeout(t));
+      scheduledTimeouts = [];
+      if (playLoopTimer) { clearTimeout(playLoopTimer); playLoopTimer = null; }
+      // Stop active notes
+      Array.from(activeNotes.keys()).forEach(id => stopPianoNote(id));
+      stopBeatAnimation();
+      setRecState('idle');
+    }
+
+    function clearLoop() {
+      stopAll();
+      recordedEvents = [];
+      flatEvents = [];
+    }
+
+    recBtn.addEventListener('click', () => {
+      getCtx(); // ensure audio active
+      if (state === 'idle') startArm();
+      else if (state === 'armed') { setRecState('idle'); /* cancel arm */ }
+      else stopAll();
+    });
+    clearBtn.addEventListener('click', clearLoop);
+
+    /* ── Beat indicator animation ── */
+    function startBeatAnimation(startT) {
+      stopBeatAnimation();
+      const dots = beatDots();
+      function tick() {
+        const ac = getCtx();
+        const elapsed = ac.currentTime - startT;
+        if (elapsed >= loopLength) {
+          // will be re-started by scheduleIteration2 for next iteration
+          dots.forEach(d => d.classList.remove('lit'));
+          return;
+        }
+        const beat = Math.floor((elapsed / loopLength) * 16);
+        dots.forEach((d, i) => {
+          d.classList.toggle('lit', i === beat);
+        });
+        beatRafId = requestAnimationFrame(tick);
+      }
+      tick();
+    }
+    function stopBeatAnimation() {
+      if (beatRafId) cancelAnimationFrame(beatRafId);
+      beatRafId = null;
+      beatDots().forEach(d => d.classList.remove('lit'));
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       AUDIO NAG (iOS user-gesture)
+    ════════════════════════════════════════════════════════════════ */
+    const audioNag = document.getElementById('audioNag');
+    let audioReady = false;
+    function checkAudio() {
+      try {
+        const C = window.AudioContext || window.webkitAudioContext;
+        const probe = new C();
+        if (probe.state === 'suspended') audioNag.classList.add('show');
+        probe.close();
+      } catch (_) {}
+    }
+    function dismissNag() {
+      audioReady = true;
+      audioNag.classList.remove('show');
+      getCtx(); // initialize
+    }
+    audioNag.addEventListener('click', dismissNag);
+    document.addEventListener('pointerdown', function once() {
+      dismissNag();
+      document.removeEventListener('pointerdown', once);
+    }, { once: true });
+    // Initial check
+    checkAudio();
+
+    /* Prevent scroll on body for touch */
+    document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  </script>
+</body>
+</html>
