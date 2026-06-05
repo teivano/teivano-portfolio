@@ -48,14 +48,17 @@
     { href:'/studio.html',     url:'/studio.html',     title:'Studio',         desc:'Piano + drum machine · synthèse Web Audio' },
   ];
 
-  /* ── Hamburger ── */
-  var ham = document.createElement('button');
-  ham.className   = 'ham';
-  ham.id          = 'hamBtn';
-  ham.setAttribute('aria-label', 'Menu');
-  ham.setAttribute('aria-expanded', 'false');
-  ham.innerHTML   = '<span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span>';
-  document.body.appendChild(ham);
+  /* ── Hamburger (skipped si body[data-no-ham]) ── */
+  var ham = null;
+  if (!document.body.dataset.noHam) {
+    ham = document.createElement('button');
+    ham.className   = 'ham';
+    ham.id          = 'hamBtn';
+    ham.setAttribute('aria-label', 'Menu');
+    ham.setAttribute('aria-expanded', 'false');
+    ham.innerHTML   = '<span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span>';
+    document.body.appendChild(ham);
+  }
 
   /* ── Overlay ── */
   var overlay = document.createElement('div');
@@ -113,20 +116,29 @@
   /* ── Logique open / close ── */
   function openNav() {
     overlay.classList.add('open');
-    ham.classList.add('open');
-    ham.setAttribute('aria-expanded', 'true');
+    if (ham) {
+      ham.classList.add('open');
+      ham.setAttribute('aria-expanded', 'true');
+    }
     overlay.scrollTop = 0;
     requestAnimationFrame(checkScroll);
   }
   function closeNav() {
     overlay.classList.remove('open');
-    ham.classList.remove('open');
-    ham.setAttribute('aria-expanded', 'false');
+    if (ham) {
+      ham.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    }
   }
+  /* Expose pour boutons custom (ex: studio, sudoku) */
+  window.tlbOpenNav  = openNav;
+  window.tlbCloseNav = closeNav;
 
-  ham.addEventListener('click', function () {
-    ham.classList.contains('open') ? closeNav() : openNav();
-  });
+  if (ham) {
+    ham.addEventListener('click', function () {
+      ham.classList.contains('open') ? closeNav() : openNav();
+    });
+  }
   overlay.addEventListener('click', function (e) {
     if (e.target === overlay) closeNav();
   });
