@@ -156,23 +156,26 @@
     }
 
     .brand {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-weight: 400;
-      font-size: clamp(0.9rem, 3.2vw, 1.15rem);
-      color: var(--metal-shadow);
-      letter-spacing: 0.04em;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-      flex: 1;
-    }
-    .brand-sub {
-      font-size: 0.55rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: rgba(0,0,0,0.5);
-      margin-top: 2px;
       font-family: 'Space Grotesk', sans-serif;
       font-style: normal;
+      font-weight: 700;
+      font-size: clamp(0.85rem, 3vw, 1.05rem);
+      color: #0a0a0a;
+      letter-spacing: 0.05em;
+      text-transform: lowercase;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+      flex: 1;
+      text-align: center;
+    }
+    .brand-sub {
+      font-size: 0.52rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.65);
+      margin-top: 3px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
     }
 
     /* Chrono LED display */
@@ -262,10 +265,10 @@
     .landing-screen[hidden] { display: none; }
 
     .landing-h {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-weight: 400;
-      font-size: clamp(1.4rem, 5.5vw, 2rem);
+      font-family: 'Space Grotesk', sans-serif;
+      font-style: normal;
+      font-weight: 600;
+      font-size: clamp(1.2rem, 4.8vw, 1.65rem);
       color: var(--ink);
       text-align: center;
       letter-spacing: -0.01em;
@@ -324,11 +327,12 @@
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
     }
     .diff-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 400;
-      font-style: italic;
-      font-size: 1.2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-style: normal;
+      font-size: 1.05rem;
       color: var(--ink);
+      letter-spacing: 0.02em;
     }
     .diff-clues {
       font-size: 0.6rem;
@@ -395,11 +399,12 @@
       padding: 0 4px;
     }
     .diff-tag {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 0.95rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
       color: var(--ink);
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
     .hints-counter {
       font-size: 0.6rem;
@@ -574,11 +579,11 @@
       align-items: center; gap: 1rem;
     }
     .win-h {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 400;
-      font-size: 2.5rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 2.1rem;
       color: var(--win-green);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
     .win-time {
       font-family: 'Space Grotesk', sans-serif;
@@ -607,12 +612,13 @@
 
     /* Loading */
     .loading-msg {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: 1.1rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 0.95rem;
       color: var(--ink);
-      opacity: 0.6;
+      opacity: 0.7;
       text-align: center;
+      letter-spacing: 0.05em;
     }
 
     @media (max-height: 720px) {
@@ -628,17 +634,17 @@
     <span class="screw bl"></span><span class="screw br"></span>
 
     <div class="control-panel">
-      <button class="menu-btn" id="menuBtn" aria-label="Ouvrir le menu">
-        <span class="menu-btn-icon"><span></span><span></span><span></span></span>
-      </button>
-      <div class="brand">
-        sudoku
-        <div class="brand-sub">TLB · 02</div>
-      </div>
       <div class="chrono" id="chrono" role="button" tabindex="0" aria-label="Chrono">
         <span class="chrono-dot"></span>
         <span class="chrono-time" id="chronoTime">00:00</span>
       </div>
+      <div class="brand">
+        sudoku
+        <div class="brand-sub">TLB · 02</div>
+      </div>
+      <button class="menu-btn" id="menuBtn" aria-label="Ouvrir le menu">
+        <span class="menu-btn-icon"><span></span><span></span><span></span></span>
+      </button>
     </div>
 
     <div class="play-area">

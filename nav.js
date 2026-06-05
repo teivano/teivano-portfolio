@@ -51,7 +51,7 @@
 
   /* ── Hamburger (skipped si body[data-no-ham]) ── */
   var ham = null;
-  if (!document.body.dataset.noHam) {
+  if (!document.body.hasAttribute('data-no-ham')) {
     ham = document.createElement('button');
     ham.className   = 'ham';
     ham.id          = 'hamBtn';
