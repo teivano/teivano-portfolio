@@ -402,13 +402,24 @@
     let state = 'landing'; // landing | playing | gameOver
     let worldY = 0;
     let scrollSpeed = 200;
+    let speedMul = 1;
+    let targetSpeedMul = 1;
     let trail = [];        // [{worldY, x}]
     let segments = [];     // [{startY, endY, startLeft, endLeft, startRight, endRight}]
     let obstacles = [];    // [{worldY, x, radius}]
+    let pickups   = [];    // [{worldY, x, type, radius}]
     let drop = { x: 0, screenY: 0, targetX: 0, radius: 7 };
     let pointing = false;
     let lastT = 0;
     let rafId = 0;
+    // Bonus state
+    let bonusPlume = false;
+    let boostActive = false;
+    let boostUntilY = 0;
+    let invulnUntil = 0;
+    let bounceFlashUntil = 0;
+    let nextPlumeY = 0;
+    let nextBoostY = 0;
 
     /* ── Canvas DPR sizing ── */
     function resize() {
@@ -511,19 +522,105 @@
       obstacles = obstacles.filter(o => o.worldY > worldY - gameH * 0.5);
     }
 
+    /* ── Bonus pickup spawn ── */
+    function maybeSpawnPickup() {
+      // Plume (~1/km, range 700-1300m random)
+      while (nextPlumeY < worldY + gameH * 1.5) {
+        const spawnY = nextPlumeY;
+        const m = getMarginAt(spawnY);
+        const pad = 35;
+        if (m.right - m.left > pad * 2 + 30) {
+          const x = m.left + pad + Math.random() * (m.right - m.left - pad * 2);
+          pickups.push({ worldY: spawnY, x, type: 'plume', radius: 10 });
+        }
+        nextPlumeY = spawnY + 7000 + Math.random() * 6000;
+      }
+      // Boost (rare, range 1800-3500m random)
+      while (nextBoostY < worldY + gameH * 1.5) {
+        const spawnY = nextBoostY;
+        const m = getMarginAt(spawnY);
+        const pad = 35;
+        if (m.right - m.left > pad * 2 + 30) {
+          const x = m.left + pad + Math.random() * (m.right - m.left - pad * 2);
+          pickups.push({ worldY: spawnY, x, type: 'boost', radius: 11 });
+        }
+        nextBoostY = spawnY + 18000 + Math.random() * 17000;
+      }
+      pickups = pickups.filter(p => p.worldY > worldY - gameH * 0.5);
+    }
+
+    function checkPickups() {
+      const wy = worldY;
+      for (let i = pickups.length - 1; i >= 0; i--) {
+        const p = pickups[i];
+        const dy = p.worldY - wy;
+        if (Math.abs(dy) > p.radius + drop.radius + 4) continue;
+        const dx = p.x - drop.x;
+        const r = p.radius + drop.radius;
+        if (dx*dx + dy*dy < r*r) {
+          if (p.type === 'plume') {
+            if (!bonusPlume) bonusPlume = true;
+            // si déjà 1, on consomme silencieusement (stack max 1)
+          } else if (p.type === 'boost') {
+            if (!boostActive) {
+              boostActive = true;
+              boostUntilY = worldY + 2500; // 250 m
+              targetSpeedMul = 2.5;
+            }
+          }
+          pickups.splice(i, 1);
+        }
+      }
+    }
+
+    function consumePlume() {
+      bonusPlume = false;
+      invulnUntil = performance.now() + 400; // 400ms invuln
+      bounceFlashUntil = performance.now() + 220;
+    }
+
     /* ── Collision ── */
     function checkCollision() {
-      const wy = worldY; // drop at world Y = worldY
+      if (performance.now() < invulnUntil) return false;
+      const wy = worldY;
       const m = getMarginAt(wy);
-      if (drop.x - drop.radius < m.left)  return true;
-      if (drop.x + drop.radius > m.right) return true;
+      if (drop.x - drop.radius < m.left) {
+        if (bonusPlume) {
+          consumePlume();
+          drop.x = m.left + drop.radius + 28;
+          drop.targetX = drop.x;
+          return false;
+        }
+        return true;
+      }
+      if (drop.x + drop.radius > m.right) {
+        if (bonusPlume) {
+          consumePlume();
+          drop.x = m.right - drop.radius - 28;
+          drop.targetX = drop.x;
+          return false;
+        }
+        return true;
+      }
+      if (boostActive) return false; // pas d'obstacles pendant boost
       for (const o of obstacles) {
         const dy = o.worldY - wy;
         if (Math.abs(dy) > o.radius + drop.radius + 5) continue;
         const dx = o.x - drop.x;
         const dist2 = dx*dx + dy*dy;
         const r = o.radius + drop.radius;
-        if (dist2 < r*r) return true;
+        if (dist2 < r*r) {
+          if (bonusPlume) {
+            consumePlume();
+            const dir = (drop.x - o.x) >= 0 ? 1 : -1;
+            drop.x = o.x + dir * (o.radius + drop.radius + 14);
+            const margin = getMarginAt(wy);
+            drop.x = Math.max(margin.left + drop.radius + 4, Math.min(margin.right - drop.radius - 4, drop.x));
+            drop.targetX = drop.x;
+            return false;
+          }
+          return true;
+        }
       }
       return false;
     }
@@ -554,10 +651,10 @@
       }
       ctx.stroke();
 
-      // Trail
+      // Trail (gold pendant boost, noir sinon)
       if (trail.length > 1) {
-        ctx.strokeStyle = '#0a0a18';
-        ctx.lineWidth = 4.5;
+        ctx.strokeStyle = boostActive ? '#c98030' : '#0a0a18';
+        ctx.lineWidth = boostActive ? 5.5 : 4.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.beginPath();
@@ -571,11 +668,12 @@
         ctx.stroke();
       }
 
-      // Obstacles
+      // Obstacles (ghosted pendant boost)
+      const obstacleAlpha = boostActive ? 0.22 : 1;
+      ctx.globalAlpha = obstacleAlpha;
       for (const o of obstacles) {
         const sy = drop.screenY + (o.worldY - worldY);
         if (sy < -40 || sy > gameH + 40) continue;
-        // halo
         const g = ctx.createRadialGradient(o.x, sy, 0, o.x, sy, o.radius * 1.7);
         g.addColorStop(0, 'rgba(10,10,24,0.7)');
         g.addColorStop(0.6, 'rgba(10,10,24,0.25)');
@@ -584,28 +682,96 @@
         ctx.beginPath();
         ctx.arc(o.x, sy, o.radius * 1.7, 0, Math.PI * 2);
         ctx.fill();
-        // solid
         ctx.fillStyle = '#0a0a18';
         ctx.beginPath();
         ctx.arc(o.x, sy, o.radius, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.globalAlpha = 1;
 
-      // Drop
+      // Pickups (pulse animation)
+      const pulse = 1 + 0.1 * Math.sin(performance.now() * 0.005);
+      for (const p of pickups) {
+        const sy = drop.screenY + (p.worldY - worldY);
+        if (sy < -40 || sy > gameH + 40) continue;
+        const r = p.radius * pulse;
+        if (p.type === 'plume') {
+          // halo rouge
+          const g = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, r * 2.6);
+          g.addColorStop(0, 'rgba(220,80,60,0.55)');
+          g.addColorStop(0.5, 'rgba(220,80,60,0.18)');
+          g.addColorStop(1, 'rgba(220,80,60,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(p.x, sy, r * 2.6, 0, Math.PI * 2); ctx.fill();
+          // corps rouge
+          ctx.fillStyle = '#c83020';
+          ctx.beginPath(); ctx.arc(p.x, sy, r, 0, Math.PI * 2); ctx.fill();
+          // highlight
+          ctx.fillStyle = 'rgba(255,200,180,0.7)';
+          ctx.beginPath(); ctx.arc(p.x - r * 0.3, sy - r * 0.3, r * 0.35, 0, Math.PI * 2); ctx.fill();
+        } else if (p.type === 'boost') {
+          // halo doré (plus grand, plus brillant)
+          const g = ctx.createRadialGradient(p.x, sy, 0, p.x, sy, r * 3.2);
+          g.addColorStop(0, 'rgba(255,180,60,0.7)');
+          g.addColorStop(0.5, 'rgba(255,180,60,0.22)');
+          g.addColorStop(1, 'rgba(255,180,60,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(p.x, sy, r * 3.2, 0, Math.PI * 2); ctx.fill();
+          // corps doré
+          ctx.fillStyle = '#e09028';
+          ctx.beginPath(); ctx.arc(p.x, sy, r, 0, Math.PI * 2); ctx.fill();
+          // cœur brillant
+          ctx.fillStyle = 'rgba(255,255,200,0.85)';
+          ctx.beginPath(); ctx.arc(p.x, sy, r * 0.42, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      // Drop (avec flash potentiel après bounce)
       if (state !== 'landing') {
-        // soft shadow under
-        const dg = ctx.createRadialGradient(drop.x, drop.screenY, 0, drop.x, drop.screenY, drop.radius * 2.2);
-        dg.addColorStop(0, 'rgba(10,10,24,0.3)');
-        dg.addColorStop(1, 'rgba(10,10,24,0)');
+        const flashing = performance.now() < bounceFlashUntil;
+        const dg = ctx.createRadialGradient(drop.x, drop.screenY, 0, drop.x, drop.screenY, drop.radius * 2.5);
+        if (flashing) {
+          dg.addColorStop(0, 'rgba(200,48,32,0.55)');
+          dg.addColorStop(1, 'rgba(200,48,32,0)');
+        } else {
+          dg.addColorStop(0, 'rgba(10,10,24,0.3)');
+          dg.addColorStop(1, 'rgba(10,10,24,0)');
+        }
         ctx.fillStyle = dg;
         ctx.beginPath();
-        ctx.arc(drop.x, drop.screenY, drop.radius * 2.2, 0, Math.PI * 2);
+        ctx.arc(drop.x, drop.screenY, drop.radius * 2.5, 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.fillStyle = '#0a0a18';
+        ctx.fillStyle = flashing ? '#c83020' : '#0a0a18';
         ctx.beginPath();
         ctx.arc(drop.x, drop.screenY, drop.radius, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      // HUD : plume tenue (top-left)
+      if (bonusPlume) {
+        const hx = 20, hy = 22;
+        const hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, 18);
+        hg.addColorStop(0, 'rgba(220,80,60,0.5)');
+        hg.addColorStop(1, 'rgba(220,80,60,0)');
+        ctx.fillStyle = hg;
+        ctx.beginPath(); ctx.arc(hx, hy, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#c83020';
+        ctx.beginPath(); ctx.arc(hx, hy, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(10,10,24,0.75)';
+        ctx.font = '600 11px "Space Grotesk", system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('× 1', hx + 14, hy);
+      }
+
+      // HUD : countdown boost (top-center, quand actif)
+      if (boostActive) {
+        const remaining = Math.max(0, Math.ceil((boostUntilY - worldY) / 10));
+        ctx.fillStyle = 'rgba(224,144,40,0.95)';
+        ctx.font = '700 13px "Space Grotesk", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('BOOST · ' + remaining + ' M', gameW / 2, 12);
       }
     }
 
@@ -616,14 +782,26 @@
       // Drop lerp toward target
       drop.x += (drop.targetX - drop.x) * Math.min(1, dt * 14);
 
+      // Boost lifecycle
+      if (boostActive && worldY >= boostUntilY) {
+        boostActive = false;
+        targetSpeedMul = 1;
+        // Saute les obstacles "manqués" pendant le boost (sinon spawn massif)
+        if (nextObstacleY < worldY + gameH * 0.4) {
+          nextObstacleY = worldY + gameH * 0.5;
+        }
+      }
+      speedMul += (targetSpeedMul - speedMul) * Math.min(1, dt * 2);
+
       // Speed: progressive ramp
       const distance = worldY / 10;
       const targetSpeed = Math.min(720, 200 + distance * 0.18);
       scrollSpeed += (targetSpeed - scrollSpeed) * Math.min(1, dt * 0.6);
 
-      worldY += scrollSpeed * dt;
+      worldY += scrollSpeed * speedMul * dt;
       ensureSegments();
-      maybeSpawnObstacle();
+      if (!boostActive) maybeSpawnObstacle();
+      maybeSpawnPickup();
 
       // Add trail point
       trail.push({ worldY: worldY, x: drop.x });
@@ -635,7 +813,8 @@
       const score = Math.floor(worldY / 10);
       scoreEl.textContent = score + ' m';
 
-      // Collision
+      // Pickups + Collision
+      checkPickups();
       if (checkCollision()) {
         endGame();
       }
@@ -656,10 +835,21 @@
       state = 'playing';
       worldY = 0;
       scrollSpeed = 200;
+      speedMul = 1;
+      targetSpeedMul = 1;
       trail = [];
       segments = [];
       obstacles = [];
+      pickups = [];
       nextObstacleY = 200;
+      // First plume between 700-1300m, first boost between 1800-3500m
+      nextPlumeY = 7000 + Math.random() * 6000;
+      nextBoostY = 18000 + Math.random() * 17000;
+      bonusPlume = false;
+      boostActive = false;
+      boostUntilY = 0;
+      invulnUntil = 0;
+      bounceFlashUntil = 0;
       drop.x = gameW / 2;
       drop.targetX = gameW / 2;
       drop.screenY = gameH * 0.4;
