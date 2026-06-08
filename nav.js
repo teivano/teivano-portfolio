@@ -47,6 +47,7 @@
     { href:'#',                pin:'/koala.html',      url:'/koala.html', pinHash:'07aa2015d482734372d4a9a1c07c8290198526b9ce1fd2e2dcff4d05f6792a29', title:'', emoji:'🐨', desc:'Accès protégé · code à 4 chiffres' },
     { href:'/studio.html',     url:'/studio.html',     title:'Studio',         desc:'Piano + drum machine · synthèse Web Audio' },
     { href:'/sudoku.html',     url:'/sudoku.html',     title:'Sudoku',         desc:'Générateur live · facile, normal, difficile' },
+    { href:'/salaire.html',    url:'/salaire.html',    title:'Brut/net',       desc:'Simulateur de salaire · barème 2026' },
     { href:'/encre.html',      url:'/encre.html',      title:'Encre',          desc:'Endless · glisse pour guider la goutte' },
   ];
 
