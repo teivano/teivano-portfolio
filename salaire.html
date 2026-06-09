@@ -1012,10 +1012,10 @@
       </div>
 
       <div class="sn-field">
-        <label class="sn-field-lbl" for="adv-mut-pat">Part patronale santé
-          <span class="sn-field-hint">Élargit l'assiette CSG (€)</span>
+        <label class="sn-field-lbl" for="adv-mut-pat">Part patronale santé + prévoyance
+          <span class="sn-field-hint">Mutuelle pat. + prévoyance pat. (€/mois). Élargit l'assiette CSG.</span>
         </label>
-        <input class="sn-field-input" id="adv-mut-pat" type="number" min="0" step="0.01" value="0">
+        <input class="sn-field-input" id="adv-mut-pat" type="number" min="0" step="0.01" value="40">
       </div>
 
       <div class="sn-field">
@@ -1263,8 +1263,10 @@
   function brutToNet(brutM, statut, params) {
     const c = cotisations(brutM, statut, params);
     const netPayer    = brutM - c.total;
+    // Net imposable = brut − cotisations DÉDUCTIBLES uniquement
+    // (mutuelle salariale, CSG_nd, CRDS NE sont PAS déductibles → restent dans le net imposable)
     const cotisDed    = c.retraite_secu + c.arrco + c.csg_ded + (c.prev || 0);
-    const netImposable = brutM - cotisDed - (c.mutuelle || 0);
+    const netImposable = brutM - cotisDed;
     return { brutM, c, netPayer, netImposable };
   }
 
@@ -1355,7 +1357,7 @@
     adv: {
       mutuelle: 40,
       prev: 0,
-      mutPat: 0,
+      mutPat: 40,
       csgGlobal: null,    // null = taux standard
       situation: 'celib',
       enfants: 0,
@@ -1885,7 +1887,7 @@
   /* ── Dirty dot ────────────────────────────────────────── */
   function updateDirtyDot() {
     const def = {
-      mutuelle:40, prev:0, mutPat:0, csgGlobal:null, situation:'celib',
+      mutuelle:40, prev:0, mutPat:40, csgGlobal:null, situation:'celib',
       enfants:0, enfantsAlt:0, isole:false, revConjoint:0, fraisReels:0,
       pasMode:'theo', pasTaux:0, smic:'2026b'
     };
@@ -1896,7 +1898,7 @@
   /* ── Reset ────────────────────────────────────────────── */
   $('advReset').addEventListener('click', () => {
     state.adv = {
-      mutuelle: 40, prev: 0, mutPat: 0, csgGlobal: null,
+      mutuelle: 40, prev: 0, mutPat: 40, csgGlobal: null,
       situation: 'celib', enfants: 0, enfantsAlt: 0, isole: false,
       revConjoint: 0, fraisReels: 0, pasMode: 'theo', pasTaux: 0, smic: '2026b',
     };
