@@ -104,6 +104,8 @@
       color: var(--ink);
       letter-spacing: -.01em;
     }
+    .sn-mx-row[data-emph] .sn-mx-lbl { font-weight: 500; }
+    .sn-mx-row[data-emph] .sn-mx-val { font-weight: 600; }
     .sn-mx-cell {
       justify-content: flex-end;
       gap: .3rem;
@@ -439,11 +441,12 @@
     }
     .sn-bar-seg + .sn-bar-seg { border-left: 1px solid var(--ink); }
     .sn-bar-seg[data-key="paye"]     { background: #8BB174; }
+    .sn-bar-seg[data-key="mutuelle"] { background: #D49B8E; }
     .sn-bar-seg[data-key="ir"]       { background: #C8995A; }
-    .sn-bar-seg[data-key="retraite"] { background: var(--stripe); }
-    .sn-bar-seg[data-key="agirc"]    { background: #94aedb; }
-    .sn-bar-seg[data-key="csg"]      { background: #6f8ec1; }
-    .sn-bar-seg[data-key="autres"]   { background: var(--ink); }
+    .sn-bar-seg[data-key="retraite"] { background: #B8C9E8; }
+    .sn-bar-seg[data-key="agirc"]    { background: #94AEDB; }
+    .sn-bar-seg[data-key="csg"]      { background: #6F8EC1; }
+    .sn-bar-seg[data-key="autres"]   { background: #3F4A5F; }
 
     .sn-legend {
       display: grid;
@@ -461,18 +464,49 @@
       border: 1.5px solid var(--ink);
       flex-shrink: 0;
     }
-    .sn-legend-sw.paye     { background: #8BB174; }
-    .sn-legend-sw.ir       { background: #C8995A; }
-    .sn-legend-sw.retraite { background: var(--stripe); }
-    .sn-legend-sw.agirc    { background: #94aedb; }
-    .sn-legend-sw.csg      { background: #6f8ec1; }
-    .sn-legend-sw.autres   { background: var(--ink); }
+    .sn-legend-sw.paye     { background: #8BB174; border-color: #6E8E5C; }
+    .sn-legend-sw.mutuelle { background: #D49B8E; border-color: #B47E72; }
+    .sn-legend-sw.ir       { background: #C8995A; border-color: #A87E45; }
+    .sn-legend-sw.retraite { background: #B8C9E8; border-color: #8DA1C4; }
+    .sn-legend-sw.agirc    { background: #94AEDB; border-color: #7088B5; }
+    .sn-legend-sw.csg      { background: #6F8EC1; border-color: #54719E; }
+    .sn-legend-sw.autres   { background: #3F4A5F; border-color: #2A3340; }
     .sn-legend-lbl { color: var(--ink); flex: 1; letter-spacing: .04em; }
     .sn-legend-val { color: var(--ink); font-weight: 500; }
 
-    /* ── Bouton paramètres (inline) ── */
+    /* Tooltips légende — hover sur l'item entier */
+    .sn-legend-item { position: relative; cursor: help; }
+    .sn-legend-tip {
+      position: absolute;
+      bottom: calc(100% + 6px); left: 0;
+      background: var(--ink);
+      color: var(--bg);
+      padding: .6rem .75rem;
+      font-size: .6rem;
+      font-weight: 300;
+      letter-spacing: .02em;
+      line-height: 1.45;
+      width: min(260px, calc(100vw - 2rem));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s ease;
+      z-index: 800;
+      box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 15%, transparent);
+    }
+    .sn-legend-tip::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 14px;
+      border: 5px solid transparent;
+      border-top-color: var(--ink);
+    }
+    .sn-legend-item:hover .sn-legend-tip { opacity: 1; }
+    .sn-legend-tip strong { color: var(--bg); font-weight: 500; }
+
+    /* ── Boutons d'action (inline) ── */
     .sn-cog-row {
       display: flex; justify-content: center;
+      gap: .8rem; flex-wrap: wrap;
       margin: 2rem 0 1.6rem;
     }
     .sn-cog {
@@ -490,6 +524,7 @@
       color: var(--bg);
     }
     .sn-cog:hover .sn-cog-dot { background: var(--bg); }
+    .sn-cog.ok { background: #8BB174; color: var(--bg); border-color: #6E8E5C; }
     .sn-cog-dot {
       display: inline-block;
       width: 6px; height: 6px;
@@ -784,7 +819,7 @@
           </div>
 
           <!-- Brut -->
-          <div class="sn-mx-row">
+          <div class="sn-mx-row" data-emph>
             <div class="sn-mx-lbl">Brut</div>
             <div class="sn-mx-cell">
               <input class="sn-mx-val" id="brut-a" type="text" inputmode="decimal" placeholder="Entrez un salaire">
@@ -808,8 +843,19 @@
             <div class="sn-mx-recap-cell"><span id="cotis-h">—</span><span class="sn-mx-recap-cell-unit">€/h</span></div>
           </div>
 
+          <!-- Bande : mutuelle -->
+          <div class="sn-mx-recap">
+            <div class="sn-mx-recap-lbl">
+              − Mutuelle
+              <span class="sn-tip" id="mut-tip">i<span class="sn-tip-body" id="mut-tip-body">…</span></span>
+            </div>
+            <div class="sn-mx-recap-cell"><span id="mut-a">—</span><span class="sn-mx-recap-cell-unit">€/an</span></div>
+            <div class="sn-mx-recap-cell"><span id="mut-m">—</span><span class="sn-mx-recap-cell-unit">€/mois</span></div>
+            <div class="sn-mx-recap-cell"><span id="mut-h">—</span><span class="sn-mx-recap-cell-unit">€/h</span></div>
+          </div>
+
           <!-- Net (avant impôt) -->
-          <div class="sn-mx-row">
+          <div class="sn-mx-row" data-emph>
             <div class="sn-mx-lbl">Net</div>
             <div class="sn-mx-cell">
               <input class="sn-mx-val" id="netp-a" type="text" inputmode="decimal" placeholder="—">
@@ -848,7 +894,7 @@
           </div>
 
           <!-- Net à payer (= versé au compte, après PAS) -->
-          <div class="sn-mx-row">
+          <div class="sn-mx-row" data-emph>
             <div class="sn-mx-lbl">Net à payer</div>
             <div class="sn-mx-cell">
               <input class="sn-mx-val" id="ai-a" type="text" inputmode="decimal" placeholder="—">
@@ -867,10 +913,13 @@
       </div>
     </div>
 
-    <!-- Bouton paramètres avancés -->
+    <!-- Boutons actions -->
     <div class="sn-cog-row">
       <button class="sn-cog" id="cogBtn" aria-label="Paramètres avancés">
         Paramètres avancés<span class="sn-cog-dot" aria-hidden="true"></span>
+      </button>
+      <button class="sn-cog" id="copyBtn" aria-label="Copier la simulation">
+        <span id="copyBtnLabel">Copier la simulation</span>
       </button>
     </div>
 
@@ -881,7 +930,8 @@
         <span class="sn-breakdown-total" id="bd-total">3 808 €</span>
       </div>
       <div class="sn-bar" id="bar">
-        <div class="sn-bar-seg" data-key="paye"     style="flex-grow:72"></div>
+        <div class="sn-bar-seg" data-key="paye"     style="flex-grow:70"></div>
+        <div class="sn-bar-seg" data-key="mutuelle" style="flex-grow:1"></div>
         <div class="sn-bar-seg" data-key="ir"       style="flex-grow:7"></div>
         <div class="sn-bar-seg" data-key="retraite" style="flex-grow:7.6"></div>
         <div class="sn-bar-seg" data-key="agirc"    style="flex-grow:4"></div>
@@ -889,12 +939,13 @@
         <div class="sn-bar-seg" data-key="autres"   style="flex-grow:0"></div>
       </div>
       <div class="sn-legend">
-        <div class="sn-legend-item"><span class="sn-legend-sw paye"></span><span class="sn-legend-lbl">Net à payer</span><span class="sn-legend-val" id="lg-paye">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw ir"></span><span class="sn-legend-lbl">Impôt</span><span class="sn-legend-val" id="lg-ir">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw retraite"></span><span class="sn-legend-lbl">Retraite Sécu</span><span class="sn-legend-val" id="lg-ret">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw agirc"></span><span class="sn-legend-lbl">AGIRC-ARRCO</span><span class="sn-legend-val" id="lg-arrco">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw csg"></span><span class="sn-legend-lbl">CSG / CRDS</span><span class="sn-legend-val" id="lg-csg">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw autres"></span><span class="sn-legend-lbl">Autres cotis.</span><span class="sn-legend-val" id="lg-aut">—</span></div>
+        <div class="sn-legend-item" data-key="paye"><span class="sn-legend-sw paye"></span><span class="sn-legend-lbl">Net à payer</span><span class="sn-legend-val" id="lg-paye">—</span><span class="sn-legend-tip" id="lg-tip-paye">…</span></div>
+        <div class="sn-legend-item" data-key="ir"><span class="sn-legend-sw ir"></span><span class="sn-legend-lbl">Impôt</span><span class="sn-legend-val" id="lg-ir">—</span><span class="sn-legend-tip" id="lg-tip-ir">…</span></div>
+        <div class="sn-legend-item" data-key="mutuelle"><span class="sn-legend-sw mutuelle"></span><span class="sn-legend-lbl">Mutuelle</span><span class="sn-legend-val" id="lg-mut">—</span><span class="sn-legend-tip" id="lg-tip-mut">…</span></div>
+        <div class="sn-legend-item" data-key="retraite"><span class="sn-legend-sw retraite"></span><span class="sn-legend-lbl">Retraite Sécu</span><span class="sn-legend-val" id="lg-ret">—</span><span class="sn-legend-tip" id="lg-tip-ret">…</span></div>
+        <div class="sn-legend-item" data-key="agirc"><span class="sn-legend-sw agirc"></span><span class="sn-legend-lbl">AGIRC-ARRCO</span><span class="sn-legend-val" id="lg-arrco">—</span><span class="sn-legend-tip" id="lg-tip-arrco">…</span></div>
+        <div class="sn-legend-item" data-key="csg"><span class="sn-legend-sw csg"></span><span class="sn-legend-lbl">CSG / CRDS</span><span class="sn-legend-val" id="lg-csg">—</span><span class="sn-legend-tip" id="lg-tip-csg">…</span></div>
+        <div class="sn-legend-item" data-key="autres"><span class="sn-legend-sw autres"></span><span class="sn-legend-lbl">Autres cotis.</span><span class="sn-legend-val" id="lg-aut">—</span><span class="sn-legend-tip" id="lg-tip-aut">…</span></div>
       </div>
     </section>
 
@@ -950,7 +1001,7 @@
         <label class="sn-field-lbl" for="adv-mutuelle">Mutuelle obligatoire
           <span class="sn-field-hint">Part salariale mensuelle (€)</span>
         </label>
-        <input class="sn-field-input" id="adv-mutuelle" type="number" min="0" step="0.01" value="0">
+        <input class="sn-field-input" id="adv-mutuelle" type="number" min="0" step="0.01" value="40">
       </div>
 
       <div class="sn-field">
@@ -1196,14 +1247,15 @@
 
     const retraite_secu = vieillesse_plaf + vieillesse_deplaf;
     const arrco         = arrco_T1 + arrco_T2 + ceg_T1 + ceg_T2;
-    const autres        = cet + apec + mutuelle + prev;
+    // "autres" = CET + APEC + prévoyance (mutuelle séparée pour l'affichage)
+    const autres        = cet + apec + prev;
 
     return {
       retraite_secu, arrco,
       csg_ded, csg_nded, crds,
       autres,
       mutuelle, prev,
-      total: retraite_secu + arrco + csg_ded + csg_nded + crds + autres,
+      total: retraite_secu + arrco + csg_ded + csg_nded + crds + autres + mutuelle,
     };
   }
 
@@ -1301,7 +1353,7 @@
     mois: 12,
     editing: null,
     adv: {
-      mutuelle: 0,
+      mutuelle: 40,
       prev: 0,
       mutPat: 0,
       csgGlobal: null,    // null = taux standard
@@ -1393,7 +1445,7 @@
     const empty = !state.brutM || state.brutM <= 0;
     if (empty) {
       FIELDS.forEach(([id]) => { if (state.editing !== id) $(id).value = ''; });
-      ['cotis-h','cotis-m','cotis-a','ir-h','ir-m','ir-a'].forEach(id => $(id).textContent = '—');
+      ['cotis-h','cotis-m','cotis-a','mut-h','mut-m','mut-a','ir-h','ir-m','ir-a'].forEach(id => $(id).textContent = '—');
       renderBarEmpty();
       renderTipPAS(null);
       return;
@@ -1419,11 +1471,17 @@
     setVal('ai-m', res.netApresImpot, 'm');
     setVal('ai-a', res.netApresImpot * M, 'a');
 
-    // Récap cotisations (H/M/A)
-    const cotMens = res.cot.total;
+    // Récap cotisations sociales (H/M/A) — SANS mutuelle (affichée séparément)
+    const cotMens = res.cot.total - res.cot.mutuelle;
     $('cotis-h').textContent = fmtH(cotMens / H);
     $('cotis-m').textContent = fmt(cotMens);
     $('cotis-a').textContent = fmt(cotMens * M);
+
+    // Récap mutuelle (H/M/A)
+    const mutMens = res.cot.mutuelle;
+    $('mut-h').textContent = fmt2(mutMens / H);
+    $('mut-m').textContent = fmt(mutMens);
+    $('mut-a').textContent = fmt(mutMens * M);
 
     // Récap IR (H/M/A)
     $('ir-h').textContent = fmtH(res.irMensuel / H);
@@ -1432,6 +1490,19 @@
 
     renderBar(res);
     renderTipPAS(res);
+    renderTipMut(res);
+  }
+
+  /* ── Tooltip Mutuelle (bandé) ──────────────────────────── */
+  function renderTipMut(res) {
+    const el = $('mut-tip-body');
+    if (!el) return;
+    const m = state.adv.mutuelle || 0;
+    el.innerHTML =
+      '<strong>Mutuelle santé · ' + fmt2(m) + ' €/mois</strong><br>' +
+      'Mutuelle d\'entreprise obligatoire (loi ANI 2016).<br>' +
+      'Valeur par défaut 40 €/mois (moyenne marché). ' +
+      'Modifiable dans Paramètres avancés.';
   }
 
   /* ── Tooltip PAS ───────────────────────────────────────── */
@@ -1467,18 +1538,20 @@
   function renderResults() { renderAllValues(); }
 
   function renderBarEmpty() {
-    ['paye','ir','retraite','agirc','csg','autres'].forEach(k => {
-      const seg = document.querySelector(`[data-key="${k}"]`);
+    ['paye','mutuelle','ir','retraite','agirc','csg','autres'].forEach(k => {
+      const seg = document.querySelector(`.sn-bar-seg[data-key="${k}"]`);
       if (seg) seg.style.flexGrow = (k === 'paye') ? 100 : 0;
     });
-    ['lg-paye','lg-ir','lg-ret','lg-arrco','lg-csg','lg-aut'].forEach(id => $(id).textContent = '—');
+    ['lg-paye','lg-mut','lg-ir','lg-ret','lg-arrco','lg-csg','lg-aut'].forEach(id => $(id).textContent = '—');
     $('bd-total').textContent = '—';
+    renderLegendTips(null);
   }
 
   function renderBar(res) {
     const brut = state.brutM;
     const segs = {
       paye:     res.netApresImpot,
+      mutuelle: res.cot.mutuelle,
       ir:       res.irMensuel,
       retraite: res.cot.retraite_secu,
       agirc:    res.cot.arrco,
@@ -1486,16 +1559,87 @@
       autres:   res.cot.autres,
     };
     Object.entries(segs).forEach(([k, v]) => {
-      const seg = document.querySelector(`[data-key="${k}"]`);
+      const seg = document.querySelector(`.sn-bar-seg[data-key="${k}"]`);
       if (seg) seg.style.flexGrow = Math.max(0, (v / brut) * 100);
     });
     $('lg-paye').textContent  = fmt(segs.paye)     + ' €';
+    $('lg-mut').textContent   = fmt(segs.mutuelle) + ' €';
     $('lg-ir').textContent    = fmt(segs.ir)       + ' €';
     $('lg-ret').textContent   = fmt(segs.retraite) + ' €';
     $('lg-arrco').textContent = fmt(segs.agirc)    + ' €';
     $('lg-csg').textContent   = fmt(segs.csg)      + ' €';
     $('lg-aut').textContent   = fmt(segs.autres)   + ' €';
     $('bd-total').textContent = fmt(brut) + ' €';
+    renderLegendTips(res, segs);
+  }
+
+  /* ── Tooltips légende — contenu dynamique ──────────────── */
+  function renderLegendTips(res, segs) {
+    const def = {
+      paye:     'Sera renseigné après saisie du brut.',
+      mutuelle: 'Sera renseigné après saisie du brut.',
+      ir:       'Sera renseigné après saisie du brut.',
+      retraite: 'Sera renseigné après saisie du brut.',
+      arrco:    'Sera renseigné après saisie du brut.',
+      csg:      'Sera renseigné après saisie du brut.',
+      aut:      'Sera renseigné après saisie du brut.',
+    };
+    const map = {
+      paye:  $('lg-tip-paye'),
+      mut:   $('lg-tip-mut'),
+      ir:    $('lg-tip-ir'),
+      ret:   $('lg-tip-ret'),
+      arrco: $('lg-tip-arrco'),
+      csg:   $('lg-tip-csg'),
+      aut:   $('lg-tip-aut'),
+    };
+    if (!res) {
+      map.paye.innerHTML  = '<strong>Net à payer</strong><br>Versé sur le compte. = Brut − cotisations − impôt − mutuelle.';
+      map.mut.innerHTML   = '<strong>Mutuelle</strong><br>Mutuelle santé d\'entreprise obligatoire (loi ANI 2016). Modifiable dans Paramètres.';
+      map.ir.innerHTML    = '<strong>Impôt sur le revenu</strong><br>PAS — Prélèvement à la Source.';
+      map.ret.innerHTML   = '<strong>Retraite Sécurité sociale</strong><br>Vieillesse plafonnée (6,90 % T1) + déplafonnée (0,40 %).';
+      map.arrco.innerHTML = '<strong>AGIRC-ARRCO</strong><br>Retraite complémentaire — T1 4,01 % (+CEG) · T2 9,72 %.';
+      map.csg.innerHTML   = '<strong>CSG / CRDS</strong><br>9,70 % × 98,25 % du brut. CSG finance la Sécu, CRDS rembourse la dette sociale.';
+      map.aut.innerHTML   = '<strong>Autres cotisations</strong><br>CET (>1 PMSS) + APEC (cadres) + prévoyance.';
+      return;
+    }
+    const brut = state.brutM;
+    const pct = v => brut > 0 ? (v / brut * 100).toFixed(1) + ' %' : '—';
+
+    map.paye.innerHTML =
+      '<strong>Net à payer · ' + fmt(segs.paye) + ' €/mois</strong><br>' +
+      'Ce qui arrive sur ton compte (' + pct(segs.paye) + ' du brut).<br>' +
+      '= Brut − cotisations − impôt − mutuelle.';
+
+    map.mut.innerHTML =
+      '<strong>Mutuelle · ' + fmt2(segs.mutuelle) + ' €/mois</strong><br>' +
+      'Mutuelle santé d\'entreprise obligatoire (loi ANI 2016).<br>' +
+      'Valeur modifiable dans Paramètres avancés.';
+
+    const tauxPAS = state.adv.pasMode === 'perso' && state.adv.pasTaux > 0
+      ? state.adv.pasTaux.toFixed(2) + ' % (perso)'
+      : (res.netImposable > 0 ? (res.irMensuel / res.netImposable * 100).toFixed(2) + ' % (théorique)' : '—');
+    map.ir.innerHTML =
+      '<strong>Impôt sur le revenu · ' + fmt(segs.ir) + ' €/mois</strong><br>' +
+      'PAS · taux ' + tauxPAS + '<br>' +
+      'Appliqué sur ' + fmt(res.netImposable) + ' € (net imposable).';
+
+    map.ret.innerHTML =
+      '<strong>Retraite Sécurité sociale · ' + fmt(segs.retraite) + ' €/mois</strong><br>' +
+      'Vieillesse plafonnée 6,90 % (T1) + déplafonnée 0,40 % (total brut).';
+
+    map.arrco.innerHTML =
+      '<strong>AGIRC-ARRCO · ' + fmt(segs.agirc) + ' €/mois</strong><br>' +
+      'Retraite complémentaire. T1 (≤4 005 €) : 4,01 % · T2 : 9,72 %.';
+
+    map.csg.innerHTML =
+      '<strong>CSG / CRDS · ' + fmt(segs.csg) + ' €/mois</strong><br>' +
+      'CSG 9,20 % + CRDS 0,50 % · assiette 98,25 % du brut.<br>' +
+      'CSG finance la Sécu, CRDS rembourse la dette sociale.';
+
+    map.aut.innerHTML =
+      '<strong>Autres cotisations · ' + fmt(segs.autres) + ' €/mois</strong><br>' +
+      'CET (>1 PMSS, 0,14 %) + APEC (cadres, 0,024 %) + prévoyance éventuelle.';
   }
 
   function renderAll() {
@@ -1604,6 +1748,72 @@
     });
   });
 
+  /* ── Bouton "Copier la simulation" ────────────────────── */
+  function buildMarkdown() {
+    if (!state.brutM) return '_Aucune simulation — saisis un brut d\'abord._';
+    const r = calculer();
+    const M = state.mois;
+    const statutLbl = {cadre:'Cadre','non-cadre':'Non-cadre',public:'Fonction publique'}[state.statut] || state.statut;
+    const lines = [
+      '# Simulation salaire · Brut/net · teivano.fr',
+      '',
+      '**Statut** : ' + statutLbl + ' · **' + M + ' mois** · barème 2026',
+      '',
+      '| | Annuel | Mensuel | Horaire |',
+      '|---|---:|---:|---:|',
+      `| **Brut** | ${fmt(state.brutM * M)} € | ${fmt(state.brutM)} € | ${fmt2(state.brutM / 151.67)} €/h |`,
+      `| − Cotisations sociales | ${fmt((r.cot.total - r.cot.mutuelle) * M)} € | ${fmt(r.cot.total - r.cot.mutuelle)} € | ${fmt2((r.cot.total - r.cot.mutuelle) / 151.67)} €/h |`,
+      `| − Mutuelle | ${fmt(r.cot.mutuelle * M)} € | ${fmt(r.cot.mutuelle)} € | ${fmt2(r.cot.mutuelle / 151.67)} €/h |`,
+      `| **Net** | ${fmt(r.netPayer * M)} € | ${fmt(r.netPayer)} € | ${fmt2(r.netPayer / 151.67)} €/h |`,
+      `| Net imposable | ${fmt(r.netImposable * M)} € | ${fmt(r.netImposable)} € | – |`,
+      `| − Impôt sur le revenu | ${fmt(r.irAnnuel)} € | ${fmt(r.irMensuel)} € | ${fmt2(r.irMensuel / 151.67)} €/h |`,
+      `| **Net à payer** | ${fmt(r.netApresImpot * M)} € | ${fmt(r.netApresImpot)} € | ${fmt2(r.netApresImpot / 151.67)} €/h |`,
+      '',
+      '## Détail impôt',
+    ];
+    const tauxEff = r.netImposable > 0 ? (r.irMensuel / r.netImposable * 100).toFixed(2) : '—';
+    if (state.adv.pasMode === 'perso' && state.adv.pasTaux > 0) {
+      lines.push(`- Mode : **Taux personnalisé ${fmt2(state.adv.pasTaux)} %**`);
+    } else {
+      const parts = calculParts(getOptIR());
+      const sit = {celib:'Célibataire',couple:'Marié/Pacsé',divorce:'Divorcé',veuf:'Veuf'}[state.adv.situation] || 'Célibataire';
+      lines.push(`- Mode : **Théorique** (barème 2026)`);
+      lines.push(`- Situation : ${sit} · ${parts} part${parts > 1 ? 's' : ''}`);
+      if (state.adv.enfants)    lines.push(`- Enfants à charge : ${state.adv.enfants}`);
+      if (state.adv.enfantsAlt) lines.push(`- Enfants en garde alternée : ${state.adv.enfantsAlt}`);
+      if (state.adv.isole)      lines.push(`- Parent isolé (case T)`);
+      if (state.adv.fraisReels) lines.push(`- Frais réels : ${fmt(state.adv.fraisReels)} €/an (au lieu de l'abattement 10 %)`);
+      if (state.adv.revConjoint) lines.push(`- Revenu imposable conjoint : ${fmt(state.adv.revConjoint)} €/an`);
+    }
+    lines.push(`- Taux effectif : **${tauxEff} %**`);
+    lines.push('');
+    lines.push('## Paramètres');
+    lines.push(`- Mutuelle : ${fmt2(state.adv.mutuelle)} €/mois`);
+    if (state.adv.prev)      lines.push(`- Prévoyance salariale : ${state.adv.prev} % T1`);
+    if (state.adv.mutPat)    lines.push(`- Part patronale santé : ${fmt2(state.adv.mutPat)} €/mois (élargit assiette CSG)`);
+    if (state.adv.csgGlobal != null) lines.push(`- Taux CSG : ${(state.adv.csgGlobal * 100).toFixed(1)} %`);
+    if (state.tps !== 100)   lines.push(`- Temps de travail : ${state.tps} %`);
+    lines.push('');
+    lines.push('_Simulé sur https://teivano.fr/salaire.html_');
+    return lines.join('\n');
+  }
+
+  $('copyBtn').addEventListener('click', async () => {
+    const md = buildMarkdown();
+    try {
+      await navigator.clipboard.writeText(md);
+      const label = $('copyBtnLabel');
+      const prev = label.textContent;
+      label.textContent = 'Copié ✓';
+      $('copyBtn').classList.add('ok');
+      setTimeout(() => { label.textContent = prev; $('copyBtn').classList.remove('ok'); }, 1800);
+    } catch(e) {
+      const label = $('copyBtnLabel');
+      label.textContent = 'Erreur · réessaie';
+      setTimeout(() => { label.textContent = 'Copier la simulation'; }, 1800);
+    }
+  });
+
   /* ── Sidebar ──────────────────────────────────────────── */
   const side = $('sideAdv');
   const back = $('sideBack');
@@ -1675,7 +1885,7 @@
   /* ── Dirty dot ────────────────────────────────────────── */
   function updateDirtyDot() {
     const def = {
-      mutuelle:0, prev:0, mutPat:0, csgGlobal:null, situation:'celib',
+      mutuelle:40, prev:0, mutPat:0, csgGlobal:null, situation:'celib',
       enfants:0, enfantsAlt:0, isole:false, revConjoint:0, fraisReels:0,
       pasMode:'theo', pasTaux:0, smic:'2026b'
     };
@@ -1686,7 +1896,7 @@
   /* ── Reset ────────────────────────────────────────────── */
   $('advReset').addEventListener('click', () => {
     state.adv = {
-      mutuelle: 0, prev: 0, mutPat: 0, csgGlobal: null,
+      mutuelle: 40, prev: 0, mutPat: 0, csgGlobal: null,
       situation: 'celib', enfants: 0, enfantsAlt: 0, isole: false,
       revConjoint: 0, fraisReels: 0, pasMode: 'theo', pasTaux: 0, smic: '2026b',
     };
