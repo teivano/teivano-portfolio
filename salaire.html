@@ -630,6 +630,84 @@
     }
     .sn-foot a { color: var(--ink2); text-decoration: underline; text-underline-offset: 2px; }
     .sn-foot a:hover { color: var(--ink); }
+
+    /* ──────────────────────────────────────────────────────
+     * Mobile — drop la colonne Horaire + compaction
+     * ────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .sn-wrap   { padding: 0 1rem 4rem; }
+      .sn-hd     { padding: 1.5rem 0 1.2rem; }
+      .sn-title  { font-size: clamp(2.6rem, 14vw, 4.5rem); }
+      .sn-subtitle { font-size: .55rem; letter-spacing: .14em; }
+
+      .sn-panel  { padding: 1rem 1rem 1.1rem; box-shadow: 3px 3px 0 var(--ink); }
+      .sn-panel-h {
+        font-size: 1.25rem;
+        padding-bottom: .15rem;
+        margin-bottom: .35rem;
+      }
+      .sn-panel-tag {
+        padding: .1rem .35rem;
+        font-size: .48rem;
+        letter-spacing: .14em;
+      }
+
+      /* Grid 3 colonnes : label | Annuel | Mensuel — drop Horaire */
+      .sn-mx-grid {
+        grid-template-columns: minmax(4.5rem, 1.05fr) 1fr 1fr;
+        column-gap: .5rem;
+      }
+      .sn-mx-head > div:last-child,
+      .sn-mx-row > *:last-child,
+      .sn-mx-recap > *:last-child { display: none; }
+
+      .sn-mx-head > div {
+        padding-bottom: .45rem;
+        font-size: .58rem;
+        letter-spacing: .12em;
+      }
+      .sn-mx-row > * { padding: .75rem 0; }
+      .sn-mx-row-sub > * { padding: .4rem 0; }
+
+      .sn-mx-lbl {
+        font-size: 1.05rem;
+      }
+      .sn-mx-row-sub .sn-mx-lbl { font-size: .65rem; }
+      .sn-mx-val {
+        font-size: 1rem;
+        padding: .1rem .15rem;
+      }
+      .sn-mx-val::placeholder { font-size: .65rem; }
+      .sn-mx-unit { font-size: .55rem; }
+
+      .sn-mx-recap > * { padding: .5rem 0; }
+      .sn-mx-recap-lbl {
+        font-size: .54rem;
+        letter-spacing: .1em;
+        padding-left: .3rem;
+        gap: .25rem;
+      }
+      .sn-mx-recap-cell { font-size: .75rem; }
+      .sn-mx-recap-cell-unit { font-size: .52rem; }
+
+      /* Bouton compact */
+      .sn-cog-row { margin: 1.4rem 0 1.2rem; }
+      .sn-cog { padding: .55rem 1rem; font-size: .56rem; }
+
+      /* Tooltip plus contenu (mobile) */
+      .sn-tip-body {
+        width: 200px;
+        left: auto; right: -8px;
+        transform: none;
+        font-size: .6rem;
+      }
+      .sn-tip-body::after { left: auto; right: 14px; transform: none; }
+
+      /* Décomposition + légende compactes */
+      .sn-bar { height: 28px; }
+      .sn-legend { gap: .45rem .9rem; }
+      .sn-legend-item { font-size: .62rem; }
+    }
   </style>
 </head>
 <body>
