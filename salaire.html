@@ -64,14 +64,107 @@
     .sn-chip:hover { background: var(--ink); color: var(--bg); }
     .sn-chip.active { background: var(--ink); color: var(--bg); }
 
-    /* ── Grid principale ── */
-    .sn-grid {
+    /* ── Matrice (une seule card) ── */
+    .sn-mx { margin-bottom: 2rem; }
+    .sn-mx-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.2rem;
-      margin-bottom: 2rem;
+      grid-template-columns: minmax(7.5rem, 1.2fr) 1fr 1fr 1fr;
+      column-gap: .8rem;
+      row-gap: 0;
+      align-items: stretch;
     }
-    @media (max-width: 720px) { .sn-grid { grid-template-columns: 1fr; } }
+    .sn-mx-head {
+      display: contents;
+    }
+    .sn-mx-head > div {
+      padding: 0 0 .65rem;
+      font-size: .55rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2);
+      border-bottom: 1.5px solid var(--ink);
+    }
+    .sn-mx-head > div:not(:first-child) { text-align: right; }
+
+    .sn-mx-row { display: contents; }
+    .sn-mx-row > * {
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(107,26,26,.12);
+      display: flex; align-items: center;
+    }
+    .sn-mx-row:last-child > * { border-bottom: none; }
+
+    .sn-mx-lbl {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.25rem; font-weight: 400;
+      color: var(--ink);
+      letter-spacing: -.01em;
+    }
+    .sn-mx-cell {
+      justify-content: flex-end;
+      gap: .3rem;
+      min-width: 0;
+    }
+    .sn-mx-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem; font-weight: 400;
+      color: var(--ink);
+      background: transparent; border: none; outline: none;
+      padding: .15rem .25rem;
+      text-align: right;
+      letter-spacing: -.005em;
+      font-variant-numeric: tabular-nums;
+      width: 100%;
+      min-width: 0;
+      border-bottom: 1px dashed transparent;
+      transition: border-color .15s, background .15s;
+    }
+    .sn-mx-val:hover    { border-bottom-color: rgba(107,26,26,.25); }
+    .sn-mx-val:focus    { border-bottom-color: var(--ink); background: rgba(184,201,232,.18); }
+    .sn-mx-val::placeholder {
+      color: rgba(107,26,26,.28);
+      font-style: italic;
+      font-size: .85rem;
+    }
+    .sn-mx-unit {
+      font-size: .62rem;
+      color: var(--ink2);
+      white-space: nowrap;
+    }
+
+    /* Ligne secondaire (Imposable) */
+    .sn-mx-row-sub > * {
+      padding: .55rem 0;
+      border-bottom: 1px dashed rgba(107,26,26,.16);
+    }
+    .sn-mx-row-sub .sn-mx-lbl {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      font-weight: 400;
+      letter-spacing: .04em;
+      color: var(--ink2);
+    }
+    .sn-mx-row-sub .sn-mx-val {
+      font-size: .8rem;
+      color: var(--ink2);
+    }
+
+    /* Bandes "déductions" entre les lignes */
+    .sn-mx-recap {
+      grid-column: 1 / -1;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .55rem .5rem;
+      font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--ink2);
+      background: rgba(184,201,232,.18);
+      border-bottom: 1px solid rgba(107,26,26,.12);
+    }
+    .sn-mx-recap-amt {
+      font-family: 'Space Grotesk', sans-serif;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: .72rem;
+      color: var(--ink);
+    }
 
     .sn-panel {
       background: var(--bg);
@@ -111,50 +204,81 @@
       border-color: var(--ink);
     }
 
-    /* ── Inputs synchro ── */
-    .sn-row {
-      display: flex; align-items: baseline; gap: .5rem;
-      padding: .55rem 0;
-      border-top: 1px solid rgba(107,26,26,.14);
+    /* ── Cellules périodicité ── */
+    .sn-cells {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: rgba(107,26,26,.15);
+      border: 1px solid rgba(107,26,26,.15);
+      margin-top: .2rem;
     }
-    .sn-row:first-of-type { border-top: none; }
-    .sn-row-label {
-      flex: 0 0 5.5rem;
-      font-size: .58rem; letter-spacing: .14em; text-transform: uppercase;
+    @media (max-width: 460px) {
+      .sn-cells { grid-template-columns: 1fr; }
+    }
+    .sn-cell {
+      display: flex; flex-direction: column;
+      padding: .7rem .8rem .8rem;
+      background: var(--bg);
+      gap: .3rem;
+      min-width: 0;
+    }
+    .sn-cell-label {
+      font-size: .52rem; letter-spacing: .16em; text-transform: uppercase;
       color: var(--ink2);
     }
-    .sn-row-val {
-      flex: 1;
+    .sn-cell-row {
+      display: flex; align-items: baseline; gap: .25rem;
+    }
+    .sn-cell-val {
+      flex: 1; min-width: 0; width: 100%;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.45rem; font-weight: 400;
+      font-size: 1.15rem; font-weight: 400;
       color: var(--ink);
       background: transparent; border: none; outline: none;
-      padding: 0; min-width: 0; width: 100%;
-      text-align: right;
+      padding: 0;
       letter-spacing: -.005em;
       font-variant-numeric: tabular-nums;
     }
-    .sn-row-val::placeholder {
+    .sn-cell-val::placeholder {
       color: rgba(107,26,26,.28);
-      font-weight: 300;
-      font-style: italic;
-      font-size: .85rem;
+      font-weight: 300; font-style: italic;
+      font-size: .72rem;
       letter-spacing: .04em;
     }
-    .sn-row-val:focus {
+    .sn-cell-val:focus {
       outline: 1px dashed rgba(107,26,26,.4);
-      outline-offset: 4px;
+      outline-offset: 3px;
     }
-    .sn-row-unit {
+    .sn-cell-unit {
       flex: 0 0 auto;
-      font-size: .7rem;
+      font-size: .65rem;
       color: var(--ink2);
-      font-family: 'Space Grotesk', sans-serif;
     }
-
-    /* ── Résultats (read-only) ── */
-    .sn-panel-results .sn-row-val { pointer-events: none; }
-    .sn-panel-results .sn-row { border-top-color: rgba(107,26,26,.14); }
+    .sn-cell-sub {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: .25rem;
+      padding-top: .45rem;
+      border-top: 1px dashed rgba(107,26,26,.18);
+      font-size: .62rem;
+      color: var(--ink2);
+    }
+    .sn-cell-sub-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-variant-numeric: tabular-nums;
+      background: transparent; border: none; outline: none;
+      color: var(--ink2);
+      text-align: right;
+      width: 4.5rem;
+      padding: 0;
+      font-size: .62rem;
+      min-width: 0;
+    }
+    .sn-cell-sub-val:focus {
+      outline: 1px dashed rgba(107,26,26,.3);
+      outline-offset: 2px;
+      color: var(--ink);
+    }
 
     /* ── Sliders ── */
     .sn-sliders {
@@ -247,7 +371,7 @@
       min-width: 0;
     }
     .sn-bar-seg + .sn-bar-seg { border-left: 1px solid var(--ink); }
-    .sn-bar-seg[data-key="net"]      { background: var(--bg); }
+    .sn-bar-seg[data-key="net"]      { background: #8BB174; }
     .sn-bar-seg[data-key="retraite"] { background: var(--stripe); }
     .sn-bar-seg[data-key="agirc"]    { background: #94aedb; }
     .sn-bar-seg[data-key="csg"]      { background: #6f8ec1; }
@@ -462,43 +586,93 @@
       <button class="sn-chip"        data-statut="public"     role="radio" aria-checked="false">Fonction publique</button>
     </div>
 
-    <!-- Inputs synchro + Résultats -->
-    <div class="sn-grid">
-      <div class="sn-panel sn-panel-brut">
-        <div class="sn-panel-h">Salaire brut<span class="sn-panel-tag">Saisie</span></div>
-        <label class="sn-row">
-          <span class="sn-row-label">Horaire</span>
-          <input class="sn-row-val" id="brut-h" type="text" inputmode="decimal" placeholder="Entrez un salaire">
-          <span class="sn-row-unit">€/h</span>
-        </label>
-        <label class="sn-row">
-          <span class="sn-row-label">Mensuel</span>
-          <input class="sn-row-val" id="brut-m" type="text" inputmode="decimal" placeholder="Entrez un salaire">
-          <span class="sn-row-unit">€</span>
-        </label>
-        <label class="sn-row">
-          <span class="sn-row-label">Annuel</span>
-          <input class="sn-row-val" id="brut-a" type="text" inputmode="decimal" placeholder="Entrez un salaire">
-          <span class="sn-row-unit">€</span>
-        </label>
-      </div>
+    <!-- Matrice unique : 3 lignes × 3 périodes -->
+    <div class="sn-mx">
+      <div class="sn-panel">
+        <div class="sn-panel-h">Salaire<span class="sn-panel-tag">Live</span></div>
 
-      <div class="sn-panel sn-panel-net sn-panel-results">
-        <div class="sn-panel-h">Résultat net<span class="sn-panel-tag">Calculé</span></div>
-        <div class="sn-row">
-          <span class="sn-row-label">À payer</span>
-          <input class="sn-row-val" id="net-m" type="text" inputmode="decimal" placeholder="—">
-          <span class="sn-row-unit">€/mois</span>
-        </div>
-        <div class="sn-row">
-          <span class="sn-row-label">Imposable</span>
-          <input class="sn-row-val" id="net-i" type="text" inputmode="decimal" placeholder="—" readonly>
-          <span class="sn-row-unit">€/mois</span>
-        </div>
-        <div class="sn-row">
-          <span class="sn-row-label">Après impôt</span>
-          <input class="sn-row-val" id="net-pi" type="text" inputmode="decimal" placeholder="—">
-          <span class="sn-row-unit">€/mois</span>
+        <div class="sn-mx-grid">
+          <!-- Header -->
+          <div class="sn-mx-head">
+            <div></div>
+            <div>Horaire</div>
+            <div>Mensuel</div>
+            <div>Annuel</div>
+          </div>
+
+          <!-- Brut -->
+          <div class="sn-mx-row">
+            <div class="sn-mx-lbl">Brut</div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="brut-h" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€/h</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="brut-m" type="text" inputmode="decimal" placeholder="Entrez un salaire">
+              <span class="sn-mx-unit">€</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="brut-a" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+          </div>
+
+          <!-- Bande : cotisations -->
+          <div class="sn-mx-recap">
+            <span>− Cotisations sociales</span>
+            <span class="sn-mx-recap-amt" id="arrow-cotis">—</span>
+          </div>
+
+          <!-- Net (avant impôt) -->
+          <div class="sn-mx-row">
+            <div class="sn-mx-lbl">Net</div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="netp-h" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€/h</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="netp-m" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="netp-a" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+          </div>
+
+          <!-- Sous-ligne : imposable (mensuel uniquement) -->
+          <div class="sn-mx-row sn-mx-row-sub">
+            <div class="sn-mx-lbl">Net imposable</div>
+            <div class="sn-mx-cell"></div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="neti-m" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+            <div class="sn-mx-cell"></div>
+          </div>
+
+          <!-- Bande : impôt -->
+          <div class="sn-mx-recap">
+            <span>− Impôt sur le revenu</span>
+            <span class="sn-mx-recap-amt" id="arrow-ir">—</span>
+          </div>
+
+          <!-- Après impôt -->
+          <div class="sn-mx-row">
+            <div class="sn-mx-lbl">Après impôt</div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="ai-h" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€/h</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="ai-m" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+            <div class="sn-mx-cell">
+              <input class="sn-mx-val" id="ai-a" type="text" inputmode="decimal" placeholder="—">
+              <span class="sn-mx-unit">€</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -524,7 +698,7 @@
         <div class="sn-bar-seg" data-key="autres"   style="flex-grow:0"></div>
       </div>
       <div class="sn-legend">
-        <div class="sn-legend-item"><span class="sn-legend-sw net"></span><span class="sn-legend-lbl">Net à payer</span><span class="sn-legend-val" id="lg-net">—</span></div>
+        <div class="sn-legend-item"><span class="sn-legend-sw net"></span><span class="sn-legend-lbl">Net</span><span class="sn-legend-val" id="lg-net">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw retraite"></span><span class="sn-legend-lbl">Retraite Sécu</span><span class="sn-legend-val" id="lg-ret">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw agirc"></span><span class="sn-legend-lbl">AGIRC-ARRCO</span><span class="sn-legend-val" id="lg-arrco">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw csg"></span><span class="sn-legend-lbl">CSG / CRDS</span><span class="sn-legend-val" id="lg-csg">—</span></div>
@@ -1000,30 +1174,68 @@
   /* ── Render ───────────────────────────────────────────── */
   const $ = id => document.getElementById(id);
 
-  function renderInputs() {
-    const brutM = state.brutM;
-    const empty = !brutM || brutM <= 0;
-    if (state.editing !== 'h') $('brut-h').value = empty ? '' : fmt2(brutM / 151.67);
-    if (state.editing !== 'm') $('brut-m').value = empty ? '' : fmt(brutM);
-    if (state.editing !== 'a') $('brut-a').value = empty ? '' : fmt(brutM * state.mois);
+  // Tous les inputs : id → (kind, period)
+  const FIELDS = [
+    ['brut-h', 'brut', 'h'], ['brut-m', 'brut', 'm'], ['brut-a', 'brut', 'a'],
+    ['netp-h', 'netp', 'h'], ['netp-m', 'netp', 'm'], ['netp-a', 'netp', 'a'],
+    ['neti-m', 'neti', 'm'],
+    ['ai-h',   'ai',   'h'], ['ai-m',   'ai',   'm'], ['ai-a',   'ai',   'a'],
+  ];
+
+  function setVal(id, num, period) {
+    const el = $(id);
+    if (!el) return;
+    if (state.editing === id) return;
+    if (!isFinite(num) || num <= 0) { el.value = ''; return; }
+    // Horaire : 2 décimales si < 100, sinon 0
+    if (period === 'h') {
+      el.value = num < 100 ? fmt2(num) : fmt(num);
+    } else {
+      el.value = fmt(num);
+    }
   }
 
-  function renderResults() {
+  function renderAllValues() {
     const empty = !state.brutM || state.brutM <= 0;
     if (empty) {
-      $('net-m').value = '';
-      $('net-i').value = '';
-      $('net-pi').value = '';
+      FIELDS.forEach(([id]) => { if (state.editing !== id) $(id).value = ''; });
+      $('arrow-cotis').textContent = '—';
+      $('arrow-ir').textContent = '—';
       renderBarEmpty();
       return;
     }
     const res = calculer();
-    $('net-m').value  = fmt(res.netPayer);
-    $('net-i').value  = fmt(res.netImposable);
-    $('net-pi').value = fmt(res.netApresImpot);
+    const M = state.mois, H = 151.67;
+
+    // Brut
+    setVal('brut-h', state.brutM / H, 'h');
+    setVal('brut-m', state.brutM, 'm');
+    setVal('brut-a', state.brutM * M, 'a');
+
+    // Net à payer
+    setVal('netp-h', res.netPayer / H, 'h');
+    setVal('netp-m', res.netPayer, 'm');
+    setVal('netp-a', res.netPayer * M, 'a');
+
+    // Net imposable (juste mensuel)
+    setVal('neti-m', res.netImposable, 'm');
+
+    // Après impôt
+    setVal('ai-h', res.netApresImpot / H, 'h');
+    setVal('ai-m', res.netApresImpot, 'm');
+    setVal('ai-a', res.netApresImpot * M, 'a');
+
+    // Flèches récap
+    const cotMens = res.cot.total;
+    $('arrow-cotis').textContent = '− ' + fmt(cotMens) + ' €/mois';
+    $('arrow-ir').textContent    = '− ' + fmt(res.irMensuel) + ' €/mois';
 
     renderBar(res);
   }
+
+  // Alias legacy
+  function renderInputs() { renderAllValues(); }
+  function renderResults() { renderAllValues(); }
 
   function renderBarEmpty() {
     ['net','retraite','agirc','csg','autres'].forEach(k => {
@@ -1061,51 +1273,49 @@
     updateDirtyDot();
   }
 
-  /* ── Events : inputs brut ─────────────────────────────── */
-  function bindBrutInput(id, type) {
+  /* ── Solveur générique : ajuste state.brutM pour matcher cible ── */
+  // kind : 'netp' | 'neti' | 'ai'  (net à payer / imposable / après impôt)
+  function solveBrutFor(targetM, kind) {
+    let lo = 0, hi = Math.max(100, targetM * 3);
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      state.brutM = mid;
+      const r = calculer();
+      let val;
+      if (kind === 'netp') val = r.netPayer;
+      else if (kind === 'neti') val = r.netImposable;
+      else val = r.netApresImpot;
+      if (val < targetM) lo = mid; else hi = mid;
+    }
+    state.brutM = (lo + hi) / 2;
+  }
+
+  /* ── Binder universel ─────────────────────────────────── */
+  function bindCell(id, group, period) {
     const el = $(id);
-    el.addEventListener('focus', () => { state.editing = type; el.select(); });
-    el.addEventListener('blur',  () => { state.editing = null; renderInputs(); });
+    el.addEventListener('focus', () => { state.editing = id; el.select(); });
+    el.addEventListener('blur',  () => { state.editing = null; renderAllValues(); });
     el.addEventListener('input', () => {
       const v = num(el.value);
-      if (type === 'h') state.brutM = v * 151.67;
-      else if (type === 'm') state.brutM = v;
-      else if (type === 'a') state.brutM = v / state.mois;
-      renderInputs();
-      renderResults();
-      pushURL();
-    });
-  }
-  bindBrutInput('brut-h', 'h');
-  bindBrutInput('brut-m', 'm');
-  bindBrutInput('brut-a', 'a');
+      // Conversion vers mensuel selon période
+      const H = 151.67;
+      let mensuel;
+      if (period === 'h') mensuel = v * H;
+      else if (period === 'a') mensuel = v / state.mois;
+      else mensuel = v;
 
-  /* ── Inputs net (reverse) ─────────────────────────────── */
-  function bindNetInput(id, kind) {
-    const el = $(id);
-    el.removeAttribute('readonly');
-    el.addEventListener('focus', () => el.select());
-    el.addEventListener('change', () => {
-      const v = num(el.value);
-      if (kind === 'payer') {
-        state.brutM = netToBrut(v, state.statut, paramsCotis());
-      } else if (kind === 'apres') {
-        // approche : ajuster brut pour que netApresImpot = v
-        let lo = 0, hi = v * 2.5;
-        for (let i = 0; i < 50; i++) {
-          const mid = (lo + hi) / 2;
-          state.brutM = mid;
-          const r = calculer();
-          if (r.netApresImpot < v) lo = mid; else hi = mid;
-        }
-        state.brutM = (lo + hi) / 2;
+      if (group === 'brut') {
+        state.brutM = mensuel;
+      } else {
+        // reverse calc depuis la cible mensuelle
+        solveBrutFor(mensuel, group);
       }
-      renderAll();
+      renderAllValues();
       pushURL();
     });
   }
-  bindNetInput('net-m', 'payer');
-  bindNetInput('net-pi', 'apres');
+
+  FIELDS.forEach(([id, group, period]) => bindCell(id, group, period));
 
   /* ── Statut ───────────────────────────────────────────── */
   document.querySelectorAll('.sn-chip').forEach(c => {
