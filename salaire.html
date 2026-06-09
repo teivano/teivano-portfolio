@@ -694,14 +694,28 @@
       .sn-cog-row { margin: 1.4rem 0 1.2rem; }
       .sn-cog { padding: .55rem 1rem; font-size: .56rem; }
 
-      /* Tooltip plus contenu (mobile) */
-      .sn-tip-body {
-        width: 200px;
-        left: auto; right: -8px;
-        transform: none;
-        font-size: .6rem;
+      /* Tip "i" plus lisible (Space Grotesk i = très fin) */
+      .sn-tip {
+        width: 17px; height: 17px;
+        font-size: .62rem;
+        font-weight: 600;
+        flex-shrink: 0;
       }
-      .sn-tip-body::after { left: auto; right: 14px; transform: none; }
+
+      /* Tooltip body : ancré au tip à gauche, déborde à droite, plafonné au viewport */
+      .sn-tip-body {
+        width: min(280px, calc(100vw - 2rem));
+        left: 0;
+        right: auto;
+        transform: none;
+        font-size: .62rem;
+        padding: .65rem .8rem;
+      }
+      .sn-tip-body::after {
+        left: 6px;
+        right: auto;
+        transform: none;
+      }
 
       /* Décomposition + légende compactes */
       .sn-bar { height: 28px; }
