@@ -77,9 +77,10 @@
       display: contents;
     }
     .sn-mx-head > div {
-      padding: 0 0 .65rem;
-      font-size: .55rem; letter-spacing: .18em; text-transform: uppercase;
-      color: var(--ink2);
+      padding: 0 0 .7rem;
+      font-size: .72rem; font-weight: 500;
+      letter-spacing: .16em; text-transform: uppercase;
+      color: var(--ink);
       border-bottom: 1.5px solid var(--ink);
     }
     .sn-mx-head > div:not(:first-child) { text-align: right; }
@@ -148,22 +149,83 @@
     }
 
     /* Bandes "déductions" entre les lignes */
-    .sn-mx-recap {
-      grid-column: 1 / -1;
-      display: flex; justify-content: space-between; align-items: center;
-      padding: .55rem .5rem;
-      font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
-      color: var(--ink2);
-      background: rgba(184,201,232,.18);
+    .sn-mx-recap { display: contents; }
+    .sn-mx-recap > * {
+      padding: .65rem 0;
+      background: rgba(184,201,232,.22);
       border-bottom: 1px solid rgba(107,26,26,.12);
+      display: flex; align-items: center;
     }
-    .sn-mx-recap-amt {
+    .sn-mx-recap-lbl {
+      font-size: .6rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--ink2);
+      padding-left: .5rem;
+      gap: .35rem;
+    }
+    .sn-mx-recap-cell {
+      justify-content: flex-end;
+      gap: .25rem;
       font-family: 'Space Grotesk', sans-serif;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0;
-      text-transform: none;
-      font-size: .72rem;
+      font-size: .85rem;
       color: var(--ink);
+      padding-right: .25rem;
+    }
+    .sn-mx-recap-cell-unit {
+      font-size: .58rem;
+      color: var(--ink2);
+    }
+
+    /* Tooltip "i" */
+    .sn-tip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px;
+      border: 1px solid var(--ink2);
+      border-radius: 50%;
+      font-size: .55rem; font-weight: 500;
+      color: var(--ink2);
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0;
+      cursor: help;
+      position: relative;
+      text-transform: none;
+      line-height: 1;
+    }
+    .sn-tip:hover { color: var(--ink); border-color: var(--ink); }
+    .sn-tip-body {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: .7rem .9rem;
+      font-size: .65rem;
+      font-weight: 300;
+      letter-spacing: .02em;
+      text-transform: none;
+      line-height: 1.5;
+      width: 240px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s ease;
+      z-index: 800;
+      box-shadow: 3px 3px 0 rgba(107,26,26,.15);
+      white-space: normal;
+      text-align: left;
+    }
+    .sn-tip-body::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--ink);
+    }
+    .sn-tip:hover .sn-tip-body { opacity: 1; }
+    .sn-tip-body strong {
+      font-weight: 500;
+      color: var(--bg);
     }
 
     .sn-panel {
@@ -371,7 +433,8 @@
       min-width: 0;
     }
     .sn-bar-seg + .sn-bar-seg { border-left: 1px solid var(--ink); }
-    .sn-bar-seg[data-key="net"]      { background: #8BB174; }
+    .sn-bar-seg[data-key="paye"]     { background: #8BB174; }
+    .sn-bar-seg[data-key="ir"]       { background: #C8995A; }
     .sn-bar-seg[data-key="retraite"] { background: var(--stripe); }
     .sn-bar-seg[data-key="agirc"]    { background: #94aedb; }
     .sn-bar-seg[data-key="csg"]      { background: #6f8ec1; }
@@ -393,7 +456,8 @@
       border: 1.5px solid var(--ink);
       flex-shrink: 0;
     }
-    .sn-legend-sw.net      { background: var(--bg); }
+    .sn-legend-sw.paye     { background: #8BB174; }
+    .sn-legend-sw.ir       { background: #C8995A; }
     .sn-legend-sw.retraite { background: var(--stripe); }
     .sn-legend-sw.agirc    { background: #94aedb; }
     .sn-legend-sw.csg      { background: #6f8ec1; }
@@ -619,8 +683,10 @@
 
           <!-- Bande : cotisations -->
           <div class="sn-mx-recap">
-            <span>− Cotisations sociales</span>
-            <span class="sn-mx-recap-amt" id="arrow-cotis">—</span>
+            <div class="sn-mx-recap-lbl">− Cotisations sociales</div>
+            <div class="sn-mx-recap-cell"><span id="cotis-h">—</span><span class="sn-mx-recap-cell-unit">€/h</span></div>
+            <div class="sn-mx-recap-cell"><span id="cotis-m">—</span><span class="sn-mx-recap-cell-unit">€/mois</span></div>
+            <div class="sn-mx-recap-cell"><span id="cotis-a">—</span><span class="sn-mx-recap-cell-unit">€/an</span></div>
           </div>
 
           <!-- Net (avant impôt) -->
@@ -653,13 +719,18 @@
 
           <!-- Bande : impôt -->
           <div class="sn-mx-recap">
-            <span>− Impôt sur le revenu</span>
-            <span class="sn-mx-recap-amt" id="arrow-ir">—</span>
+            <div class="sn-mx-recap-lbl">
+              − Impôt sur le revenu
+              <span class="sn-tip" id="ir-tip">i<span class="sn-tip-body" id="ir-tip-body">Calcul en cours...</span></span>
+            </div>
+            <div class="sn-mx-recap-cell"><span id="ir-h">—</span><span class="sn-mx-recap-cell-unit">€/h</span></div>
+            <div class="sn-mx-recap-cell"><span id="ir-m">—</span><span class="sn-mx-recap-cell-unit">€/mois</span></div>
+            <div class="sn-mx-recap-cell"><span id="ir-a">—</span><span class="sn-mx-recap-cell-unit">€/an</span></div>
           </div>
 
-          <!-- Après impôt -->
+          <!-- Net à payer (= versé au compte, après PAS) -->
           <div class="sn-mx-row">
-            <div class="sn-mx-lbl">Après impôt</div>
+            <div class="sn-mx-lbl">Net à payer</div>
             <div class="sn-mx-cell">
               <input class="sn-mx-val" id="ai-h" type="text" inputmode="decimal" placeholder="—">
               <span class="sn-mx-unit">€/h</span>
@@ -691,18 +762,20 @@
         <span class="sn-breakdown-total" id="bd-total">3 808 €</span>
       </div>
       <div class="sn-bar" id="bar">
-        <div class="sn-bar-seg" data-key="net"      style="flex-grow:79"></div>
+        <div class="sn-bar-seg" data-key="paye"     style="flex-grow:72"></div>
+        <div class="sn-bar-seg" data-key="ir"       style="flex-grow:7"></div>
         <div class="sn-bar-seg" data-key="retraite" style="flex-grow:7.6"></div>
         <div class="sn-bar-seg" data-key="agirc"    style="flex-grow:4"></div>
         <div class="sn-bar-seg" data-key="csg"      style="flex-grow:9.5"></div>
         <div class="sn-bar-seg" data-key="autres"   style="flex-grow:0"></div>
       </div>
       <div class="sn-legend">
-        <div class="sn-legend-item"><span class="sn-legend-sw net"></span><span class="sn-legend-lbl">Net</span><span class="sn-legend-val" id="lg-net">—</span></div>
+        <div class="sn-legend-item"><span class="sn-legend-sw paye"></span><span class="sn-legend-lbl">Net à payer</span><span class="sn-legend-val" id="lg-paye">—</span></div>
+        <div class="sn-legend-item"><span class="sn-legend-sw ir"></span><span class="sn-legend-lbl">Impôt</span><span class="sn-legend-val" id="lg-ir">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw retraite"></span><span class="sn-legend-lbl">Retraite Sécu</span><span class="sn-legend-val" id="lg-ret">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw agirc"></span><span class="sn-legend-lbl">AGIRC-ARRCO</span><span class="sn-legend-val" id="lg-arrco">—</span></div>
         <div class="sn-legend-item"><span class="sn-legend-sw csg"></span><span class="sn-legend-lbl">CSG / CRDS</span><span class="sn-legend-val" id="lg-csg">—</span></div>
-        <div class="sn-legend-item"><span class="sn-legend-sw autres"></span><span class="sn-legend-lbl">Autres</span><span class="sn-legend-val" id="lg-aut">—</span></div>
+        <div class="sn-legend-item"><span class="sn-legend-sw autres"></span><span class="sn-legend-lbl">Autres cotis.</span><span class="sn-legend-val" id="lg-aut">—</span></div>
       </div>
     </section>
 
@@ -1195,13 +1268,15 @@
     }
   }
 
+  function fmtH(n) { return n < 100 ? fmt2(n) : fmt(n); }
+
   function renderAllValues() {
     const empty = !state.brutM || state.brutM <= 0;
     if (empty) {
       FIELDS.forEach(([id]) => { if (state.editing !== id) $(id).value = ''; });
-      $('arrow-cotis').textContent = '—';
-      $('arrow-ir').textContent = '—';
+      ['cotis-h','cotis-m','cotis-a','ir-h','ir-m','ir-a'].forEach(id => $(id).textContent = '—');
       renderBarEmpty();
+      renderTipPAS(null);
       return;
     }
     const res = calculer();
@@ -1212,7 +1287,7 @@
     setVal('brut-m', state.brutM, 'm');
     setVal('brut-a', state.brutM * M, 'a');
 
-    // Net à payer
+    // Net (avant IR)
     setVal('netp-h', res.netPayer / H, 'h');
     setVal('netp-m', res.netPayer, 'm');
     setVal('netp-a', res.netPayer * M, 'a');
@@ -1220,17 +1295,52 @@
     // Net imposable (juste mensuel)
     setVal('neti-m', res.netImposable, 'm');
 
-    // Après impôt
+    // Net à payer (= versé sur compte, après PAS)
     setVal('ai-h', res.netApresImpot / H, 'h');
     setVal('ai-m', res.netApresImpot, 'm');
     setVal('ai-a', res.netApresImpot * M, 'a');
 
-    // Flèches récap
+    // Récap cotisations (H/M/A)
     const cotMens = res.cot.total;
-    $('arrow-cotis').textContent = '− ' + fmt(cotMens) + ' €/mois';
-    $('arrow-ir').textContent    = '− ' + fmt(res.irMensuel) + ' €/mois';
+    $('cotis-h').textContent = fmtH(cotMens / H);
+    $('cotis-m').textContent = fmt(cotMens);
+    $('cotis-a').textContent = fmt(cotMens * M);
+
+    // Récap IR (H/M/A)
+    $('ir-h').textContent = fmtH(res.irMensuel / H);
+    $('ir-m').textContent = fmt(res.irMensuel);
+    $('ir-a').textContent = fmt(res.irMensuel * M);
 
     renderBar(res);
+    renderTipPAS(res);
+  }
+
+  /* ── Tooltip PAS ───────────────────────────────────────── */
+  function renderTipPAS(res) {
+    const el = $('ir-tip-body');
+    if (!el) return;
+    if (!res || !state.brutM) { el.innerHTML = 'Entre un salaire pour voir le détail du calcul.'; return; }
+    const netImpAnnuel = res.netImposable * state.mois;
+    const tauxEffectif = netImpAnnuel > 0 ? (res.irAnnuel / netImpAnnuel * 100) : 0;
+    if (state.adv.pasMode === 'perso' && state.adv.pasTaux > 0) {
+      el.innerHTML =
+        '<strong>Taux PAS perso : ' + fmt2(state.adv.pasTaux) + ' %</strong><br>' +
+        'Appliqué sur le net imposable annuel (' + fmt(netImpAnnuel) + ' €).<br>' +
+        '→ ' + fmt(res.irAnnuel) + ' €/an.';
+    } else {
+      // Théorique : calcul réel barème
+      const sit = state.adv.situation === 'couple' ? 'Couple' : 'Célibataire';
+      const enf = state.adv.enfants || 0;
+      const enfAlt = state.adv.enfantsAlt || 0;
+      const parts = calculParts(getOptIR());
+      el.innerHTML =
+        '<strong>Calcul théorique (barème 2026)</strong><br>' +
+        sit + ' · ' + parts + ' part' + (parts > 1 ? 's' : '') +
+        (enf ? ' · ' + enf + ' enfant(s)' : '') +
+        (enfAlt ? ' · ' + enfAlt + ' en garde alt.' : '') +
+        '<br>Net imposable : ' + fmt(netImpAnnuel) + ' €/an<br>' +
+        'IR annuel : ' + fmt(res.irAnnuel) + ' € (taux effectif <strong>' + fmt2(tauxEffectif) + ' %</strong>)';
+    }
   }
 
   // Alias legacy
@@ -1238,18 +1348,19 @@
   function renderResults() { renderAllValues(); }
 
   function renderBarEmpty() {
-    ['net','retraite','agirc','csg','autres'].forEach(k => {
+    ['paye','ir','retraite','agirc','csg','autres'].forEach(k => {
       const seg = document.querySelector(`[data-key="${k}"]`);
-      if (seg) seg.style.flexGrow = (k === 'net') ? 100 : 0;
+      if (seg) seg.style.flexGrow = (k === 'paye') ? 100 : 0;
     });
-    ['lg-net','lg-ret','lg-arrco','lg-csg','lg-aut'].forEach(id => $(id).textContent = '—');
+    ['lg-paye','lg-ir','lg-ret','lg-arrco','lg-csg','lg-aut'].forEach(id => $(id).textContent = '—');
     $('bd-total').textContent = '—';
   }
 
   function renderBar(res) {
     const brut = state.brutM;
     const segs = {
-      net:      res.netPayer,
+      paye:     res.netApresImpot,
+      ir:       res.irMensuel,
       retraite: res.cot.retraite_secu,
       agirc:    res.cot.arrco,
       csg:      res.cot.csg_ded + res.cot.csg_nded + res.cot.crds,
@@ -1259,11 +1370,12 @@
       const seg = document.querySelector(`[data-key="${k}"]`);
       if (seg) seg.style.flexGrow = Math.max(0, (v / brut) * 100);
     });
-    $('lg-net').textContent   = fmt(segs.net) + ' €';
+    $('lg-paye').textContent  = fmt(segs.paye)     + ' €';
+    $('lg-ir').textContent    = fmt(segs.ir)       + ' €';
     $('lg-ret').textContent   = fmt(segs.retraite) + ' €';
-    $('lg-arrco').textContent = fmt(segs.agirc) + ' €';
-    $('lg-csg').textContent   = fmt(segs.csg) + ' €';
-    $('lg-aut').textContent   = fmt(segs.autres) + ' €';
+    $('lg-arrco').textContent = fmt(segs.agirc)    + ' €';
+    $('lg-csg').textContent   = fmt(segs.csg)      + ' €';
+    $('lg-aut').textContent   = fmt(segs.autres)   + ' €';
     $('bd-total').textContent = fmt(brut) + ' €';
   }
 
