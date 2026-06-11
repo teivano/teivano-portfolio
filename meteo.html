@@ -28,17 +28,6 @@
     }
     body { overflow-x: hidden; }
 
-    /* ── "2026" coin haut-gauche, comme index.html ── */
-    .tlb-year {
-      position: fixed; top: 1.5rem; left: 1.8rem;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(.55rem, 1vw, .68rem);
-      font-weight: 300;
-      letter-spacing: .38em;
-      color: var(--ink2);
-      z-index: 10;
-    }
-
     /* ── Page wrapper mobile-first ── */
     .meteo-page {
       position: relative; z-index: 1;
@@ -182,19 +171,19 @@
     /* ── Current weather (vue-vedette) ── */
     .current { padding-top: 1.2rem; padding-bottom: 1.4rem; }
     .current-temp {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: clamp(5rem, 22vw, 8rem);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(4.2rem, 19vw, 6.8rem);
       font-weight: 300;
       letter-spacing: -.04em;
       line-height: .9;
       display: inline-block;
     }
     .current-temp sup {
-      font-size: .4em;
+      font-size: .35em;
       font-weight: 300;
       vertical-align: baseline;
       position: relative;
-      top: -.55em;
+      top: -.95em;
       margin-left: .04em;
       opacity: .55;
     }
@@ -243,6 +232,13 @@
       color: var(--ink);
     }
     .rain-today-text b { font-weight: 500; font-style: italic; }
+    /* Tous les chiffres de la prévision pluie en Space Grotesk (heures, mm, %) */
+    .rain-today-text .num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      letter-spacing: .01em;
+    }
     .rain-today-text small {
       display: block;
       font-family: 'Space Grotesk', sans-serif;
@@ -302,10 +298,12 @@
       width: 100%;
       margin: .5rem 0 1rem;
       position: relative;
+      touch-action: pan-y;
+      cursor: crosshair;
     }
     .hourly-graph svg {
       width: 100%;
-      height: 180px;
+      height: 200px;
       display: block;
       overflow: visible;
     }
@@ -313,12 +311,12 @@
       stroke: var(--ink2);
       stroke-width: .5;
       stroke-dasharray: 2 3;
-      opacity: .4;
+      opacity: .35;
     }
     .hourly-graph .temp-path {
       fill: none;
       stroke: var(--ink);
-      stroke-width: 1.6;
+      stroke-width: 1.8;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -327,31 +325,95 @@
       opacity: .07;
     }
     .hourly-graph .precip-bar {
-      fill: var(--ink);
-      opacity: .35;
+      fill: #3a7ab8;
+      opacity: .45;
     }
-    .hourly-graph .now-line {
-      stroke: var(--ink);
-      stroke-width: 1;
-      stroke-dasharray: 3 3;
+    .hourly-graph .now-dot {
+      fill: var(--ink);
+      stroke: var(--bg);
+      stroke-width: 2;
     }
     .hourly-graph .day-sep {
       stroke: var(--ink2);
       stroke-width: .5;
       stroke-dasharray: 1 4;
+      opacity: .6;
     }
     .hourly-graph .axis-label {
       fill: var(--ink2);
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 9px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: .06em;
     }
-    .hourly-graph .temp-label {
-      fill: var(--ink);
+    .hourly-graph .y-label {
+      fill: var(--ink2);
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 400;
+    }
+    /* Scrubber overlay (touch/drag pour scruter la courbe) */
+    .scrubber {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--ink);
+      opacity: .55;
+      pointer-events: none;
+      transform: translateX(-50%);
+      transition: opacity .15s;
+    }
+    .scrubber[hidden] { display: none; }
+    .scrubber-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 8px; height: 8px;
+      transform: translate(-50%, -50%);
+      background: var(--ink);
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px var(--ink);
+    }
+    .scrubber-bubble {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: .35rem .55rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      box-shadow: 0 4px 12px -4px rgba(0,0,0,.3);
+    }
+    .scrubber-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 6px; height: 6px;
+      background: var(--ink);
+    }
+    .scrubber-bubble .icon { font-size: .9rem; line-height: 1; }
+    .scrubber-bubble .temp { font-weight: 500; font-size: .78rem; }
+    .scrubber-hint {
+      text-align: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      margin: -.4rem 0 .4rem;
+      opacity: .65;
     }
 
     .hourly-scroll {
@@ -422,8 +484,8 @@
       color: var(--ink);
     }
     .hour-temp {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.25rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem;
       font-weight: 400;
       letter-spacing: -.02em;
       line-height: 1;
@@ -488,16 +550,25 @@
       margin-bottom: .8rem;
     }
     .hour-detail-time {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.5rem;
-      font-weight: 300;
-      letter-spacing: -.02em;
-      line-height: 1;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: .02em;
+      line-height: 1.1;
       color: var(--ink);
     }
+    .hour-detail-time small {
+      display: block;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      font-weight: 400;
+      margin-bottom: .25rem;
+    }
     .hour-detail-temp {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
       font-weight: 300;
       letter-spacing: -.03em;
       line-height: 1;
@@ -524,9 +595,9 @@
     }
     .hour-detail-grid b {
       display: block;
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.1rem;
-      font-weight: 400;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      font-weight: 500;
       letter-spacing: -.01em;
       color: var(--ink);
       text-transform: none;
@@ -584,14 +655,14 @@
       line-height: 1;
     }
     .day-range {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.1rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
       letter-spacing: -.01em;
       text-align: right;
-      min-width: 80px;
+      min-width: 90px;
     }
-    .day-range b { font-weight: 400; }
-    .day-range .min { color: var(--ink2); }
+    .day-range b { font-weight: 500; }
+    .day-range .min { color: var(--ink2); margin-left: .35em; font-weight: 400; }
 
     /* ── Footer / source ── */
     .source {
@@ -627,6 +698,70 @@
     }
     .source-share:hover { background: var(--ink); color: var(--bg); }
     .source-share.copied { background: var(--ink); color: var(--bg); }
+
+    /* ── Modal koala ── */
+    .koala-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 1.5rem;
+      animation: koalaFadeIn .35s ease;
+    }
+    .koala-modal[hidden] { display: none; }
+    .koala-card {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 2.6rem 2rem 1.8rem;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 28px 64px -20px rgba(0,0,0,.4);
+      animation: koalaSlideUp .45s cubic-bezier(.16,1,.3,1);
+    }
+    .koala-close {
+      position: absolute;
+      top: .65rem; right: .65rem;
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--ink2);
+      padding: .45rem;
+      line-height: 0;
+      transition: color .2s;
+    }
+    .koala-close:hover { color: var(--ink); }
+    .koala-message {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.55rem;
+      line-height: 1.3;
+      color: var(--ink);
+      margin: .3rem 0 1.6rem;
+    }
+    .koala-ok {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      padding: .7rem 1.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      transition: opacity .2s, transform .15s;
+    }
+    .koala-ok:hover { opacity: .88; }
+    .koala-ok:active { transform: scale(.97); }
+    @keyframes koalaFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes koalaSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
     /* ── States ── */
     .loading {
@@ -689,9 +824,6 @@
   <!-- Stripes -->
   <div class="page-stripes" id="stripes" aria-hidden="true"></div>
 
-  <!-- 2026 coin haut-gauche -->
-  <p class="tlb-year" aria-hidden="true">2026</p>
-
   <main class="meteo-page">
 
     <!-- Vigilance banner (conditional) -->
@@ -726,16 +858,25 @@
 
     <!-- Toggle horizon -->
     <div class="toggle" role="tablist" aria-label="Horizon de prévision">
-      <button class="toggle-btn active" data-view="hourly" role="tab" aria-selected="true">Live → 48h</button>
-      <button class="toggle-btn" data-view="daily" role="tab" aria-selected="false">48h → 7 jours</button>
+      <button class="toggle-btn active" data-view="hourly" role="tab" aria-selected="true">48 h</button>
+      <button class="toggle-btn" data-view="daily" role="tab" aria-selected="false">7 jours</button>
     </div>
 
     <!-- Vue horaire (défaut) -->
     <section class="view view-hourly" id="viewHourly" role="tabpanel">
       <div class="card" style="padding-bottom:.5rem">
         <div class="hourly-graph" id="hourlyGraph">
-          <svg id="hourlySvg" viewBox="0 0 800 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <svg id="hourlySvg" viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="scrubber" id="scrubber" hidden>
+            <div class="scrubber-dot"></div>
+            <div class="scrubber-bubble">
+              <span class="icon" id="scrubIcon"></span>
+              <span id="scrubTime"></span>
+              <span class="temp" id="scrubTemp"></span>
+            </div>
+          </div>
         </div>
+        <div class="scrubber-hint">Glisse le doigt sur la courbe pour scruter</div>
         <div class="hourly-scroll" id="hourlyScroll"></div>
       </div>
       <div class="hour-detail" id="hourDetail" hidden></div>
@@ -761,6 +902,17 @@
     </footer>
 
   </main>
+
+  <!-- Modal koala (s'affiche le matin, une fois par jour) -->
+  <div class="koala-modal" id="koalaModal" hidden>
+    <div class="koala-card">
+      <button class="koala-close" id="koalaClose" type="button" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <p class="koala-message" id="koalaMessage"></p>
+      <button class="koala-ok" id="koalaOk" type="button">Oui 🌿</button>
+    </div>
+  </div>
 
   <!-- Stripes init (commune à toutes les pages) -->
   <script>
@@ -809,8 +961,13 @@
       vigi: $('vigiBanner'),
       viewHourly: $('viewHourly'),
       viewDaily: $('viewDaily'),
+      hourlyGraph: $('hourlyGraph'),
       hourlySvg: $('hourlySvg'),
       hourlyScroll: $('hourlyScroll'),
+      scrubber: $('scrubber'),
+      scrubTime: $('scrubTime'),
+      scrubTemp: $('scrubTemp'),
+      scrubIcon: $('scrubIcon'),
       dailyList: $('dailyList'),
       sourceModel: $('sourceModel'),
       sourceUpdated: $('sourceUpdated'),
@@ -1017,11 +1174,11 @@
         + '&minutely_15=precipitation,weather_code'
         + '&models=arome_france&timezone=Europe%2FParis&forecast_days=3&past_days=0';
 
-      // ARPEGE : global moyen-terme, 7j
-      var arpegeUrl = 'https://api.open-meteo.com/v1/meteofrance'
+      // 7 jours : endpoint best_match qui combine ECMWF/GFS/MF — couvre largement 7 jours
+      var arpegeUrl = 'https://api.open-meteo.com/v1/forecast'
         + '?latitude=' + lat + '&longitude=' + lon
         + '&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,sunrise,sunset'
-        + '&models=meteofrance_arpege_europe&timezone=Europe%2FParis&forecast_days=7&past_days=0';
+        + '&timezone=Europe%2FParis&forecast_days=7&past_days=0';
 
       return Promise.all([
         fetch(aromeUrl).then(function(r){ if(!r.ok) throw new Error('arome '+r.status); return r.json(); }),
@@ -1032,7 +1189,7 @@
         // Combine : on garde la structure AROME et on injecte daily depuis ARPEGE
         if (arpege && arpege.daily) {
           arome.daily = arpege.daily;
-          arome._dailyModel = 'ARPEGE';
+          arome._dailyModel = 'multi-modèles';
         } else {
           arome._dailyModel = 'AROME';
         }
@@ -1311,63 +1468,76 @@
       });
     }
 
-    /* ───── Bandeau pluie aujourd'hui ───── */
-    function renderRainToday(data){
-      if (!data || !data.hourly) { els.rainToday.hidden = true; return; }
+    /* ───── Résumé pluie pour aujourd'hui (utilisé par le bandeau + le koala) ───── */
+    function computeTodayRain(data){
+      if (!data || !data.hourly) return null;
       var times = data.hourly.time.map(function(t){ return new Date(t); });
       var precs = data.hourly.precipitation;
       var probs = data.hourly.precipitation_probability || [];
       var now = new Date();
-      var todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
-
-      // Fenêtre : maintenant → fin de la journée
       var hours = [];
       for (var i = 0; i < times.length; i++) {
         var t = times[i];
         if (!isSameDay(t, now)) continue;
-        if (t.getTime() < now.getTime() - 3600*1000) continue; // déjà passé
+        if (t.getTime() < now.getTime() - 3600*1000) continue;
         hours.push({ t: t, p: precs[i] || 0, prob: probs[i] });
       }
-      if (!hours.length) { els.rainToday.hidden = true; return; }
+      if (!hours.length) return null;
 
       var totalMm = hours.reduce(function(s, x){ return s + x.p; }, 0);
-      // Heures avec pluie effective (>0.1mm)
       var rainyHours = hours.filter(function(x){ return x.p > 0.1; });
       var maxProb = hours.reduce(function(m, x){ return x.prob != null && x.prob > m ? x.prob : m; }, 0);
+      var hMax = rainyHours.length ? Math.max.apply(null, rainyHours.map(function(x){ return x.p; })) : 0;
+
+      var willRain = totalMm > 0.1 || maxProb >= 60;
+
+      var info = {
+        totalMm: totalMm,
+        maxProb: maxProb,
+        rainyHours: rainyHours,
+        hMax: hMax,
+        willRain: willRain
+      };
+      return info;
+    }
+
+    /* ───── Bandeau pluie aujourd'hui ───── */
+    function renderRainToday(data){
+      var info = computeTodayRain(data);
+      if (!info) { els.rainToday.hidden = true; return; }
 
       var icon, label, sub;
-      if (rainyHours.length === 0 && totalMm < 0.2) {
-        // Pas de pluie : afficher uniquement si proba élevée, sinon "sec"
-        if (maxProb >= 40) {
+      var num = function(v){ return '<span class="num">' + v + '</span>'; };
+
+      if (info.rainyHours.length === 0 && info.totalMm < 0.2) {
+        if (info.maxProb >= 40) {
           icon = '🌥️';
           label = '<b>Risque d’averses</b> aujourd’hui';
-          sub = 'probabilité max ' + maxProb + ' % · pas de cumul attendu';
+          sub = 'probabilité max ' + num(info.maxProb + ' %') + ' · pas de cumul attendu';
           els.rainToday.classList.remove('wet');
         } else {
           icon = '☀️';
           label = '<b>Pas de pluie</b> aujourd’hui';
-          sub = (maxProb > 0 ? 'probabilité max ' + maxProb + ' %' : 'temps sec attendu');
+          sub = info.maxProb > 0 ? ('probabilité max ' + num(info.maxProb + ' %')) : 'temps sec attendu';
           els.rainToday.classList.remove('wet');
         }
       } else {
-        // Fenêtre de pluie (premier → dernier créneau pluvieux)
-        var first = rainyHours[0].t;
-        var last = rainyHours[rainyHours.length - 1].t;
+        var first = info.rainyHours[0].t;
+        var last = info.rainyHours[info.rainyHours.length - 1].t;
         var firstH = String(first.getHours()).padStart(2,'0') + 'h';
-        // last + 1h pour donner une fenêtre fermante
         var lastEnd = new Date(last.getTime() + 3600*1000);
         var lastH = String(lastEnd.getHours()).padStart(2,'0') + 'h';
-        var window = (rainyHours.length === 1) ? ('vers ' + firstH) : ('entre ' + firstH + ' et ' + lastH);
+        var window = (info.rainyHours.length === 1) ? ('vers ' + num(firstH)) : ('entre ' + num(firstH) + ' et ' + num(lastH));
 
         var intensity;
-        var hMax = Math.max.apply(null, rainyHours.map(function(x){ return x.p; }));
-        if (totalMm >= 10 || hMax >= 4) intensity = 'forte';
-        else if (totalMm >= 3 || hMax >= 1.5) intensity = 'modérée';
+        if (info.totalMm >= 10 || info.hMax >= 4) intensity = 'forte';
+        else if (info.totalMm >= 3 || info.hMax >= 1.5) intensity = 'modérée';
         else intensity = 'faible';
 
-        icon = totalMm >= 10 ? '⛈️' : '🌧️';
+        icon = info.totalMm >= 10 ? '⛈️' : '🌧️';
         label = '<b>Pluie aujourd’hui</b> · ' + window;
-        sub = 'cumul ' + totalMm.toFixed(totalMm < 1 ? 1 : (totalMm < 10 ? 1 : 0)) + ' mm · intensité ' + intensity;
+        var mmStr = info.totalMm.toFixed(info.totalMm < 1 ? 1 : (info.totalMm < 10 ? 1 : 0)) + ' mm';
+        sub = 'cumul ' + num(mmStr) + ' · intensité ' + intensity;
         els.rainToday.classList.add('wet');
       }
 
@@ -1377,40 +1547,100 @@
       els.rainToday.hidden = false;
     }
 
+    /* ───── Modal koala (matin, 1×/jour, message selon météo) ───── */
+    var KOALA_LAST_KEY = 'meteo_koala_last_shown';
+    var koalaTimer = null;
+    var koalaShownThisSession = false;
+
+    function todayISO(){
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function tryShowKoala(data){
+      if (koalaShownThisSession) return;
+      var now = new Date();
+      var hour = now.getHours();
+      if (hour < 7 || hour >= 11) return;
+
+      var last = null;
+      try { last = localStorage.getItem(KOALA_LAST_KEY); } catch(e){}
+      var today = todayISO();
+      if (last === today) return;
+
+      var info = computeTodayRain(data);
+      var willRain = info && info.willRain;
+      var msg = willRain
+        ? 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️'
+        : 'Bonne journée mon koala 🐨';
+
+      var modal = document.getElementById('koalaModal');
+      document.getElementById('koalaMessage').textContent = msg;
+      modal.hidden = false;
+      koalaShownThisSession = true;
+      try { localStorage.setItem(KOALA_LAST_KEY, today); } catch(e){}
+
+      function closeKoala(){
+        modal.hidden = true;
+        clearTimeout(koalaTimer);
+        document.removeEventListener('keydown', escClose);
+      }
+      function escClose(e){ if (e.key === 'Escape') closeKoala(); }
+
+      document.getElementById('koalaClose').onclick = closeKoala;
+      document.getElementById('koalaOk').onclick = closeKoala;
+      modal.onclick = function(e){ if (e.target === modal) closeKoala(); };
+      document.addEventListener('keydown', escClose);
+
+      koalaTimer = setTimeout(closeKoala, 6000);
+    }
+
     function drawHourlySvg(times, temps, precs, now){
       var svg = els.hourlySvg;
       svg.innerHTML = '';
       if (!times.length) return;
 
-      var W = 800, H = 180;
-      var padL = 18, padR = 18, padT = 20, padB = 30;
+      var W = 800, H = 200;
+      var padL = 36, padR = 14, padT = 18, padB = 30;
       var innerW = W - padL - padR;
       var innerH = H - padT - padB;
 
-      var tMin = Math.min.apply(null, temps);
-      var tMax = Math.max.apply(null, temps);
-      if (tMax - tMin < 4) { tMax = tMin + 4; } // évite courbe plate
+      // Échelle Y : arrondir à l'entier inférieur/supérieur, ajouter 1° de respiration
+      var rawMin = Math.min.apply(null, temps);
+      var rawMax = Math.max.apply(null, temps);
+      var tMin = Math.floor(rawMin - 1);
+      var tMax = Math.ceil(rawMax + 1);
+      if (tMax - tMin < 4) { tMax = tMin + 4; }
       var range = tMax - tMin;
       var pMax = Math.max(0.5, Math.max.apply(null, precs));
 
-      // X = position parmi (n) points
       function x(i){ return padL + (i / (times.length - 1)) * innerW; }
-      function yTemp(t){ return padT + (1 - (t - tMin) / range) * innerH * 0.85; }
+      function yTemp(t){ return padT + (1 - (t - tMin) / range) * innerH; }
       function yPrecBar(p){ return padT + innerH - (p / pMax) * innerH * 0.35; }
 
-      // Grid horizontale (3 lignes)
-      [0.25, 0.5, 0.75].forEach(function(f){
-        var y = padT + f * innerH;
+      // ── Axe Y : 3 graduations (min, mid, max) avec labels temp ──
+      var tMid = (tMin + tMax) / 2;
+      var yTicks = [tMax, tMid, tMin];
+      yTicks.forEach(function(t){
+        var y = yTemp(t);
         var ln = document.createElementNS('http://www.w3.org/2000/svg','line');
         ln.setAttribute('class','grid-line');
         ln.setAttribute('x1', padL); ln.setAttribute('x2', W - padR);
         ln.setAttribute('y1', y);    ln.setAttribute('y2', y);
         svg.appendChild(ln);
+
+        var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
+        lab.setAttribute('class','y-label');
+        lab.setAttribute('x', padL - 6);
+        lab.setAttribute('y', y + 3);
+        lab.setAttribute('text-anchor', 'end');
+        lab.textContent = Math.round(t) + '°';
+        svg.appendChild(lab);
       });
 
-      // Séparateurs jours + labels jour
+      // ── Séparateurs jours + labels jour (au lieu du label hour 00h) ──
       var lastDay = times[0].getDate();
-      var DAYS = ['dim','lun','mar','mer','jeu','ven','sam'];
+      var DAYS = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
       times.forEach(function(t, i){
         if (t.getDate() !== lastDay) {
           var ln = document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -1421,8 +1651,9 @@
 
           var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
           lab.setAttribute('class','axis-label');
-          lab.setAttribute('x', x(i) + 4);
-          lab.setAttribute('y', H - padB + 14);
+          lab.setAttribute('x', x(i));
+          lab.setAttribute('y', H - padB + 16);
+          lab.setAttribute('text-anchor', 'middle');
           lab.textContent = DAYS[t.getDay()] + ' ' + t.getDate();
           svg.appendChild(lab);
 
@@ -1430,22 +1661,22 @@
         }
       });
 
-      // Labels heures (toutes les 6h, on skip 00h pour éviter collision avec le label de jour)
+      // ── Labels heures : 06h, 12h, 18h uniquement (00h géré par séparateur) ──
       times.forEach(function(t, i){
         var hh = t.getHours();
-        if (hh === 0) return; // collision avec label "MER 12" du séparateur de jour
-        if (hh % 6 === 0 || i === 0) {
+        if (hh === 0) return;
+        if (hh === 6 || hh === 12 || hh === 18) {
           var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
           lab.setAttribute('class','axis-label');
           lab.setAttribute('x', x(i));
-          lab.setAttribute('y', H - padB + 14);
+          lab.setAttribute('y', H - padB + 16);
           lab.setAttribute('text-anchor', 'middle');
           lab.textContent = String(hh).padStart(2,'0') + 'h';
           svg.appendChild(lab);
         }
       });
 
-      // Barres précipitations
+      // ── Barres précipitations ──
       var barW = Math.max(2, innerW / times.length * 0.85);
       precs.forEach(function(p, i){
         if (p <= 0.05) return;
@@ -1460,21 +1691,29 @@
         svg.appendChild(rect);
       });
 
-      // Courbe température (path lissé)
-      var dPath = '';
-      var dArea = '';
-      temps.forEach(function(t, i){
-        var xi = x(i), yi = yTemp(t);
-        if (i === 0) { dPath += 'M' + xi + ' ' + yi; dArea += 'M' + xi + ' ' + (padT + innerH) + ' L' + xi + ' ' + yi; }
-        else {
-          var prevX = x(i-1), prevY = yTemp(temps[i-1]);
-          var midX = (prevX + xi) / 2;
-          dPath += ' Q' + prevX + ' ' + prevY + ' ' + midX + ' ' + ((prevY+yi)/2);
-          dPath += ' Q' + xi + ' ' + yi + ' ' + xi + ' ' + yi;
-          dArea += ' L' + xi + ' ' + yi;
+      // ── Courbe température : Catmull-Rom → Bezier cubic (lissage plus doux) ──
+      var pts = temps.map(function(t, i){ return { x: x(i), y: yTemp(t) }; });
+      function catmullRomPath(points){
+        if (!points.length) return '';
+        if (points.length === 1) return 'M' + points[0].x + ',' + points[0].y;
+        var d = 'M' + points[0].x + ',' + points[0].y;
+        var tens = 6;
+        for (var i = 0; i < points.length - 1; i++) {
+          var p0 = points[i - 1] || points[i];
+          var p1 = points[i];
+          var p2 = points[i + 1];
+          var p3 = points[i + 2] || points[i + 1];
+          var cp1x = p1.x + (p2.x - p0.x) / tens;
+          var cp1y = p1.y + (p2.y - p0.y) / tens;
+          var cp2x = p2.x - (p3.x - p1.x) / tens;
+          var cp2y = p2.y - (p3.y - p1.y) / tens;
+          d += ' C' + cp1x + ',' + cp1y + ' ' + cp2x + ',' + cp2y + ' ' + p2.x + ',' + p2.y;
         }
-      });
-      dArea += ' L' + x(temps.length-1) + ' ' + (padT + innerH) + ' Z';
+        return d;
+      }
+      var dPath = catmullRomPath(pts);
+      var dArea = dPath + ' L' + pts[pts.length-1].x + ',' + (padT + innerH) +
+                  ' L' + pts[0].x + ',' + (padT + innerH) + ' Z';
 
       var areaEl = document.createElementNS('http://www.w3.org/2000/svg','path');
       areaEl.setAttribute('class','temp-area');
@@ -1486,25 +1725,101 @@
       pathEl.setAttribute('d', dPath);
       svg.appendChild(pathEl);
 
-      // Marqueurs température min/max
-      var iMax = temps.indexOf(Math.max.apply(null, temps));
-      var iMin = temps.indexOf(Math.min.apply(null, temps));
-      [iMax, iMin].forEach(function(idx){
-        var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
-        lab.setAttribute('class','temp-label');
-        lab.setAttribute('x', x(idx));
-        lab.setAttribute('y', yTemp(temps[idx]) - 6);
-        lab.setAttribute('text-anchor', 'middle');
-        lab.textContent = Math.round(temps[idx]) + '°';
-        svg.appendChild(lab);
-      });
+      // ── Point "maintenant" : dot rempli sur la courbe ──
+      var nowDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      nowDot.setAttribute('class','now-dot');
+      nowDot.setAttribute('cx', pts[0].x);
+      nowDot.setAttribute('cy', pts[0].y);
+      nowDot.setAttribute('r', 4);
+      svg.appendChild(nowDot);
 
-      // Ligne "maintenant"
-      var nowLine = document.createElementNS('http://www.w3.org/2000/svg','line');
-      nowLine.setAttribute('class','now-line');
-      nowLine.setAttribute('x1', padL); nowLine.setAttribute('x2', padL);
-      nowLine.setAttribute('y1', padT); nowLine.setAttribute('y2', H - padB);
-      svg.appendChild(nowLine);
+      // Mémoriser pour le scrubber
+      state.gPadL = padL; state.gPadR = padR; state.gW = W; state.gH = H;
+      if (state.hourlySlice) state.hourlySlice.svgPoints = pts;
+    }
+
+    /* ───── Scrubber tactile sur le graph ───── */
+    function indexFromClientX(clientX){
+      var s = state.hourlySlice;
+      if (!s) return -1;
+      var rect = els.hourlyGraph.getBoundingClientRect();
+      var padLpx = (state.gPadL / state.gW) * rect.width;
+      var padRpx = (state.gPadR / state.gW) * rect.width;
+      var innerWpx = rect.width - padLpx - padRpx;
+      var relX = clientX - rect.left - padLpx;
+      var ratio = relX / innerWpx;
+      ratio = Math.max(0, Math.min(1, ratio));
+      return Math.round(ratio * (s.times.length - 1));
+    }
+
+    function moveScrubber(idx){
+      var s = state.hourlySlice;
+      if (!s || !s.svgPoints || !s.svgPoints[idx]) return;
+      var rect = els.hourlyGraph.getBoundingClientRect();
+      var pt = s.svgPoints[idx];
+      var xpx = (pt.x / state.gW) * rect.width;
+      els.scrubber.style.left = xpx + 'px';
+      var t = s.times[idx];
+      var label = (idx === 0)
+        ? 'maintenant'
+        : String(t.getHours()).padStart(2,'0') + 'h';
+      els.scrubTime.textContent = label;
+      els.scrubTemp.textContent = Math.round(s.temps[idx]) + '°';
+      els.scrubIcon.textContent = wmoIcon(s.codes[idx]);
+      els.scrubber.hidden = false;
+    }
+
+    function hideScrubber(){
+      els.scrubber.hidden = true;
+    }
+
+    var scrubState = { active: false, startX: 0, moved: false, lastIdx: -1 };
+    function attachScrubber(){
+      var g = els.hourlyGraph;
+      function down(e){
+        var ce = e.touches ? e.touches[0] : e;
+        scrubState.active = true;
+        scrubState.startX = ce.clientX;
+        scrubState.moved = false;
+        var idx = indexFromClientX(ce.clientX);
+        if (idx >= 0) { scrubState.lastIdx = idx; moveScrubber(idx); }
+      }
+      function move(e){
+        if (!scrubState.active) return;
+        var ce = e.touches ? e.touches[0] : e;
+        if (Math.abs(ce.clientX - scrubState.startX) > 4) scrubState.moved = true;
+        var idx = indexFromClientX(ce.clientX);
+        if (idx >= 0 && idx !== scrubState.lastIdx) {
+          scrubState.lastIdx = idx;
+          moveScrubber(idx);
+        }
+        // Empêche le scroll vertical pendant le drag horizontal sur mobile
+        if (scrubState.moved && e.cancelable) e.preventDefault();
+      }
+      function up(){
+        if (!scrubState.active) return;
+        var idx = scrubState.lastIdx;
+        scrubState.active = false;
+        // Tap (sans drag) → ouvrir le panneau détail
+        if (!scrubState.moved && idx >= 0) {
+          hideScrubber();
+          if (state.selectedHour === idx) { hideHourDetail(); }
+          else { showHourDetail(idx); }
+        } else {
+          // Drag terminé : on laisse le scrubber visible quelques secondes puis on cache
+          setTimeout(hideScrubber, 1800);
+        }
+      }
+      g.addEventListener('mousedown', down);
+      g.addEventListener('mousemove', function(e){ if (scrubState.active) move(e); });
+      window.addEventListener('mouseup', up);
+      g.addEventListener('mouseleave', function(){
+        if (scrubState.active) { scrubState.active = false; setTimeout(hideScrubber, 1200); }
+      });
+      g.addEventListener('touchstart', down, { passive: true });
+      g.addEventListener('touchmove', move, { passive: false });
+      g.addEventListener('touchend', up);
+      g.addEventListener('touchcancel', up);
     }
 
     /* ───── Vue 7 jours ───── */
@@ -1570,9 +1885,12 @@
       var now = new Date();
       var h = String(now.getHours()).padStart(2,'0');
       var m = String(now.getMinutes()).padStart(2,'0');
-      var modelLabel = state.view === 'hourly' ? 'AROME' : ((state.data && state.data._dailyModel) || 'ARPEGE');
       var runHour = now.getHours() < 6 ? '00z' : (now.getHours() < 12 ? '06z' : (now.getHours() < 18 ? '12z' : '18z'));
-      els.sourceUpdated.textContent = 'Mis à jour ' + h + ':' + m + ' · Run ' + modelLabel + ' ' + runHour;
+      if (state.view === 'hourly') {
+        els.sourceUpdated.textContent = 'Mis à jour ' + h + ':' + m + ' · Run AROME ' + runHour;
+      } else {
+        els.sourceUpdated.textContent = 'Mis à jour ' + h + ':' + m;
+      }
     }
 
     /* ───── Toggle view ───── */
@@ -1585,8 +1903,7 @@
         b.classList.toggle('active', active);
         b.setAttribute('aria-selected', active ? 'true' : 'false');
       });
-      var dailyModel = (state.data && state.data._dailyModel) || 'ARPEGE';
-      els.sourceModel.textContent = v === 'hourly' ? 'Modèle AROME' : ('Modèle ' + dailyModel);
+      els.sourceModel.textContent = v === 'hourly' ? 'Modèle AROME' : 'Modèles combinés (best match)';
       updateSourceLine();
     }
 
@@ -1650,6 +1967,7 @@
         renderRainToday(data);
         renderVigilance(computeVigilance(data));
         updateSourceLine();
+        tryShowKoala(data);
       }).catch(function(err){
         console.error('[meteo] fetch error', err);
         if (!keepSpinner) {
@@ -1680,6 +1998,9 @@
       if (state.selectedHour === idx) { hideHourDetail(); return; }
       showHourDetail(idx);
     });
+
+    // Scrubber tactile sur le graph
+    attachScrubber();
 
     els.cityEdit.addEventListener('click', openCitySearch);
     els.cityInput.addEventListener('input', function(e){ searchCities(e.target.value.trim()); });
