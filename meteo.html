@@ -167,12 +167,20 @@
       font-style: italic;
     }
 
-    /* ── Current weather (vue-vedette) ── */
-    .current {
-      margin: 1rem 0 1.8rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--ink2);
+    /* ── Card générique (fond blanc) ── */
+    .card {
+      background: rgba(255, 255, 255, .82);
+      border: 1px solid rgba(255, 255, 255, .9);
+      border-radius: 6px;
+      padding: 1.4rem 1.3rem;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
+    /* ── Current weather (vue-vedette) ── */
+    .current { padding-top: 1.2rem; padding-bottom: 1.4rem; }
     .current-temp {
       font-family: 'Cormorant Garamond', Georgia, serif;
       font-size: clamp(5rem, 22vw, 8rem);
@@ -209,15 +217,51 @@
     }
     .current-meta b { font-weight: 500; color: var(--ink); letter-spacing: .04em; text-transform: none; font-size: .82rem; }
 
-    /* ── Nowcasting pluie ── */
+    /* ── Bandeau pluie aujourd'hui (NEW) ── */
+    .rain-today {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.1rem;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 6px;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .rain-today.wet { background: linear-gradient(135deg, rgba(180,210,240,.55), rgba(255,255,255,.85)); }
+    .rain-today-icon {
+      font-size: 1.6rem; line-height: 1;
+      flex-shrink: 0;
+    }
+    .rain-today-text {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.05rem;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+    .rain-today-text b { font-weight: 500; font-style: italic; }
+    .rain-today-text small {
+      display: block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      margin-top: .25rem;
+    }
+
+    /* ── Nowcasting pluie (court terme, 1h) ── */
     .nowcast {
-      padding: .85rem 1rem;
-      margin-bottom: 1.6rem;
+      padding: .8rem 1.1rem;
+      margin-bottom: 1.1rem;
       background: var(--ink);
       color: var(--bg);
-      border-radius: 2px;
+      border-radius: 6px;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: .75rem;
+      font-size: .72rem;
       letter-spacing: .04em;
       line-height: 1.45;
     }
@@ -316,9 +360,9 @@
       overflow-x: auto;
       overflow-y: hidden;
       padding: .25rem .1rem 1rem;
-      margin: 0 -1.4rem;
-      padding-left: 1.4rem;
-      padding-right: 1.4rem;
+      margin: 0 -1.3rem;
+      padding-left: 1.3rem;
+      padding-right: 1.3rem;
       scrollbar-width: thin;
       scrollbar-color: var(--ink2) transparent;
       -webkit-overflow-scrolling: touch;
@@ -330,13 +374,22 @@
     .hour-card {
       flex: 0 0 auto;
       min-width: 68px;
-      padding: .7rem .55rem;
+      padding: .7rem .55rem .6rem;
       border: 1px solid var(--ink2);
-      border-radius: 2px;
+      border-radius: 4px;
       text-align: center;
-      background: transparent;
-      transition: border-color .2s, background .2s;
+      background: rgba(255,255,255,.5);
+      transition: border-color .2s, background .2s, transform .15s;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
     }
+    .hour-card:hover, .hour-card:focus-visible {
+      border-color: var(--ink);
+      outline: none;
+    }
+    .hour-card:active { transform: scale(.97); }
     .hour-card.now {
       border-color: var(--ink);
       background: var(--ink);
@@ -344,8 +397,15 @@
     }
     .hour-card.now .hour-time,
     .hour-card.now .hour-temp,
-    .hour-card.now .hour-precip,
     .hour-card.now .hour-icon { color: var(--bg); }
+    .hour-card.now .hour-precip-mm { color: var(--bg); }
+    .hour-card.now .hour-precip-bar-fill { background: var(--bg); opacity: .85; }
+    .hour-card.has-rain { background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(170,200,235,.45)); }
+    .hour-card.has-rain.now { background: var(--ink); }
+    .hour-card.selected {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 2px var(--ink) inset;
+    }
 
     .hour-time {
       font-family: 'Space Grotesk', sans-serif;
@@ -369,37 +429,135 @@
       line-height: 1;
       color: var(--ink);
     }
-    .hour-precip {
+    /* Mini-barre verticale pluie (remplace le tiret) */
+    .hour-precip-bar {
+      margin: .45rem auto 0;
+      width: 28px;
+      height: 14px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+    }
+    .hour-precip-bar-fill {
+      width: 6px;
+      background: #3a7ab8;
+      border-radius: 1px;
+      transition: height .3s;
+    }
+    .hour-precip-mm {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: .58rem;
-      letter-spacing: .04em;
-      color: var(--ink2);
-      margin-top: .25rem;
-      min-height: .8rem;
+      font-size: .55rem;
+      letter-spacing: .02em;
+      color: #2a5e94;
+      margin-top: .15rem;
+      line-height: 1;
+      font-weight: 500;
     }
     .hour-day-sep {
       flex: 0 0 auto;
-      width: 1px;
-      align-self: stretch;
-      background: var(--ink2);
-      opacity: .35;
-      margin: 0 .2rem;
+      align-self: center;
+      padding: .35rem .55rem;
+      margin: 0 .25rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      border: 1px dashed var(--ink2);
+      border-radius: 3px;
+      white-space: nowrap;
+      background: rgba(255,255,255,.4);
     }
+
+    /* ── Hour detail panel (slide-down sous les cards) ── */
+    .hour-detail {
+      margin: .8rem 0 0;
+      padding: 1rem 1.2rem;
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--ink2);
+      border-radius: 4px;
+      animation: tlbFadeUp .3s cubic-bezier(.16,1,.3,1) both;
+    }
+    .hour-detail[hidden] { display: none; }
+    .hour-detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: .8rem;
+    }
+    .hour-detail-time {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: -.02em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .hour-detail-temp {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: -.03em;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .hour-detail-desc {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: .8rem;
+    }
+    .hour-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .6rem .9rem;
+    }
+    .hour-detail-grid > div {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--ink2);
+    }
+    .hour-detail-grid b {
+      display: block;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: -.01em;
+      color: var(--ink);
+      text-transform: none;
+      margin-top: .15rem;
+    }
+    .hour-detail-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--ink2);
+      padding: .15rem;
+      line-height: 0;
+      transition: color .2s;
+    }
+    .hour-detail-close:hover { color: var(--ink); }
+    .hour-detail-close svg { width: 14px; height: 14px; }
 
     /* ── Vue 7 jours ── */
     .daily-list {
       display: flex;
       flex-direction: column;
-      border-top: 1px solid var(--ink2);
     }
     .day-row {
       display: grid;
       grid-template-columns: 1fr auto auto;
       align-items: center;
       gap: .8rem;
-      padding: 1rem .25rem;
-      border-bottom: 1px solid var(--ink2);
+      padding: .95rem .25rem;
+      border-bottom: 1px solid rgba(0,0,0,.08);
     }
+    .day-row:last-child { border-bottom: none; }
     .day-row.today .day-label-main { color: var(--ink); }
     .day-label {
       display: flex;
@@ -552,7 +710,7 @@
     </div>
 
     <!-- Current weather -->
-    <section class="current" id="current">
+    <section class="card current" id="current">
       <div>
         <span class="current-temp" id="currentTemp"><span class="loading"></span></span>
       </div>
@@ -560,7 +718,10 @@
       <div class="current-meta" id="currentMeta"></div>
     </section>
 
-    <!-- Nowcasting pluie -->
+    <!-- Bandeau pluie aujourd'hui -->
+    <div class="rain-today" id="rainToday" hidden></div>
+
+    <!-- Nowcasting pluie (court terme intra-heure) -->
     <div class="nowcast" id="nowcast" hidden></div>
 
     <!-- Toggle horizon -->
@@ -571,15 +732,20 @@
 
     <!-- Vue horaire (défaut) -->
     <section class="view view-hourly" id="viewHourly" role="tabpanel">
-      <div class="hourly-graph" id="hourlyGraph">
-        <svg id="hourlySvg" viewBox="0 0 800 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="card" style="padding-bottom:.5rem">
+        <div class="hourly-graph" id="hourlyGraph">
+          <svg id="hourlySvg" viewBox="0 0 800 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="hourly-scroll" id="hourlyScroll"></div>
       </div>
-      <div class="hourly-scroll" id="hourlyScroll"></div>
+      <div class="hour-detail" id="hourDetail" hidden></div>
     </section>
 
     <!-- Vue 7 jours -->
     <section class="view view-daily" id="viewDaily" role="tabpanel" hidden>
-      <div class="daily-list" id="dailyList"></div>
+      <div class="card" style="padding-top:.4rem;padding-bottom:.4rem">
+        <div class="daily-list" id="dailyList"></div>
+      </div>
     </section>
 
     <!-- Footer / source -->
@@ -590,7 +756,7 @@
       <br>
       <button class="source-share" id="shareBtn" type="button">
         <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        <span>Partager ce lieu</span>
+        <span>Partager cette prévision</span>
       </button>
     </footer>
 
@@ -623,7 +789,8 @@
     /* ───── Constantes ───── */
     var DEFAULT_LOC = { name: 'Rennes', country: 'France', admin: 'Bretagne', lat: 48.1113, lon: -1.6800, dept: '35' };
     var CACHE_TTL_MS = 15 * 60 * 1000; // 15 min
-    var GEO_TIMEOUT_MS = 4000;
+    var GEO_TIMEOUT_MS = 1500;
+    var LAST_LOC_KEY = 'meteo_last_loc';
 
     /* ───── DOM refs ───── */
     var $ = function(id){ return document.getElementById(id); };
@@ -637,6 +804,8 @@
       currentDesc: $('currentDesc'),
       currentMeta: $('currentMeta'),
       nowcast: $('nowcast'),
+      rainToday: $('rainToday'),
+      hourDetail: $('hourDetail'),
       vigi: $('vigiBanner'),
       viewHourly: $('viewHourly'),
       viewDaily: $('viewDaily'),
@@ -653,7 +822,9 @@
       loc: null,
       data: null,    // AROME (live → 48h)
       dataLong: null,// ARPEGE-européen-via-MF (48h → 7j)
-      view: 'hourly'
+      view: 'hourly',
+      hourlySlice: null, // données horaires utilisées pour la vue (pour panneau détail)
+      selectedHour: null
     };
 
     /* ───── WMO weather code → libellé FR + glyphe ───── */
@@ -842,7 +1013,7 @@
       var aromeUrl = 'https://api.open-meteo.com/v1/meteofrance'
         + '?latitude=' + lat + '&longitude=' + lon
         + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day,relative_humidity_2m'
-        + '&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m'
+        + '&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m'
         + '&minutely_15=precipitation,weather_code'
         + '&models=arome_france&timezone=Europe%2FParis&forecast_days=3&past_days=0';
 
@@ -977,13 +1148,21 @@
     }
 
     /* ───── Vue horaire : graph SVG + cards scrollables ───── */
+    var DAYS_SHORT = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
+    var DAYS_LONG  = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
     function renderHourly(data){
       if (!data || !data.hourly) return;
       var h = data.hourly;
       var times = h.time.map(function(t){ return new Date(t); });
       var temps = h.temperature_2m;
+      var apps  = h.apparent_temperature || [];
       var precs = h.precipitation;
+      var probs = h.precipitation_probability || [];
       var codes = h.weather_code;
+      var winds = h.wind_speed_10m || [];
+      var windDirs = h.wind_direction_10m || [];
+      var hums  = h.relative_humidity_2m || [];
 
       // Fenêtre : à partir de maintenant (heure pleine en cours) → 48h
       var now = new Date();
@@ -991,7 +1170,6 @@
       for (var i = 0; i < times.length; i++) {
         if (times[i].getTime() >= now.getTime() - 3600*1000) { startIdx = i; break; }
       }
-      // Tronquer à la première valeur null (AROME ne couvre que 48-60h)
       var endIdx = startIdx + Math.min(48, times.length - startIdx);
       for (var k = startIdx; k < endIdx; k++) {
         if (temps[k] == null || isNaN(temps[k])) { endIdx = k; break; }
@@ -999,43 +1177,204 @@
       var n = endIdx - startIdx;
       if (n < 2) return;
 
-      var sliceTimes = times.slice(startIdx, endIdx);
-      var sliceTemps = temps.slice(startIdx, endIdx);
-      var slicePrecs = precs.slice(startIdx, endIdx).map(function(p){ return p == null ? 0 : p; });
-      var sliceCodes = codes.slice(startIdx, endIdx);
+      var slice = {
+        times: times.slice(startIdx, endIdx),
+        temps: temps.slice(startIdx, endIdx),
+        apps:  apps.slice(startIdx, endIdx),
+        precs: precs.slice(startIdx, endIdx).map(function(p){ return p == null ? 0 : p; }),
+        probs: probs.slice(startIdx, endIdx),
+        codes: codes.slice(startIdx, endIdx),
+        winds: winds.slice(startIdx, endIdx),
+        windDirs: windDirs.slice(startIdx, endIdx),
+        hums:  hums.slice(startIdx, endIdx)
+      };
+      state.hourlySlice = slice;
 
       // ── SVG ──
-      drawHourlySvg(sliceTimes, sliceTemps, slicePrecs, now);
+      drawHourlySvg(slice.times, slice.temps, slice.precs, now);
+
+      // Max précip pour normaliser la mini-barre
+      var maxP = Math.max.apply(null, slice.precs.concat([1])); // au moins 1mm comme échelle
+      if (maxP < 1) maxP = 1;
+      if (maxP > 6) maxP = Math.max(6, maxP);
 
       // ── Cards horizontales ──
       els.hourlyScroll.innerHTML = '';
-      var currentHour = now.getHours();
-      var lastDay = -1;
-      sliceTimes.forEach(function(t, idx){
-        if (lastDay !== -1 && t.getDate() !== lastDay) {
+      var lastDate = slice.times[0].getDate();
+      slice.times.forEach(function(t, idx){
+        if (t.getDate() !== lastDate) {
           var sep = document.createElement('div');
           sep.className = 'hour-day-sep';
+          var isTomorrow = isSameDay(t, new Date(Date.now() + 24*3600*1000));
+          sep.textContent = (isTomorrow ? 'DEMAIN' : (DAYS_SHORT[t.getDay()] + ' ' + t.getDate())) + ' →';
           els.hourlyScroll.appendChild(sep);
+          lastDate = t.getDate();
         }
-        lastDay = t.getDate();
 
-        var card = document.createElement('div');
+        var card = document.createElement('button');
+        card.type = 'button';
         card.className = 'hour-card';
+        card.dataset.idx = idx;
         var isNow = (idx === 0);
         if (isNow) card.classList.add('now');
 
+        var p = slice.precs[idx];
+        var hasRain = p > 0.05;
+        if (hasRain) card.classList.add('has-rain');
+
         var label = isNow ? 'maintenant' : (String(t.getHours()).padStart(2,'0') + 'h');
-        var pHtml = (slicePrecs[idx] > 0.05)
-          ? slicePrecs[idx].toFixed(1) + ' mm'
-          : '—';
+
+        // Mini-barre pluie (hauteur ∝ mm, max ~12px)
+        var barH = hasRain ? Math.max(2, Math.min(12, (p / maxP) * 12)) : 0;
+        var mmHtml = hasRain ? '<div class="hour-precip-mm">' + p.toFixed(p < 1 ? 1 : (p < 10 ? 1 : 0)) + 'mm</div>' : '';
+        var barHtml = '<div class="hour-precip-bar" aria-hidden="true">' +
+          (hasRain ? '<div class="hour-precip-bar-fill" style="height:' + barH + 'px"></div>' : '') +
+          '</div>';
 
         card.innerHTML =
           '<div class="hour-time">' + label + '</div>' +
-          '<div class="hour-icon">' + wmoIcon(sliceCodes[idx]) + '</div>' +
-          '<div class="hour-temp">' + Math.round(sliceTemps[idx]) + '°</div>' +
-          '<div class="hour-precip">' + pHtml + '</div>';
+          '<div class="hour-icon">' + wmoIcon(slice.codes[idx]) + '</div>' +
+          '<div class="hour-temp">' + Math.round(slice.temps[idx]) + '°</div>' +
+          barHtml + mmHtml;
         els.hourlyScroll.appendChild(card);
       });
+
+      // Fermer panneau détail si présent
+      els.hourDetail.hidden = true;
+      state.selectedHour = null;
+    }
+
+    function isSameDay(a, b){
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    /* ───── Panneau détail d'une heure ───── */
+    function showHourDetail(idx){
+      var s = state.hourlySlice;
+      if (!s) return;
+      var t = s.times[idx];
+      if (!t) return;
+
+      var now = new Date();
+      var todayLabel;
+      var tomorrow = new Date(now.getTime() + 24*3600*1000);
+      if (isSameDay(t, now)) todayLabel = 'Aujourd’hui';
+      else if (isSameDay(t, tomorrow)) todayLabel = 'Demain';
+      else todayLabel = DAYS_LONG[t.getDay()];
+
+      var hhmm = String(t.getHours()).padStart(2,'0') + 'h';
+      var p = s.precs[idx];
+      var prob = s.probs[idx];
+      var wind = s.winds[idx];
+      var dir = s.windDirs[idx];
+      var hum = s.hums[idx];
+      var app = s.apps[idx];
+
+      var rainBits = [];
+      if (p > 0.05) rainBits.push(p.toFixed(p < 1 ? 1 : (p < 10 ? 1 : 0)) + ' mm');
+      if (prob != null && !isNaN(prob)) rainBits.push(prob + ' %');
+      var rainTxt = rainBits.length ? rainBits.join(' · ') : 'aucune';
+
+      els.hourDetail.innerHTML =
+        '<div class="hour-detail-head">' +
+          '<div>' +
+            '<div class="hour-detail-time">' + todayLabel + ' · ' + hhmm + '</div>' +
+          '</div>' +
+          '<div class="hour-detail-temp">' + Math.round(s.temps[idx]) + '°</div>' +
+          '<button class="hour-detail-close" id="hourDetailClose" aria-label="Fermer">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="hour-detail-desc">' + wmoIcon(s.codes[idx]) + ' ' + wmoLabel(s.codes[idx]) + '</div>' +
+        '<div class="hour-detail-grid">' +
+          (app != null && !isNaN(app) ? '<div>Ressenti<b>' + Math.round(app) + '°</b></div>' : '') +
+          (wind != null && !isNaN(wind) ? '<div>Vent<b>' + Math.round(wind) + ' km/h ' + windDir(dir) + '</b></div>' : '') +
+          (hum != null && !isNaN(hum) ? '<div>Humidité<b>' + Math.round(hum) + ' %</b></div>' : '') +
+          '<div>Pluie<b>' + rainTxt + '</b></div>' +
+        '</div>';
+      els.hourDetail.hidden = false;
+
+      // Marquer la card sélectionnée
+      Array.prototype.forEach.call(els.hourlyScroll.querySelectorAll('.hour-card'), function(c){
+        c.classList.toggle('selected', c.dataset.idx === String(idx));
+      });
+      state.selectedHour = idx;
+
+      document.getElementById('hourDetailClose').addEventListener('click', hideHourDetail);
+    }
+
+    function hideHourDetail(){
+      els.hourDetail.hidden = true;
+      state.selectedHour = null;
+      Array.prototype.forEach.call(els.hourlyScroll.querySelectorAll('.hour-card.selected'), function(c){
+        c.classList.remove('selected');
+      });
+    }
+
+    /* ───── Bandeau pluie aujourd'hui ───── */
+    function renderRainToday(data){
+      if (!data || !data.hourly) { els.rainToday.hidden = true; return; }
+      var times = data.hourly.time.map(function(t){ return new Date(t); });
+      var precs = data.hourly.precipitation;
+      var probs = data.hourly.precipitation_probability || [];
+      var now = new Date();
+      var todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+
+      // Fenêtre : maintenant → fin de la journée
+      var hours = [];
+      for (var i = 0; i < times.length; i++) {
+        var t = times[i];
+        if (!isSameDay(t, now)) continue;
+        if (t.getTime() < now.getTime() - 3600*1000) continue; // déjà passé
+        hours.push({ t: t, p: precs[i] || 0, prob: probs[i] });
+      }
+      if (!hours.length) { els.rainToday.hidden = true; return; }
+
+      var totalMm = hours.reduce(function(s, x){ return s + x.p; }, 0);
+      // Heures avec pluie effective (>0.1mm)
+      var rainyHours = hours.filter(function(x){ return x.p > 0.1; });
+      var maxProb = hours.reduce(function(m, x){ return x.prob != null && x.prob > m ? x.prob : m; }, 0);
+
+      var icon, label, sub;
+      if (rainyHours.length === 0 && totalMm < 0.2) {
+        // Pas de pluie : afficher uniquement si proba élevée, sinon "sec"
+        if (maxProb >= 40) {
+          icon = '🌥️';
+          label = '<b>Risque d’averses</b> aujourd’hui';
+          sub = 'probabilité max ' + maxProb + ' % · pas de cumul attendu';
+          els.rainToday.classList.remove('wet');
+        } else {
+          icon = '☀️';
+          label = '<b>Pas de pluie</b> aujourd’hui';
+          sub = (maxProb > 0 ? 'probabilité max ' + maxProb + ' %' : 'temps sec attendu');
+          els.rainToday.classList.remove('wet');
+        }
+      } else {
+        // Fenêtre de pluie (premier → dernier créneau pluvieux)
+        var first = rainyHours[0].t;
+        var last = rainyHours[rainyHours.length - 1].t;
+        var firstH = String(first.getHours()).padStart(2,'0') + 'h';
+        // last + 1h pour donner une fenêtre fermante
+        var lastEnd = new Date(last.getTime() + 3600*1000);
+        var lastH = String(lastEnd.getHours()).padStart(2,'0') + 'h';
+        var window = (rainyHours.length === 1) ? ('vers ' + firstH) : ('entre ' + firstH + ' et ' + lastH);
+
+        var intensity;
+        var hMax = Math.max.apply(null, rainyHours.map(function(x){ return x.p; }));
+        if (totalMm >= 10 || hMax >= 4) intensity = 'forte';
+        else if (totalMm >= 3 || hMax >= 1.5) intensity = 'modérée';
+        else intensity = 'faible';
+
+        icon = totalMm >= 10 ? '⛈️' : '🌧️';
+        label = '<b>Pluie aujourd’hui</b> · ' + window;
+        sub = 'cumul ' + totalMm.toFixed(totalMm < 1 ? 1 : (totalMm < 10 ? 1 : 0)) + ' mm · intensité ' + intensity;
+        els.rainToday.classList.add('wet');
+      }
+
+      els.rainToday.innerHTML =
+        '<div class="rain-today-icon" aria-hidden="true">' + icon + '</div>' +
+        '<div class="rain-today-text">' + label + '<small>' + sub + '</small></div>';
+      els.rainToday.hidden = false;
     }
 
     function drawHourlySvg(times, temps, precs, now){
@@ -1091,9 +1430,10 @@
         }
       });
 
-      // Labels heures (toutes les 6h)
+      // Labels heures (toutes les 6h, on skip 00h pour éviter collision avec le label de jour)
       times.forEach(function(t, i){
         var hh = t.getHours();
+        if (hh === 0) return; // collision avec label "MER 12" du séparateur de jour
         if (hh % 6 === 0 || i === 0) {
           var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
           lab.setAttribute('class','axis-label');
@@ -1278,12 +1618,16 @@
     }
 
     /* ───── Pipeline principal ───── */
-    function setLocation(loc){
+    function setLocation(loc, opts){
+      opts = opts || {};
+      var keepSpinner = !!opts.keepSpinner;
       state.loc = loc;
       renderCity(loc);
-      els.currentTemp.innerHTML = '<span class="loading"></span>';
-      els.currentDesc.textContent = 'chargement…';
-      els.currentMeta.innerHTML = '';
+      if (!keepSpinner) {
+        els.currentTemp.innerHTML = '<span class="loading"></span>';
+        els.currentDesc.textContent = 'chargement…';
+        els.currentMeta.innerHTML = '';
+      }
 
       // Push URL state pour le partage
       try {
@@ -1294,23 +1638,49 @@
         window.history.replaceState({}, '', u);
       } catch(e){}
 
-      fetchForecast(loc.lat, loc.lon).then(function(data){
+      // Mémoriser pour fast-paint à la prochaine visite
+      try { localStorage.setItem(LAST_LOC_KEY, JSON.stringify(loc)); } catch(e){}
+
+      return fetchForecast(loc.lat, loc.lon).then(function(data){
         state.data = data;
         renderCurrent(data);
         renderHourly(data);
         renderDaily(data);
         renderNowcast(data);
+        renderRainToday(data);
         renderVigilance(computeVigilance(data));
         updateSourceLine();
       }).catch(function(err){
         console.error('[meteo] fetch error', err);
-        els.currentTemp.textContent = '—';
-        els.currentDesc.innerHTML = '<span style="opacity:.6">prévisions indisponibles</span>';
-        els.currentMeta.innerHTML = '<span style="font-style:italic">réseau ou Open-Meteo injoignable</span>';
+        if (!keepSpinner) {
+          els.currentTemp.textContent = '—';
+          els.currentDesc.innerHTML = '<span style="opacity:.6">prévisions indisponibles</span>';
+          els.currentMeta.innerHTML = '<span style="font-style:italic">réseau ou Open-Meteo injoignable</span>';
+        }
       });
     }
 
+    function readLastLoc(){
+      try {
+        var raw = localStorage.getItem(LAST_LOC_KEY);
+        if (!raw) return null;
+        var l = JSON.parse(raw);
+        if (l && typeof l.lat === 'number' && typeof l.lon === 'number') return l;
+      } catch(e){}
+      return null;
+    }
+
     /* ───── Listeners ───── */
+    // Click sur une mini card horaire → panneau détail
+    els.hourlyScroll.addEventListener('click', function(e){
+      var card = e.target.closest('.hour-card');
+      if (!card) return;
+      var idx = parseInt(card.dataset.idx, 10);
+      if (isNaN(idx)) return;
+      if (state.selectedHour === idx) { hideHourDetail(); return; }
+      showHourDetail(idx);
+    });
+
     els.cityEdit.addEventListener('click', openCitySearch);
     els.cityInput.addEventListener('input', function(e){ searchCities(e.target.value.trim()); });
     els.cityInput.addEventListener('keydown', function(e){
@@ -1326,8 +1696,49 @@
     });
     els.shareBtn.addEventListener('click', share);
 
-    /* ───── Init ───── */
-    getInitialLoc().then(setLocation);
+    /* ───── Init ─────
+       Stratégie : fast-paint avec cache, puis résolution réelle en arrière-plan.
+       Priorités : URL (?lat&lon) > localStorage > géoloc navigateur > IP > Rennes. */
+    (function initBoot(){
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('lat') && p.get('lon')) {
+        // Lien partagé : utiliser directement, pas de résolution
+        setLocation({
+          lat: parseFloat(p.get('lat')),
+          lon: parseFloat(p.get('lon')),
+          name: p.get('city') || 'Lieu partagé',
+          country: '', admin: '',
+          dept: p.get('dept') || null
+        });
+        return;
+      }
+
+      var lastLoc = readLastLoc();
+      var firstPainted = false;
+      if (lastLoc) {
+        firstPainted = true;
+        setLocation(lastLoc); // affiche tout de suite (cache 15min → quasi-instantané si récent)
+      }
+
+      // Résolution réelle en parallèle
+      getInitialLoc().then(function(loc){
+        if (!loc) return;
+        // Si pas de premier paint, ou si la loc résolue est sensiblement différente → setLocation
+        if (!firstPainted) { setLocation(loc); return; }
+        var dLat = Math.abs(loc.lat - lastLoc.lat);
+        var dLon = Math.abs(loc.lon - lastLoc.lon);
+        if (dLat > 0.05 || dLon > 0.05) {
+          setLocation(loc, { keepSpinner: true });
+        } else {
+          // Même ville, on garde lastLoc mais on met à jour le nom si plus précis
+          if (loc.name && loc.name !== lastLoc.name) {
+            state.loc.name = loc.name;
+            renderCity(state.loc);
+            try { localStorage.setItem(LAST_LOC_KEY, JSON.stringify(state.loc)); } catch(e){}
+          }
+        }
+      });
+    })();
 
   })();
   </script>

@@ -40,7 +40,6 @@
   var LINKS = [
     { href:'/',                url:'/',                title:'Accueil',        desc:'TLB · Page principale' },
     { href:'/transports.html', url:'/transports.html', title:'Métros',         desc:'Lignes A & B · temps réel' },
-    { href:'/meteo.html',      url:'/meteo.html',      title:'Météo',          desc:'Modèle AROME · Météo France · via Open-Meteo' },
     { href:'/demo-api.html',   url:'/demo-api.html',   title:'Tests API',      desc:'APIs ouvertes — transports, carburant, satellites' },
     { href:'/evenements.html', url:'/evenements.html', title:'Événements',     desc:'Agenda culturel · Rennes · OpenAgenda' },
     { href:'#',                pin:'https://w.teivano.fr', title:'Workout Tracker', desc:'Suivi d\'entraînement personnel' },
@@ -50,6 +49,7 @@
     { href:'/sudoku.html',     url:'/sudoku.html',     title:'Sudoku',         desc:'Générateur live · facile, normal, difficile' },
     { href:'/salaire.html',    url:'/salaire.html',    title:'Brut/net',       desc:'Simulateur de salaire · barème 2026' },
     { href:'/encre.html',      url:'/encre.html',      title:'Encre',          desc:'Endless · glisse pour guider la goutte' },
+    { href:'/meteo.html',      url:'/meteo.html',      title:'Météo',          desc:'Modèle AROME · Météo France · via Open-Meteo' },
   ];
 
   /* ── Hamburger (skipped si body[data-no-ham]) ── */
