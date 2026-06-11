@@ -169,7 +169,40 @@
     }
 
     /* ── Current weather (vue-vedette) ── */
-    .current { padding-top: 1.2rem; padding-bottom: 1.4rem; }
+    .current {
+      padding-top: 1.2rem;
+      padding-bottom: 1.8rem;
+      position: relative;
+    }
+    /* Bouton chevron pour expand/collapse les détails */
+    .current-toggle {
+      position: absolute;
+      bottom: .35rem;
+      right: .55rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: .45rem;
+      color: var(--ink2);
+      transition: color .2s;
+      line-height: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .current-toggle:hover { color: var(--ink); }
+    .current-toggle svg {
+      width: 14px;
+      height: 14px;
+      transition: transform .35s cubic-bezier(.16,1,.3,1);
+    }
+    .current.expanded .current-toggle svg { transform: rotate(180deg); }
+    /* Détails masqués par défaut, animation via grid-template-rows */
+    .current-details {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .4s cubic-bezier(.16,1,.3,1);
+    }
+    .current-details-inner { overflow: hidden; }
+    .current.expanded .current-details { grid-template-rows: 1fr; }
     .current-head {
       display: flex;
       justify-content: space-between;
@@ -718,6 +751,19 @@
       display: flex;
       flex-direction: column;
     }
+    .daily-header {
+      text-align: right;
+      padding: .35rem .25rem .55rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      font-weight: 500;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+    .daily-header .sep { opacity: .45; margin: 0 .25em; font-weight: 300; }
+    .daily-header .min { opacity: .65; }
     .day-row {
       display: grid;
       grid-template-columns: 1fr auto auto;
@@ -953,8 +999,17 @@
         </div>
         <div class="current-date" id="currentDate"></div>
       </div>
-      <div class="current-meta" id="currentMeta"></div>
-      <div class="current-ephem" id="currentEphem"></div>
+      <div class="current-details" id="currentDetails">
+        <div class="current-details-inner">
+          <div class="current-meta" id="currentMeta"></div>
+          <div class="current-ephem" id="currentEphem"></div>
+        </div>
+      </div>
+      <button class="current-toggle" id="currentToggle" type="button" aria-expanded="false" aria-label="Voir les détails">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
     </section>
 
     <!-- Bandeau pluie aujourd'hui -->
@@ -1758,7 +1813,6 @@
 
     /* ───── Modal koala (matin, 1×/jour, message selon météo) ───── */
     var KOALA_LAST_KEY = 'meteo_koala_last_shown';
-    var koalaTimer = null;
     var koalaShownThisSession = false;
 
     function todayISO(){
@@ -1766,16 +1820,13 @@
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
-    function showKoalaModal(msg, opts){
-      opts = opts || {};
+    function showKoalaModal(msg){
       var modal = document.getElementById('koalaModal');
       document.getElementById('koalaMessage').textContent = msg;
       modal.hidden = false;
-      clearTimeout(koalaTimer);
 
       function closeKoala(){
         modal.hidden = true;
-        clearTimeout(koalaTimer);
         document.removeEventListener('keydown', escClose);
       }
       function escClose(e){ if (e.key === 'Escape') closeKoala(); }
@@ -1784,10 +1835,6 @@
       document.getElementById('koalaOk').onclick = closeKoala;
       modal.onclick = function(e){ if (e.target === modal) closeKoala(); };
       document.addEventListener('keydown', escClose);
-
-      if (opts.autoDismissMs !== 0) {
-        koalaTimer = setTimeout(closeKoala, opts.autoDismissMs || 6000);
-      }
     }
 
     function koalaMessageForToday(data){
@@ -2059,7 +2106,7 @@
     function renderDaily(data){
       if (!data || !data.daily) return;
       var d = data.daily;
-      els.dailyList.innerHTML = '';
+      els.dailyList.innerHTML = '<div class="daily-header">Max. <span class="sep">/</span> <span class="min">Min.</span></div>';
 
       // d.time est ISO "YYYY-MM-DD" ; parser composant par composant pour éviter timezone shift
       function parseDay(s){ var p = s.split('-'); return new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2])); }
@@ -2236,6 +2283,17 @@
     // Scrubber tactile sur le graph
     attachScrubber();
     attachEgg();
+
+    // Toggle expand/collapse de la card current
+    (function attachCurrentToggle(){
+      var current = document.getElementById('current');
+      var toggle = document.getElementById('currentToggle');
+      toggle.addEventListener('click', function(){
+        var expanded = current.classList.toggle('expanded');
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        toggle.setAttribute('aria-label', expanded ? 'Masquer les détails' : 'Voir les détails');
+      });
+    })();
 
     els.cityEdit.addEventListener('click', openCitySearch);
     els.cityInput.addEventListener('input', function(e){ searchCities(e.target.value.trim()); });
