@@ -273,7 +273,7 @@
       overflow: hidden;
     }
     .toggle-btn {
-      background: transparent;
+      background: rgba(255,255,255,.82);
       border: none;
       padding: .55rem 1rem;
       font-family: 'Space Grotesk', sans-serif;
@@ -296,60 +296,89 @@
 
     .hourly-graph {
       width: 100%;
-      margin: .5rem 0 1rem;
-      position: relative;
-      touch-action: pan-y;
-      cursor: crosshair;
+      margin: .5rem 0 1.4rem;
+      display: flex;
+      align-items: stretch;
     }
-    .hourly-graph svg {
+    .hourly-y-axis {
+      flex: 0 0 34px;
+      position: relative;
+      height: 200px;
+    }
+    .hourly-y-axis span {
+      position: absolute;
+      right: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      color: var(--ink2);
+      transform: translateY(-50%);
+      white-space: nowrap;
+      letter-spacing: -.01em;
+    }
+    .hourly-svg-wrap {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      cursor: crosshair;
+      touch-action: pan-y;
+    }
+    .hourly-svg-wrap svg {
       width: 100%;
       height: 200px;
       display: block;
       overflow: visible;
     }
-    .hourly-graph .grid-line {
+    .hourly-x-axis {
+      position: relative;
+      height: 26px;
+      margin-top: 2px;
+    }
+    .hourly-x-axis span {
+      position: absolute;
+      top: 4px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      color: var(--ink2);
+      letter-spacing: .04em;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .hourly-x-axis span.day {
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: .08em;
+    }
+    .grid-line {
       stroke: var(--ink2);
       stroke-width: .5;
       stroke-dasharray: 2 3;
       opacity: .35;
     }
-    .hourly-graph .temp-path {
+    .temp-path {
       fill: none;
       stroke: var(--ink);
       stroke-width: 1.8;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .hourly-graph .temp-area {
+    .temp-area {
       fill: var(--ink);
       opacity: .07;
     }
-    .hourly-graph .precip-bar {
+    .precip-bar {
       fill: #3a7ab8;
       opacity: .45;
     }
-    .hourly-graph .now-dot {
+    .now-dot {
       fill: var(--ink);
       stroke: var(--bg);
       stroke-width: 2;
     }
-    .hourly-graph .day-sep {
+    .day-sep {
       stroke: var(--ink2);
       stroke-width: .5;
       stroke-dasharray: 1 4;
       opacity: .6;
-    }
-    .hourly-graph .axis-label {
-      fill: var(--ink2);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 10px;
-      letter-spacing: .06em;
-    }
-    .hourly-graph .y-label {
-      fill: var(--ink2);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 10px;
-      font-weight: 400;
     }
     /* Scrubber overlay (touch/drag pour scruter la courbe) */
     .scrubber {
@@ -366,9 +395,9 @@
     .scrubber[hidden] { display: none; }
     .scrubber-dot {
       position: absolute;
-      top: 50%;
+      top: 0;
       left: 50%;
-      width: 8px; height: 8px;
+      width: 9px; height: 9px;
       transform: translate(-50%, -50%);
       background: var(--ink);
       border: 2px solid var(--bg);
@@ -405,16 +434,6 @@
     }
     .scrubber-bubble .icon { font-size: .9rem; line-height: 1; }
     .scrubber-bubble .temp { font-weight: 500; font-size: .78rem; }
-    .scrubber-hint {
-      text-align: center;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: .58rem;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--ink2);
-      margin: -.4rem 0 .4rem;
-      opacity: .65;
-    }
 
     .hourly-scroll {
       display: flex;
@@ -656,13 +675,18 @@
     }
     .day-range {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: .95rem;
+      font-size: .9rem;
       letter-spacing: -.01em;
       text-align: right;
-      min-width: 90px;
+      min-width: 105px;
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: .35em;
     }
     .day-range b { font-weight: 500; }
-    .day-range .min { color: var(--ink2); margin-left: .35em; font-weight: 400; }
+    .day-range .sep { color: var(--ink2); opacity: .5; font-weight: 300; }
+    .day-range .min { color: var(--ink2); font-weight: 400; }
 
     /* ── Footer / source ── */
     .source {
@@ -866,17 +890,20 @@
     <section class="view view-hourly" id="viewHourly" role="tabpanel">
       <div class="card" style="padding-bottom:.5rem">
         <div class="hourly-graph" id="hourlyGraph">
-          <svg id="hourlySvg" viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true"></svg>
-          <div class="scrubber" id="scrubber" hidden>
-            <div class="scrubber-dot"></div>
-            <div class="scrubber-bubble">
-              <span class="icon" id="scrubIcon"></span>
-              <span id="scrubTime"></span>
-              <span class="temp" id="scrubTemp"></span>
+          <div class="hourly-y-axis" id="yAxis"></div>
+          <div class="hourly-svg-wrap" id="svgWrap">
+            <svg id="hourlySvg" viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="scrubber" id="scrubber" hidden>
+              <div class="scrubber-dot" id="scrubberDot"></div>
+              <div class="scrubber-bubble">
+                <span class="icon" id="scrubIcon"></span>
+                <span id="scrubTime"></span>
+                <span class="temp" id="scrubTemp"></span>
+              </div>
             </div>
           </div>
         </div>
-        <div class="scrubber-hint">Glisse le doigt sur la courbe pour scruter</div>
+        <div class="hourly-x-axis" id="xAxis" style="margin-left:34px"></div>
         <div class="hourly-scroll" id="hourlyScroll"></div>
       </div>
       <div class="hour-detail" id="hourDetail" hidden></div>
@@ -962,9 +989,13 @@
       viewHourly: $('viewHourly'),
       viewDaily: $('viewDaily'),
       hourlyGraph: $('hourlyGraph'),
+      svgWrap: $('svgWrap'),
       hourlySvg: $('hourlySvg'),
+      yAxis: $('yAxis'),
+      xAxis: $('xAxis'),
       hourlyScroll: $('hourlyScroll'),
       scrubber: $('scrubber'),
+      scrubberDot: $('scrubberDot'),
       scrubTime: $('scrubTime'),
       scrubTemp: $('scrubTemp'),
       scrubIcon: $('scrubIcon'),
@@ -1557,28 +1588,12 @@
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
-    function tryShowKoala(data){
-      if (koalaShownThisSession) return;
-      var now = new Date();
-      var hour = now.getHours();
-      if (hour < 7 || hour >= 11) return;
-
-      var last = null;
-      try { last = localStorage.getItem(KOALA_LAST_KEY); } catch(e){}
-      var today = todayISO();
-      if (last === today) return;
-
-      var info = computeTodayRain(data);
-      var willRain = info && info.willRain;
-      var msg = willRain
-        ? 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️'
-        : 'Bonne journée mon koala 🐨';
-
+    function showKoalaModal(msg, opts){
+      opts = opts || {};
       var modal = document.getElementById('koalaModal');
       document.getElementById('koalaMessage').textContent = msg;
       modal.hidden = false;
-      koalaShownThisSession = true;
-      try { localStorage.setItem(KOALA_LAST_KEY, today); } catch(e){}
+      clearTimeout(koalaTimer);
 
       function closeKoala(){
         modal.hidden = true;
@@ -1592,16 +1607,61 @@
       modal.onclick = function(e){ if (e.target === modal) closeKoala(); };
       document.addEventListener('keydown', escClose);
 
-      koalaTimer = setTimeout(closeKoala, 6000);
+      if (opts.autoDismissMs !== 0) {
+        koalaTimer = setTimeout(closeKoala, opts.autoDismissMs || 6000);
+      }
+    }
+
+    function koalaMessageForToday(data){
+      var info = computeTodayRain(data);
+      var willRain = info && info.willRain;
+      return willRain
+        ? 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️'
+        : 'Bonne journée mon koala 🐨';
+    }
+
+    function tryShowKoala(data){
+      if (koalaShownThisSession) return;
+      var hour = new Date().getHours();
+      if (hour < 7 || hour >= 11) return;
+
+      var last = null;
+      try { last = localStorage.getItem(KOALA_LAST_KEY); } catch(e){}
+      var today = todayISO();
+      if (last === today) return;
+
+      koalaShownThisSession = true;
+      try { localStorage.setItem(KOALA_LAST_KEY, today); } catch(e){}
+      showKoalaModal(koalaMessageForToday(data));
+    }
+
+    /* ───── Easter egg : 5 clics sur "Modèle AROME" → modal koala ───── */
+    var eggClickCount = 0;
+    var eggClickTimer = null;
+    function attachEgg(){
+      els.sourceModel.style.cursor = 'pointer';
+      els.sourceModel.addEventListener('click', function(){
+        eggClickCount++;
+        clearTimeout(eggClickTimer);
+        if (eggClickCount >= 5) {
+          eggClickCount = 0;
+          showKoalaModal(koalaMessageForToday(state.data));
+          return;
+        }
+        eggClickTimer = setTimeout(function(){ eggClickCount = 0; }, 2500);
+      });
     }
 
     function drawHourlySvg(times, temps, precs, now){
       var svg = els.hourlySvg;
       svg.innerHTML = '';
+      els.yAxis.innerHTML = '';
+      els.xAxis.innerHTML = '';
       if (!times.length) return;
 
       var W = 800, H = 200;
-      var padL = 36, padR = 14, padT = 18, padB = 30;
+      // Pas de padL/padR : les axes sont en HTML overlay, le SVG s'étend full width
+      var padL = 0, padR = 0, padT = 10, padB = 10;
       var innerW = W - padL - padR;
       var innerH = H - padT - padB;
 
@@ -1618,27 +1678,24 @@
       function yTemp(t){ return padT + (1 - (t - tMin) / range) * innerH; }
       function yPrecBar(p){ return padT + innerH - (p / pMax) * innerH * 0.35; }
 
-      // ── Axe Y : 3 graduations (min, mid, max) avec labels temp ──
-      var tMid = (tMin + tMax) / 2;
+      // ── Axe Y : 3 graduations + labels HTML overlay (lisibles, pas étirés) ──
+      var tMid = Math.round((tMin + tMax) / 2);
       var yTicks = [tMax, tMid, tMin];
       yTicks.forEach(function(t){
         var y = yTemp(t);
         var ln = document.createElementNS('http://www.w3.org/2000/svg','line');
         ln.setAttribute('class','grid-line');
-        ln.setAttribute('x1', padL); ln.setAttribute('x2', W - padR);
+        ln.setAttribute('x1', 0); ln.setAttribute('x2', W);
         ln.setAttribute('y1', y);    ln.setAttribute('y2', y);
         svg.appendChild(ln);
 
-        var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
-        lab.setAttribute('class','y-label');
-        lab.setAttribute('x', padL - 6);
-        lab.setAttribute('y', y + 3);
-        lab.setAttribute('text-anchor', 'end');
+        var lab = document.createElement('span');
         lab.textContent = Math.round(t) + '°';
-        svg.appendChild(lab);
+        lab.style.top = (y / H * 100) + '%';
+        els.yAxis.appendChild(lab);
       });
 
-      // ── Séparateurs jours + labels jour (au lieu du label hour 00h) ──
+      // ── Séparateurs jours dans SVG + labels jour en HTML overlay ──
       var lastDay = times[0].getDate();
       var DAYS = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
       times.forEach(function(t, i){
@@ -1649,30 +1706,25 @@
           ln.setAttribute('y1', padT); ln.setAttribute('y2', H - padB);
           svg.appendChild(ln);
 
-          var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
-          lab.setAttribute('class','axis-label');
-          lab.setAttribute('x', x(i));
-          lab.setAttribute('y', H - padB + 16);
-          lab.setAttribute('text-anchor', 'middle');
+          var lab = document.createElement('span');
+          lab.className = 'day';
           lab.textContent = DAYS[t.getDay()] + ' ' + t.getDate();
-          svg.appendChild(lab);
+          lab.style.left = (x(i) / W * 100) + '%';
+          els.xAxis.appendChild(lab);
 
           lastDay = t.getDate();
         }
       });
 
-      // ── Labels heures : 06h, 12h, 18h uniquement (00h géré par séparateur) ──
+      // ── Labels heures 06h, 12h, 18h en HTML overlay ──
       times.forEach(function(t, i){
         var hh = t.getHours();
         if (hh === 0) return;
         if (hh === 6 || hh === 12 || hh === 18) {
-          var lab = document.createElementNS('http://www.w3.org/2000/svg','text');
-          lab.setAttribute('class','axis-label');
-          lab.setAttribute('x', x(i));
-          lab.setAttribute('y', H - padB + 16);
-          lab.setAttribute('text-anchor', 'middle');
+          var lab = document.createElement('span');
           lab.textContent = String(hh).padStart(2,'0') + 'h';
-          svg.appendChild(lab);
+          lab.style.left = (x(i) / W * 100) + '%';
+          els.xAxis.appendChild(lab);
         }
       });
 
@@ -1742,12 +1794,9 @@
     function indexFromClientX(clientX){
       var s = state.hourlySlice;
       if (!s) return -1;
-      var rect = els.hourlyGraph.getBoundingClientRect();
-      var padLpx = (state.gPadL / state.gW) * rect.width;
-      var padRpx = (state.gPadR / state.gW) * rect.width;
-      var innerWpx = rect.width - padLpx - padRpx;
-      var relX = clientX - rect.left - padLpx;
-      var ratio = relX / innerWpx;
+      var rect = els.svgWrap.getBoundingClientRect();
+      var relX = clientX - rect.left;
+      var ratio = relX / rect.width;
       ratio = Math.max(0, Math.min(1, ratio));
       return Math.round(ratio * (s.times.length - 1));
     }
@@ -1755,10 +1804,13 @@
     function moveScrubber(idx){
       var s = state.hourlySlice;
       if (!s || !s.svgPoints || !s.svgPoints[idx]) return;
-      var rect = els.hourlyGraph.getBoundingClientRect();
+      var rect = els.svgWrap.getBoundingClientRect();
       var pt = s.svgPoints[idx];
+      // SVG remplit svgWrap (width 100%, height 200px). Coords directes.
       var xpx = (pt.x / state.gW) * rect.width;
+      var ypx = (pt.y / state.gH) * rect.height;
       els.scrubber.style.left = xpx + 'px';
+      els.scrubberDot.style.top = ypx + 'px';
       var t = s.times[idx];
       var label = (idx === 0)
         ? 'maintenant'
@@ -1775,7 +1827,7 @@
 
     var scrubState = { active: false, startX: 0, moved: false, lastIdx: -1 };
     function attachScrubber(){
-      var g = els.hourlyGraph;
+      var g = els.svgWrap;
       function down(e){
         var ce = e.touches ? e.touches[0] : e;
         scrubState.active = true;
@@ -1852,8 +1904,9 @@
             '<div class="day-label-sub">' + labelSub + ' · ' + wmoLabel(d.weather_code[i]) + '</div>' +
           '</div>' +
           '<div class="day-icon">' + wmoIcon(d.weather_code[i]) + '</div>' +
-          '<div class="day-range">' +
-            '<b>' + Math.round(d.temperature_2m_max[i]) + '°</b> ' +
+          '<div class="day-range" title="Max / Min">' +
+            '<b>' + Math.round(d.temperature_2m_max[i]) + '°</b>' +
+            '<span class="sep">/</span>' +
             '<span class="min">' + Math.round(d.temperature_2m_min[i]) + '°</span>' +
           '</div>';
         els.dailyList.appendChild(row);
@@ -2001,6 +2054,7 @@
 
     // Scrubber tactile sur le graph
     attachScrubber();
+    attachEgg();
 
     els.cityEdit.addEventListener('click', openCitySearch);
     els.cityInput.addEventListener('input', function(e){ searchCities(e.target.value.trim()); });
