@@ -1,7 +1,10 @@
 /* pin-guard.js — Protection PIN numérique
  * SHA-256 côté client · pad numérique injecté · aucun clavier natif
+ * Idempotent : si déjà chargé (overlay présent), ne fait rien.
  */
 (function () {
+  if (document.getElementById('pg-overlay')) return;
+
   /* ── Hash SHA-256 du PIN "0000" (fallback global) ── */
   var PIN_HASH = '9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0';
 

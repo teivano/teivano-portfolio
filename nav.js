@@ -1,7 +1,17 @@
 /* nav.js — Menu overlay commun à toutes les pages
  * S'injecte automatiquement : hamburger + overlay + styles de secours
+ * Charge aussi pin-guard.js (utilisé par les liens protégés du menu).
  */
 (function () {
+
+  /* ── Auto-injection pin-guard.js (si pas déjà présent) ── */
+  if (!document.querySelector('script[src*="pin-guard.js"]') && !document.getElementById('pg-overlay')) {
+    var pg = document.createElement('script');
+    pg.src = '/pin-guard.js';
+    pg.async = false;
+    document.head.appendChild(pg);
+  }
+
 
   /* ── CSS de secours pour les pages sans style.css ── */
   var css = [
