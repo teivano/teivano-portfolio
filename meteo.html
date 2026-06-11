@@ -1677,10 +1677,14 @@
     }
 
     function dayLabel(targetDate, now){
-      // "aujourd'hui" / "demain" / nom du jour (samedi…)
+      // "cette nuit" / "aujourd'hui" / "demain" / nom du jour (samedi…)
       var today = new Date(now); today.setHours(0,0,0,0);
       var tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
       var target = new Date(targetDate); target.setHours(0,0,0,0);
+      // Cas spécial : J+1 entre 0h et 5h → c'est la nuit en cours, pas "demain"
+      if (target.getTime() === tomorrow.getTime() && targetDate.getHours() < 5) {
+        return 'cette nuit';
+      }
       if (target.getTime() === today.getTime()) return 'aujourd’hui';
       if (target.getTime() === tomorrow.getTime()) return 'demain';
       return FR_DAYS_LONG[targetDate.getDay()];
@@ -1716,7 +1720,13 @@
         state = rainIntensityState(near);
         var first = near.rainyHours[0].t;
         var intensity = state === 'storm' ? 'forte' : (state === 'moderate' ? 'modérée' : 'faible');
-        label = '<b>Pluie ' + scopeLabel + '</b> · à partir de ' + num(fmtHour(first));
+        var minutesUntil = (first.getTime() - now.getTime()) / 60000;
+        if (minutesUntil < 60) {
+          // C: pluie imminente (commence dans la prochaine heure ou en cours)
+          label = '<b>Pluie imminente</b> · vers ' + num(fmtHour(first));
+        } else {
+          label = '<b>Pluie ' + scopeLabel + '</b> · à partir de ' + num(fmtHour(first));
+        }
         var mmStr = near.totalMm.toFixed(near.totalMm < 1 ? 1 : (near.totalMm < 10 ? 1 : 0)) + ' mm';
         sub = 'cumul ' + num(mmStr) + ' · intensité ' + intensity;
       } else if (laterHasRain) {
