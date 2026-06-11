@@ -170,6 +170,61 @@
 
     /* ── Current weather (vue-vedette) ── */
     .current { padding-top: 1.2rem; padding-bottom: 1.4rem; }
+    .current-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .current-temp-wrap { flex: 1 1 auto; min-width: 0; }
+    .current-date {
+      flex: 0 0 auto;
+      text-align: right;
+      padding-top: .35rem;
+    }
+    .current-date-day {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.25rem;
+      color: var(--ink);
+      text-transform: capitalize;
+      line-height: 1.1;
+    }
+    .current-date-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .65rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      margin-top: .25rem;
+      font-weight: 500;
+    }
+    /* Éphéméride (lever / coucher / durée du jour) */
+    .current-ephem {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(0,0,0,.06);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      align-items: center;
+    }
+    .current-ephem-item { display: inline-flex; align-items: center; gap: .35rem; }
+    .current-ephem .arrow { font-size: .82rem; line-height: 1; color: var(--ink2); }
+    .current-ephem b {
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: .02em;
+      text-transform: none;
+      font-size: .78rem;
+    }
+    .current-ephem[hidden] { display: none; }
     .current-temp {
       font-family: 'Space Grotesk', sans-serif;
       font-size: clamp(4.2rem, 19vw, 6.8rem);
@@ -867,11 +922,15 @@
 
     <!-- Current weather -->
     <section class="card current" id="current">
-      <div>
-        <span class="current-temp" id="currentTemp"><span class="loading"></span></span>
+      <div class="current-head">
+        <div class="current-temp-wrap">
+          <span class="current-temp" id="currentTemp"><span class="loading"></span></span>
+          <div class="current-desc" id="currentDesc">chargement…</div>
+        </div>
+        <div class="current-date" id="currentDate"></div>
       </div>
-      <div class="current-desc" id="currentDesc">chargement…</div>
       <div class="current-meta" id="currentMeta"></div>
+      <div class="current-ephem" id="currentEphem"></div>
     </section>
 
     <!-- Bandeau pluie aujourd'hui -->
@@ -982,6 +1041,8 @@
       currentTemp: $('currentTemp'),
       currentDesc: $('currentDesc'),
       currentMeta: $('currentMeta'),
+      currentDate: $('currentDate'),
+      currentEphem: $('currentEphem'),
       nowcast: $('nowcast'),
       rainToday: $('rainToday'),
       hourDetail: $('hourDetail'),
@@ -1324,6 +1385,9 @@
     }
 
     /* ───── Vue "actuel" ───── */
+    var FR_DAYS_LONG   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+    var FR_MONTHS_LONG = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
     function renderCurrent(data){
       if (!data || !data.current) return;
       var c = data.current;
@@ -1333,6 +1397,35 @@
         '<span>ressenti <b>' + Math.round(c.apparent_temperature) + '°</b></span>' +
         '<span>vent <b>' + Math.round(c.wind_speed_10m) + ' km/h ' + windDir(c.wind_direction_10m) + '</b></span>' +
         '<span>humidité <b>' + Math.round(c.relative_humidity_2m) + ' %</b></span>';
+
+      // Date du jour
+      var d = new Date();
+      els.currentDate.innerHTML =
+        '<div class="current-date-day">' + FR_DAYS_LONG[d.getDay()] + '</div>' +
+        '<div class="current-date-num">' + d.getDate() + ' ' + FR_MONTHS_LONG[d.getMonth()] + '</div>';
+
+      renderEphem(data);
+    }
+
+    /* ───── Éphéméride : lever / coucher / durée du jour ───── */
+    function renderEphem(data){
+      if (!data || !data.daily || !data.daily.sunrise || !data.daily.sunrise[0]) {
+        els.currentEphem.hidden = true;
+        return;
+      }
+      var rise = new Date(data.daily.sunrise[0]);
+      var set  = new Date(data.daily.sunset[0]);
+      function hhmm(d){ return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+      var durMs = set.getTime() - rise.getTime();
+      var dh = Math.floor(durMs / 3600000);
+      var dm = Math.floor((durMs % 3600000) / 60000);
+      var dur = dh + 'h' + String(dm).padStart(2,'0');
+
+      els.currentEphem.innerHTML =
+        '<span class="current-ephem-item"><span class="arrow">↑</span> lever <b>' + hhmm(rise) + '</b></span>' +
+        '<span class="current-ephem-item"><span class="arrow">↓</span> coucher <b>' + hhmm(set) + '</b></span>' +
+        '<span class="current-ephem-item">jour <b>' + dur + '</b></span>';
+      els.currentEphem.hidden = false;
     }
 
     /* ───── Vue horaire : graph SVG + cards scrollables ───── */
@@ -1695,9 +1788,8 @@
         els.yAxis.appendChild(lab);
       });
 
-      // ── Séparateurs jours dans SVG + labels jour en HTML overlay ──
+      // ── Séparateurs jours dans SVG (ligne pointillée verticale, sans label) ──
       var lastDay = times[0].getDate();
-      var DAYS = ['DIM','LUN','MAR','MER','JEU','VEN','SAM'];
       times.forEach(function(t, i){
         if (t.getDate() !== lastDay) {
           var ln = document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -1705,22 +1797,14 @@
           ln.setAttribute('x1', x(i)); ln.setAttribute('x2', x(i));
           ln.setAttribute('y1', padT); ln.setAttribute('y2', H - padB);
           svg.appendChild(ln);
-
-          var lab = document.createElement('span');
-          lab.className = 'day';
-          lab.textContent = DAYS[t.getDay()] + ' ' + t.getDate();
-          lab.style.left = (x(i) / W * 100) + '%';
-          els.xAxis.appendChild(lab);
-
           lastDay = t.getDate();
         }
       });
 
-      // ── Labels heures 06h, 12h, 18h en HTML overlay ──
+      // ── Labels heures 00h, 06h, 12h, 18h en HTML overlay ──
       times.forEach(function(t, i){
         var hh = t.getHours();
-        if (hh === 0) return;
-        if (hh === 6 || hh === 12 || hh === 18) {
+        if (hh === 0 || hh === 6 || hh === 12 || hh === 18) {
           var lab = document.createElement('span');
           lab.textContent = String(hh).padStart(2,'0') + 'h';
           lab.style.left = (x(i) / W * 100) + '%';
