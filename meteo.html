@@ -1616,9 +1616,13 @@
       });
     }
 
-    /* ───── Résumé pluie avec scope adaptatif ─────
-       5h-18h : "aujourd'hui" (jusqu'à 23:59 du jour courant)
-       18h-5h : "ce soir"     (jusqu'à 5h du matin suivant)            */
+    /* ───── Résumé pluie avec analyse 48h ─────
+       Scope :
+         5h-18h : "aujourd'hui" (jusqu'à 23:59 du jour courant)
+         18h-5h : "ce soir"     (jusqu'à 5h du matin suivant)
+       Analyse split en 2 fenêtres :
+         near  = maintenant → fin du scope  (info pour le bandeau principal)
+         later = fin du scope → +48h        (pour signaler "risques demain XXh") */
     function getRainScope(now){
       var hour = now.getHours();
       var end = new Date(now);
@@ -1626,54 +1630,63 @@
         end.setHours(23, 59, 59, 999);
         return { label: 'aujourd’hui', until: end, kind: 'day' };
       }
-      // "ce soir" : si on est 18h-23h, jusqu'à 5h du jour suivant. Si 0h-5h, jusqu'à 5h du jour courant.
       if (hour >= 18) end.setDate(end.getDate() + 1);
       end.setHours(5, 0, 0, 0);
       return { label: 'ce soir', until: end, kind: 'night' };
     }
 
-    function computeRainWindow(data){
+    function computeRainAnalysis(data){
       if (!data || !data.hourly) return null;
       var times = data.hourly.time.map(function(t){ return new Date(t); });
       var precs = data.hourly.precipitation;
       var probs = data.hourly.precipitation_probability || [];
       var now = new Date();
       var scope = getRainScope(now);
+      var scopeEnd = scope.until.getTime();
+      var futureEnd = now.getTime() + 48 * 3600 * 1000;
 
-      var hours = [];
+      var nearHours = [], laterHours = [];
       for (var i = 0; i < times.length; i++) {
         var t = times[i];
-        if (t.getTime() < now.getTime() - 3600*1000) continue;
-        if (t.getTime() > scope.until.getTime()) break;
-        hours.push({ t: t, p: precs[i] || 0, prob: probs[i] });
+        var tt = t.getTime();
+        if (tt < now.getTime() - 3600*1000) continue;
+        if (tt > futureEnd) break;
+        var entry = { t: t, p: precs[i] || 0, prob: probs[i] };
+        if (tt <= scopeEnd) nearHours.push(entry); else laterHours.push(entry);
       }
-      if (!hours.length) return null;
+      if (!nearHours.length && !laterHours.length) return null;
 
-      var totalMm = hours.reduce(function(s, x){ return s + x.p; }, 0);
-      var rainyHours = hours.filter(function(x){ return x.p > 0.1; });
-      var maxProb = hours.reduce(function(m, x){ return x.prob != null && x.prob > m ? x.prob : m; }, 0);
-      var hMax = rainyHours.length ? Math.max.apply(null, rainyHours.map(function(x){ return x.p; })) : 0;
-      var willRain = totalMm > 0.1 || maxProb >= 60;
-
-      return {
-        totalMm: totalMm,
-        maxProb: maxProb,
-        rainyHours: rainyHours,
-        hMax: hMax,
-        willRain: willRain,
-        scope: scope
-      };
+      function stats(hours){
+        var totalMm = hours.reduce(function(s, x){ return s + x.p; }, 0);
+        var rainyHours = hours.filter(function(x){ return x.p > 0.1; });
+        var maxProb = hours.reduce(function(m, x){ return x.prob != null && x.prob > m ? x.prob : m; }, 0);
+        var hMax = rainyHours.length ? Math.max.apply(null, rainyHours.map(function(x){ return x.p; })) : 0;
+        return {
+          totalMm: totalMm, maxProb: maxProb, rainyHours: rainyHours, hMax: hMax,
+          willRain: totalMm > 0.1 || maxProb >= 60
+        };
+      }
+      return { scope: scope, near: stats(nearHours), later: stats(laterHours) };
     }
 
     /* ───── État pluie & icônes SVG ───── */
-    function rainStateName(info){
-      if (info.rainyHours.length === 0 && info.totalMm < 0.2) {
-        return info.maxProb >= 40 ? 'risk' : 'sunny';
-      }
-      if (info.totalMm >= 10 || info.hMax >= 4) return 'storm';
-      if (info.totalMm >= 3 || info.hMax >= 1.5) return 'moderate';
+    function rainIntensityState(s){
+      if (s.totalMm >= 10 || s.hMax >= 4) return 'storm';
+      if (s.totalMm >= 3 || s.hMax >= 1.5) return 'moderate';
       return 'light';
     }
+
+    function dayLabel(targetDate, now){
+      // "aujourd'hui" / "demain" / nom du jour (samedi…)
+      var today = new Date(now); today.setHours(0,0,0,0);
+      var tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      var target = new Date(targetDate); target.setHours(0,0,0,0);
+      if (target.getTime() === today.getTime()) return 'aujourd’hui';
+      if (target.getTime() === tomorrow.getTime()) return 'demain';
+      return FR_DAYS_LONG[targetDate.getDay()];
+    }
+
+    function fmtHour(d){ return d.getHours() + 'h00'; }
 
     var RAIN_SVGS = {
       sunny: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5" y1="5" x2="6.8" y2="6.8"/><line x1="17.2" y1="17.2" x2="19" y2="19"/><line x1="5" y1="19" x2="6.8" y2="17.2"/><line x1="17.2" y1="6.8" x2="19" y2="5"/></svg>',
@@ -1683,33 +1696,46 @@
       storm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 10a3.8 3.8 0 0 1 3.8-3.8h.5a4.3 4.3 0 0 1 4.2 3.4 2.8 2.8 0 0 1 .5 5.6H5a2.8 2.8 0 0 1 0-5.2z"/><path d="M12 14 L9.5 18.5 L12 18.5 L10 22.5" fill="none"/><line x1="6" y1="19" x2="6.5" y2="22"/><line x1="16" y1="19" x2="16.5" y2="22"/></svg>'
     };
 
-    /* ───── Bandeau pluie (scope adaptatif aujourd'hui / ce soir) ───── */
+    /* ───── Bandeau pluie (analyse 48h) ───── */
     function renderRainToday(data){
-      var info = computeRainWindow(data);
+      var info = computeRainAnalysis(data);
       if (!info) { els.rainToday.hidden = true; return; }
 
-      var state = rainStateName(info);
-      var scopeLabel = info.scope.label; // "aujourd'hui" ou "ce soir"
-      var label, sub;
+      var near = info.near, later = info.later;
+      var scopeLabel = info.scope.label;
+      var nearHasRain = near.rainyHours.length > 0;
+      var laterHasRain = later.rainyHours.length > 0;
+      var nearHighProb = near.maxProb >= 40;
+      var now = new Date();
+
+      var state, label, sub;
       var num = function(v){ return '<span class="num">' + v + '</span>'; };
 
-      if (state === 'sunny') {
-        label = '<b>Pas de pluie</b> ' + scopeLabel;
-        sub = info.maxProb > 0 ? ('probabilité max ' + num(info.maxProb + ' %')) : 'temps sec attendu';
-      } else if (state === 'risk') {
-        label = '<b>Risque d’averses</b> ' + scopeLabel;
-        sub = 'probabilité max ' + num(info.maxProb + ' %') + ' · pas de cumul attendu';
-      } else {
-        var first = info.rainyHours[0].t;
-        var last = info.rainyHours[info.rainyHours.length - 1].t;
-        var firstH = String(first.getHours()).padStart(2,'0') + 'h';
-        var lastEnd = new Date(last.getTime() + 3600*1000);
-        var lastH = String(lastEnd.getHours()).padStart(2,'0') + 'h';
-        var win = (info.rainyHours.length === 1) ? ('vers ' + num(firstH)) : ('entre ' + num(firstH) + ' et ' + num(lastH));
+      if (nearHasRain) {
+        // Cas 7-10 : pluie dans le scope proche
+        state = rainIntensityState(near);
+        var first = near.rainyHours[0].t;
         var intensity = state === 'storm' ? 'forte' : (state === 'moderate' ? 'modérée' : 'faible');
-        label = '<b>Pluie ' + scopeLabel + '</b> · ' + win;
-        var mmStr = info.totalMm.toFixed(info.totalMm < 1 ? 1 : (info.totalMm < 10 ? 1 : 0)) + ' mm';
+        label = '<b>Pluie ' + scopeLabel + '</b> · à partir de ' + num(fmtHour(first));
+        var mmStr = near.totalMm.toFixed(near.totalMm < 1 ? 1 : (near.totalMm < 10 ? 1 : 0)) + ' mm';
         sub = 'cumul ' + num(mmStr) + ' · intensité ' + intensity;
+      } else if (laterHasRain) {
+        // Cas 3-6 : sec dans le scope mais pluie après
+        state = 'risk';
+        var firstLater = later.rainyHours[0].t;
+        var when = dayLabel(firstLater, now);
+        label = '<b>Pas de pluie</b> ' + scopeLabel;
+        sub = 'risques ' + when + ' à partir de ' + num(fmtHour(firstLater));
+      } else if (nearHighProb) {
+        // Cas 11 : pas de pluie attendue mais proba ≥ 40%
+        state = 'risk';
+        label = '<b>Risque d’averses</b> ' + scopeLabel;
+        sub = 'probabilité max ' + num(near.maxProb + ' %') + ' · pas de cumul attendu';
+      } else {
+        // Cas 1-2 : sec partout sur 48h
+        state = 'sunny';
+        label = '<b>Pas de pluie</b> ' + scopeLabel;
+        sub = 'temps sec attendu';
       }
 
       var isWet = (state === 'light' || state === 'moderate' || state === 'storm');
@@ -1755,8 +1781,9 @@
     }
 
     function koalaMessageForToday(data){
-      var info = computeRainWindow(data);
-      var willRain = info && info.willRain;
+      var info = computeRainAnalysis(data);
+      // Koala matinal (7h-11h) → scope est "aujourd'hui" → info.near couvre le jour entier
+      var willRain = info && info.near && info.near.willRain;
       return willRain
         ? 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️'
         : 'Bonne journée mon koala 🐨';
