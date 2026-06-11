@@ -430,10 +430,29 @@
       stroke-width: 2;
     }
     .day-sep {
-      stroke: var(--ink2);
-      stroke-width: .5;
-      stroke-dasharray: 1 4;
-      opacity: .6;
+      stroke: var(--ink);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 4;
+      opacity: .75;
+    }
+    /* Badge "DEMAIN" / "SAMEDI" centré sur le séparateur de jour */
+    .day-badge {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg);
+      border: 1px solid var(--ink);
+      padding: .3rem .6rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--ink);
+      font-weight: 500;
+      border-radius: 3px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 2;
     }
     /* Scrubber overlay (touch/drag pour scruter la courbe) */
     .scrubber {
@@ -1788,7 +1807,11 @@
         els.yAxis.appendChild(lab);
       });
 
-      // ── Séparateurs jours dans SVG (ligne pointillée verticale, sans label) ──
+      // ── Séparateurs jours dans SVG + badge "DEMAIN" en HTML overlay ──
+      // Clear previous badges
+      Array.prototype.forEach.call(els.svgWrap.querySelectorAll('.day-badge'), function(b){ b.remove(); });
+      var DAYS_FR = ['DIMANCHE','LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','SAMEDI'];
+      var tomorrowDate = new Date(Date.now() + 24*3600*1000);
       var lastDay = times[0].getDate();
       times.forEach(function(t, i){
         if (t.getDate() !== lastDay) {
@@ -1797,6 +1820,13 @@
           ln.setAttribute('x1', x(i)); ln.setAttribute('x2', x(i));
           ln.setAttribute('y1', padT); ln.setAttribute('y2', H - padB);
           svg.appendChild(ln);
+
+          var badge = document.createElement('span');
+          badge.className = 'day-badge';
+          badge.textContent = isSameDay(t, tomorrowDate) ? 'demain' : DAYS_FR[t.getDay()];
+          badge.style.left = (x(i) / W * 100) + '%';
+          els.svgWrap.appendChild(badge);
+
           lastDay = t.getDate();
         }
       });
