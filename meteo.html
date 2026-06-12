@@ -1837,13 +1837,24 @@
       document.addEventListener('keydown', escClose);
     }
 
+    /* Messages du koala par jour de la semaine (indexé via Date.getDay) */
+    var KOALA_DAY_MESSAGES = [
+      'Le dimanche, tu penches 🐨',                  // 0 = dimanche
+      'Le lundi, c’est spaghetti 🐨',                // 1
+      'Le mardi, c’est ravioli 🐨',                  // 2
+      'Le mercredi, on dit merci la vie 🐨',         // 3
+      'Le jeudi, c’est panzani 🐨',                  // 4
+      'Le vendredi, c’est encore panzani 🐨',        // 5
+      'Le samedi, debout à midi 🐨'                  // 6
+    ];
+
     function koalaMessageForToday(data){
       var info = computeRainAnalysis(data);
-      // Koala matinal (7h-11h) → scope est "aujourd'hui" → info.near couvre le jour entier
+      // Message pluie prioritaire si pluie attendue sur le scope proche
       var willRain = info && info.near && info.near.willRain;
-      return willRain
-        ? 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️'
-        : 'Bonne journée mon koala 🐨';
+      if (willRain) return 'Prends ton parapluie aujourd’hui petit koala 🐨 ☔️';
+      // Sinon, message du jour de la semaine
+      return KOALA_DAY_MESSAGES[new Date().getDay()];
     }
 
     function tryShowKoala(data){
