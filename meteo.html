@@ -893,50 +893,117 @@
       font-style: normal;
       font-weight: 500;
     }
-    /* Courbe UV heure par heure (sparkline SVG) */
-    .uv-curve {
+    /* Courbe UV — même pattern que la courbe horaire (axes HTML, scrubber tactile) */
+    .uv-graph {
       width: 100%;
-      height: 78px;
+      margin: .6rem 0 .2rem;
+      display: flex;
+      align-items: stretch;
+    }
+    .uv-y-axis {
+      flex: 0 0 28px;
+      position: relative;
+      height: 130px;
+    }
+    .uv-y-axis span {
+      position: absolute;
+      right: 6px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      color: var(--ink2);
+      transform: translateY(-50%);
+      white-space: nowrap;
+      letter-spacing: -.01em;
+    }
+    .uv-svg-wrap {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      cursor: crosshair;
+      touch-action: pan-y;
+    }
+    .uv-svg-wrap svg {
+      width: 100%;
+      height: 130px;
       display: block;
-      margin: .3rem 0 .8rem;
-      color: var(--ink);
       overflow: visible;
+    }
+    .uv-x-axis {
+      position: relative;
+      height: 22px;
+      margin: 2px 0 .8rem 28px;
+    }
+    .uv-x-axis span {
+      position: absolute;
+      top: 4px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      color: var(--ink2);
+      letter-spacing: .04em;
+      transform: translateX(-50%);
+      white-space: nowrap;
     }
     .uv-curve-line {
       fill: none;
       stroke: var(--ink);
-      stroke-width: 1.6;
+      stroke-width: 1.8;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
-    .uv-curve-now {
+    .uv-now-line {
       stroke: var(--ink);
-      stroke-width: .8;
-      stroke-dasharray: 2 2;
+      stroke-width: 1;
+      stroke-dasharray: 3 3;
       opacity: .55;
     }
-    .uv-curve-dot {
+    .uv-now-dot {
       fill: var(--ink);
       stroke: var(--bg);
-      stroke-width: 1.5;
+      stroke-width: 2;
     }
-    .uv-curve-peak {
-      fill: var(--ink);
-      stroke: var(--bg);
-      stroke-width: 1.2;
+
+    /* Scrubber UV (clone du scrubber temp) */
+    .uv-scrubber {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--ink);
+      opacity: .55;
+      pointer-events: none;
+      transform: translateX(-50%);
     }
-    .uv-curve-label {
+    .uv-scrubber[hidden] { display: none; }
+    .uv-scrubber-dot {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 10px; height: 10px;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+      box-shadow: 0 0 0 1.5px currentColor;
+    }
+    .uv-scrubber-bubble {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: .35rem .55rem;
+      border-radius: 4px;
+      white-space: nowrap;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 9px;
-      letter-spacing: .06em;
-      fill: var(--ink2);
+      font-size: .68rem;
+      letter-spacing: .04em;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      box-shadow: 0 4px 12px -4px rgba(0,0,0,.3);
     }
-    .uv-curve-peak-label {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 9px;
-      font-weight: 500;
-      fill: var(--ink);
-    }
+    .uv-scrubber-bubble .uv { font-weight: 500; font-size: .78rem; }
     .uv-window {
       font-family: 'Space Grotesk', sans-serif;
       font-size: .68rem;
@@ -2175,6 +2242,7 @@
     function renderUV(data){
       if (!data || !data.hourly || !data.hourly.uv_index || !data.hourly.time) {
         els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
+        state.uvSlice = null;
         return;
       }
       var times = data.hourly.time.map(function(t){ return new Date(t); });
@@ -2193,32 +2261,27 @@
         return bucket;
       }
 
-      // 1. Toute la journée d'aujourd'hui (passé + futur)
+      // Toute la journée d'aujourd'hui (passé + futur) ou fallback demain
       var allToday = collectDay(now);
-      var dayLabel, bucket, isToday;
-      var hasAny = allToday.some(function(x){ return x.uv > 0.1; });
-      if (hasAny) {
-        bucket = allToday;
-        dayLabel = 'aujourd’hui';
-        isToday = true;
+      var bucket, isToday;
+      if (allToday.some(function(x){ return x.uv > 0.1; })) {
+        bucket = allToday; isToday = true;
       } else {
-        // 2. Fallback : demain
         bucket = collectDay(tomorrow);
         if (!bucket.some(function(x){ return x.uv > 0.1; })) {
           els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
+          state.uvSlice = null;
           return;
         }
-        dayLabel = 'demain';
         isToday = false;
       }
 
-      // Max du jour + heure de pic
       var max = bucket.reduce(function(m, x){ return x.uv > m.uv ? x : m; }, bucket[0]);
       var lv = uvLevel(max.uv);
 
-      // ── Sparkline SVG ──
-      var W = 280, H = 78;
-      var padL = 8, padR = 8, padT = 6, padB = 18;
+      // SVG dimensions (axes hors SVG, donc pas de padL/padR internes)
+      var W = 600, H = 130;
+      var padL = 0, padR = 0, padT = 10, padB = 10;
       var innerW = W - padL - padR;
       var innerH = H - padT - padB;
       var yMax = Math.max(11, Math.ceil(max.uv + 1));
@@ -2226,30 +2289,40 @@
       function xCoord(i){ return padL + (i / (bucket.length - 1)) * innerW; }
       function yCoord(uv){ return padT + (1 - uv / yMax) * innerH; }
 
-      // Path Catmull-Rom → Bezier (lissé)
-      var pts = bucket.map(function(d, i){ return { x: xCoord(i), y: yCoord(d.uv) }; });
-      var dPath = '';
-      if (pts.length === 1) {
-        dPath = 'M' + pts[0].x + ',' + pts[0].y;
-      } else {
-        dPath = 'M' + pts[0].x + ',' + pts[0].y;
-        for (var i = 0; i < pts.length - 1; i++) {
-          var p0 = pts[i - 1] || pts[i];
-          var p1 = pts[i];
-          var p2 = pts[i + 1];
-          var p3 = pts[i + 2] || pts[i + 1];
-          var cp1x = p1.x + (p2.x - p0.x) / 6;
-          var cp1y = p1.y + (p2.y - p0.y) / 6;
-          var cp2x = p2.x - (p3.x - p1.x) / 6;
-          var cp2y = p2.y - (p3.y - p1.y) / 6;
-          dPath += ' C' + cp1x + ',' + cp1y + ' ' + cp2x + ',' + cp2y + ' ' + p2.x + ',' + p2.y;
-        }
-      }
-      var dArea = dPath + ' L' + pts[pts.length-1].x + ',' + (padT + innerH) +
-                  ' L' + pts[0].x + ',' + (padT + innerH) + ' Z';
+      // ── Bandes colorées en arrière-plan (palette UV, sans dégradé) ──
+      var levels = [
+        { from: 0,  to: 3,  color: '#4caf50' },
+        { from: 3,  to: 6,  color: '#ffc107' },
+        { from: 6,  to: 8,  color: '#ff9800' },
+        { from: 8,  to: 11, color: '#f44336' },
+        { from: 11, to: yMax, color: '#9c27b0' }
+      ];
+      var bandsHtml = '';
+      levels.forEach(function(b){
+        if (b.from >= yMax) return;
+        var top = Math.min(b.to, yMax);
+        var y1 = yCoord(top);
+        var y2 = yCoord(b.from);
+        bandsHtml += '<rect x="0" y="' + y1 + '" width="' + W + '" height="' + (y2 - y1) + '" fill="' + b.color + '" opacity="0.16"/>';
+      });
 
-      // Marker "maintenant" (seulement si on regarde aujourd'hui)
-      var nowMarker = '';
+      // ── Courbe Catmull-Rom → Bezier ──
+      var pts = bucket.map(function(d, i){ return { x: xCoord(i), y: yCoord(d.uv) }; });
+      var dPath = 'M' + pts[0].x + ',' + pts[0].y;
+      for (var i = 0; i < pts.length - 1; i++) {
+        var p0 = pts[i - 1] || pts[i];
+        var p1 = pts[i];
+        var p2 = pts[i + 1];
+        var p3 = pts[i + 2] || pts[i + 1];
+        var cp1x = p1.x + (p2.x - p0.x) / 6;
+        var cp1y = p1.y + (p2.y - p0.y) / 6;
+        var cp2x = p2.x - (p3.x - p1.x) / 6;
+        var cp2y = p2.y - (p3.y - p1.y) / 6;
+        dPath += ' C' + cp1x + ',' + cp1y + ' ' + cp2x + ',' + cp2y + ' ' + p2.x + ',' + p2.y;
+      }
+
+      // ── Marker "now" (si aujourd'hui) ──
+      var nowHtml = '';
       if (isToday) {
         var nowHour = now.getHours();
         var nowIdx = -1;
@@ -2259,60 +2332,142 @@
         if (nowIdx >= 0) {
           var nx = xCoord(nowIdx);
           var ny = yCoord(bucket[nowIdx].uv);
-          nowMarker =
-            '<line class="uv-curve-now" x1="' + nx + '" y1="' + padT + '" x2="' + nx + '" y2="' + (padT + innerH) + '"/>' +
-            '<circle class="uv-curve-dot" cx="' + nx + '" cy="' + ny + '" r="3.5"/>';
+          nowHtml =
+            '<line class="uv-now-line" x1="' + nx + '" y1="' + padT + '" x2="' + nx + '" y2="' + (padT + innerH) + '"/>' +
+            '<circle class="uv-now-dot" cx="' + nx + '" cy="' + ny + '" r="4"/>';
         }
       }
 
-      // Marker pic
-      var peakIdx = bucket.indexOf(max);
-      var px = xCoord(peakIdx);
-      var py = yCoord(max.uv);
+      // ── Y-axis labels HTML (0, 6, 11 — faible/élevé/extrême) ──
+      var yLabels = '';
+      [0, 6, 11].forEach(function(v){
+        if (v > yMax) return;
+        yLabels += '<span style="top:' + (yCoord(v) / H * 100) + '%">' + v + '</span>';
+      });
 
-      // Labels X (06h, 12h, 18h s'ils existent dans le bucket)
+      // ── X-axis labels HTML (06h, 12h, 18h) ──
       var xLabels = '';
       bucket.forEach(function(d, i){
         var h = d.t.getHours();
         if (h === 6 || h === 12 || h === 18) {
-          xLabels += '<text class="uv-curve-label" x="' + xCoord(i) + '" y="' + (H - 4) + '" text-anchor="middle">' + h + 'h</text>';
+          xLabels += '<span style="left:' + (xCoord(i) / W * 100) + '%">' + h + 'h</span>';
         }
       });
 
-      // Gradient pour l'aire (couleurs UV)
-      var defs =
-        '<defs><linearGradient id="uvGrad" x1="0" y1="100%" x2="0" y2="0%">' +
-          '<stop offset="0%" stop-color="#4caf50" stop-opacity=".15"/>' +
-          '<stop offset="27%" stop-color="#ffc107" stop-opacity=".25"/>' +
-          '<stop offset="55%" stop-color="#ff9800" stop-opacity=".35"/>' +
-          '<stop offset="73%" stop-color="#f44336" stop-opacity=".4"/>' +
-          '<stop offset="100%" stop-color="#9c27b0" stop-opacity=".45"/>' +
-        '</linearGradient></defs>';
-
-      var svg =
-        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" class="uv-curve" aria-hidden="true">' +
-          defs +
-          '<path d="' + dArea + '" fill="url(#uvGrad)"/>' +
-          '<path class="uv-curve-line" d="' + dPath + '"/>' +
-          nowMarker +
-          // Pic : dot + label "max X"
-          '<circle class="uv-curve-peak" cx="' + px + '" cy="' + py + '" r="3"/>' +
-          '<text class="uv-curve-peak-label" x="' + px + '" y="' + (py - 6) + '" text-anchor="middle">' + Math.round(max.uv) + '</text>' +
-          xLabels +
-        '</svg>';
-
-      // Label dans la card
+      // Header
       var peakHourLabel = max.t.getHours() + 'h';
-      var headSub = 'max ' + dayLabel + ' à <b>' + peakHourLabel + '</b>';
+      var sub = (isToday ? 'UV max aujourd’hui à ' : 'UV max demain à ') + '<b>' + peakHourLabel + '</b>';
 
       els.uvView.innerHTML =
         '<div class="uv-head">' +
           '<div class="uv-value">' + Math.round(max.uv) + '</div>' +
-          '<div class="uv-label">' + lv.name + '<small>' + (isToday ? 'UV max aujourd’hui' : 'UV max demain') + '</small></div>' +
+          '<div class="uv-label">' + lv.name + '<small>' + sub + '</small></div>' +
         '</div>' +
-        svg +
-        '<div class="uv-window">' + headSub + '</div>' +
+        '<div class="uv-graph">' +
+          '<div class="uv-y-axis">' + yLabels + '</div>' +
+          '<div class="uv-svg-wrap" id="uvSvgWrap">' +
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+              bandsHtml +
+              '<path class="uv-curve-line" d="' + dPath + '"/>' +
+              nowHtml +
+            '</svg>' +
+            '<div class="uv-scrubber" id="uvScrubber" hidden>' +
+              '<div class="uv-scrubber-dot" id="uvScrubberDot"></div>' +
+              '<div class="uv-scrubber-bubble">' +
+                '<span id="uvScrubTime"></span>' +
+                '<span class="uv" id="uvScrubVal"></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="uv-x-axis">' + xLabels + '</div>' +
         '<div class="uv-advice">' + lv.advice + '</div>';
+
+      // Mémoriser pour le scrubber
+      state.uvSlice = { bucket: bucket, svgPoints: pts, gW: W, gH: H };
+    }
+
+    /* ───── Scrubber tactile sur la courbe UV ─────
+       Listeners attachés une seule fois au boot sur els.uvView (parent stable).
+       Le DOM interne est recréé à chaque renderUV mais la délégation tient. */
+    function attachUvScrubberOnce(){
+      var view = els.uvView;
+      var sState = { active: false, startX: 0, moved: false, lastIdx: -1 };
+
+      function uvIdxFromClientX(clientX){
+        var wrap = document.getElementById('uvSvgWrap');
+        if (!wrap || !state.uvSlice) return -1;
+        var rect = wrap.getBoundingClientRect();
+        var ratio = (clientX - rect.left) / rect.width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        return Math.round(ratio * (state.uvSlice.bucket.length - 1));
+      }
+      function moveUv(idx){
+        var s = state.uvSlice;
+        var wrap = document.getElementById('uvSvgWrap');
+        var scrubber = document.getElementById('uvScrubber');
+        var dot = document.getElementById('uvScrubberDot');
+        var timeEl = document.getElementById('uvScrubTime');
+        var valEl = document.getElementById('uvScrubVal');
+        if (!s || !wrap || !scrubber || !s.svgPoints[idx]) return;
+        var pt = s.svgPoints[idx];
+        var rect = wrap.getBoundingClientRect();
+        scrubber.style.left = ((pt.x / s.gW) * rect.width) + 'px';
+        dot.style.top = ((pt.y / s.gH) * rect.height) + 'px';
+        var entry = s.bucket[idx];
+        var lv = uvLevel(entry.uv);
+        dot.style.color = lv.color;
+        timeEl.textContent = entry.t.getHours() + 'h';
+        valEl.textContent = 'UV ' + Math.round(entry.uv);
+        scrubber.hidden = false;
+      }
+      function hideUv(){
+        var s = document.getElementById('uvScrubber');
+        if (s) s.hidden = true;
+      }
+
+      function inWrap(target){ return !!(target && target.closest && target.closest('#uvSvgWrap')); }
+
+      view.addEventListener('mousedown', function(e){
+        if (!inWrap(e.target) || !state.uvSlice) return;
+        sState.active = true; sState.startX = e.clientX; sState.moved = false;
+        var idx = uvIdxFromClientX(e.clientX);
+        if (idx >= 0) { sState.lastIdx = idx; moveUv(idx); }
+      });
+      view.addEventListener('mousemove', function(e){
+        if (!sState.active) return;
+        if (Math.abs(e.clientX - sState.startX) > 4) sState.moved = true;
+        var idx = uvIdxFromClientX(e.clientX);
+        if (idx >= 0 && idx !== sState.lastIdx) { sState.lastIdx = idx; moveUv(idx); }
+      });
+      window.addEventListener('mouseup', function(){
+        if (!sState.active) return;
+        sState.active = false;
+        setTimeout(hideUv, 1800);
+      });
+      view.addEventListener('mouseleave', function(){
+        if (sState.active) { sState.active = false; setTimeout(hideUv, 1200); }
+      });
+      view.addEventListener('touchstart', function(e){
+        if (!inWrap(e.target) || !state.uvSlice) return;
+        var ce = e.touches[0];
+        sState.active = true; sState.startX = ce.clientX; sState.moved = false;
+        var idx = uvIdxFromClientX(ce.clientX);
+        if (idx >= 0) { sState.lastIdx = idx; moveUv(idx); }
+      }, { passive: true });
+      view.addEventListener('touchmove', function(e){
+        if (!sState.active) return;
+        var ce = e.touches[0];
+        if (Math.abs(ce.clientX - sState.startX) > 4) sState.moved = true;
+        var idx = uvIdxFromClientX(ce.clientX);
+        if (idx >= 0 && idx !== sState.lastIdx) { sState.lastIdx = idx; moveUv(idx); }
+        if (sState.moved && e.cancelable) e.preventDefault();
+      }, { passive: false });
+      view.addEventListener('touchend', function(){
+        if (!sState.active) return;
+        sState.active = false;
+        setTimeout(hideUv, 1800);
+      });
     }
 
     /* ───── Vue Radar (outlook Pluie) ─────
@@ -3015,6 +3170,8 @@
     document.querySelectorAll('.outlook-toggle button').forEach(function(b){
       b.addEventListener('click', function(){ setOutlookView(b.dataset.outlook); });
     });
+    // Scrubber tactile sur la courbe UV (attaché une fois sur le parent stable)
+    attachUvScrubberOnce();
 
     // Toggle expand/collapse de la card current
     (function attachCurrentToggle(){
