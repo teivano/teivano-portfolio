@@ -2232,11 +2232,11 @@
 
     /* ───── Vue UV (outlook Soleil) ───── */
     function uvLevel(idx){
-      if (idx < 3)  return { name: 'faible',       color: '#4caf50', advice: 'Aucune protection nécessaire.' };
-      if (idx < 6)  return { name: 'modéré',       color: '#ffc107', advice: 'Crème solaire conseillée à l’extérieur.' };
-      if (idx < 8)  return { name: 'élevé',        color: '#ff9800', advice: 'Crème SPF 30+, lunettes, chapeau.' };
-      if (idx < 11) return { name: 'très élevé',   color: '#f44336', advice: 'Protection forte impérative · évite 12h–16h.' };
-      return            { name: 'extrême',         color: '#9c27b0', advice: 'Danger extrême · évite l’exposition au soleil.' };
+      if (idx < 3)  return { name: 'faible',     color: '#4caf50' };
+      if (idx < 6)  return { name: 'modéré',     color: '#ffc107' };
+      if (idx < 8)  return { name: 'élevé',      color: '#ff9800' };
+      if (idx < 11) return { name: 'très élevé', color: '#f44336' };
+      return            { name: 'extrême',       color: '#9c27b0' };
     }
 
     function renderUV(data){
@@ -2380,8 +2380,7 @@
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="uv-x-axis">' + xLabels + '</div>' +
-        '<div class="uv-advice">' + lv.advice + '</div>';
+        '<div class="uv-x-axis">' + xLabels + '</div>';
 
       // Mémoriser pour le scrubber
       state.uvSlice = { bucket: bucket, svgPoints: pts, gW: W, gH: H };
