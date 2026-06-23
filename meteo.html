@@ -508,12 +508,17 @@
       position: absolute;
       top: 0;
       bottom: 0;
+      width: 0;             /* ligne en ::before pour ne pas hériter l'opacity sur la bulle */
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+    .scrubber::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
       width: 1px;
       background: var(--ink);
       opacity: .55;
-      pointer-events: none;
-      transform: translateX(-50%);
-      transition: opacity .15s;
     }
     .scrubber[hidden] { display: none; }
     .scrubber-dot {
@@ -893,6 +898,36 @@
       font-style: normal;
       font-weight: 500;
     }
+    .uv-day-toggle {
+      display: inline-flex;
+      margin-left: auto;
+      border: 1px solid var(--ink2);
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .uv-day-toggle button {
+      background: rgba(255,255,255,.6);
+      border: none;
+      padding: .4rem .65rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .58rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .uv-day-toggle button:not(:last-child) { border-right: 1px solid var(--ink2); }
+    .uv-day-toggle button.active {
+      background: var(--ink);
+      color: var(--bg);
+    }
+    .uv-day-toggle button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
     /* Courbe UV — même pattern que la courbe horaire (axes HTML, scrubber tactile) */
     .uv-graph {
       width: 100%;
@@ -967,11 +1002,17 @@
       position: absolute;
       top: 0;
       bottom: 0;
+      width: 0;             /* la ligne est en ::before pour ne pas hériter l'opacity sur la bulle */
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+    .uv-scrubber::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
       width: 1px;
       background: var(--ink);
       opacity: .55;
-      pointer-events: none;
-      transform: translateX(-50%);
     }
     .uv-scrubber[hidden] { display: none; }
     .uv-scrubber-dot {
@@ -2248,7 +2289,7 @@
       var times = data.hourly.time.map(function(t){ return new Date(t); });
       var uvs   = data.hourly.uv_index;
       var now = new Date();
-      var tomorrow = new Date(now.getTime() + 24*3600*1000);
+      var tomorrowDate = new Date(now.getTime() + 24*3600*1000);
 
       function collectDay(refDate){
         var bucket = [];
@@ -2261,19 +2302,26 @@
         return bucket;
       }
 
-      // Toute la journée d'aujourd'hui (passé + futur) ou fallback demain
-      var allToday = collectDay(now);
+      var todayBucket = collectDay(now);
+      var tomorrowBucket = collectDay(tomorrowDate);
+      var todayHasData = todayBucket.some(function(x){ return x.uv > 0.1; });
+      var tomorrowHasData = tomorrowBucket.some(function(x){ return x.uv > 0.1; });
+
+      // Résolution du jour à afficher (state.uvView avec fallback)
+      var pick = state.uvView || 'today';
+      if (pick === 'today' && !todayHasData && tomorrowHasData) pick = 'tomorrow';
+      if (pick === 'tomorrow' && !tomorrowHasData && todayHasData) pick = 'today';
+      state.uvView = pick;
+
       var bucket, isToday;
-      if (allToday.some(function(x){ return x.uv > 0.1; })) {
-        bucket = allToday; isToday = true;
+      if (pick === 'today' && todayHasData) {
+        bucket = todayBucket; isToday = true;
+      } else if (pick === 'tomorrow' && tomorrowHasData) {
+        bucket = tomorrowBucket; isToday = false;
       } else {
-        bucket = collectDay(tomorrow);
-        if (!bucket.some(function(x){ return x.uv > 0.1; })) {
-          els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
-          state.uvSlice = null;
-          return;
-        }
-        isToday = false;
+        els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
+        state.uvSlice = null;
+        return;
       }
 
       var max = bucket.reduce(function(m, x){ return x.uv > m.uv ? x : m; }, bucket[0]);
@@ -2356,12 +2404,20 @@
 
       // Header
       var peakHourLabel = max.t.getHours() + 'h';
-      var sub = (isToday ? 'UV max aujourd’hui à ' : 'UV max demain à ') + '<b>' + peakHourLabel + '</b>';
+      var sub = 'max ' + (isToday ? 'aujourd’hui' : 'demain') + ' à <b>' + peakHourLabel + '</b>';
+
+      // Toggle Aujourd'hui / Demain (disabled si pas de data)
+      var toggleHtml =
+        '<div class="uv-day-toggle">' +
+          '<button type="button" data-uv-day="today"' + (isToday ? ' class="active"' : '') + (todayHasData ? '' : ' disabled') + '>Aujourd’hui</button>' +
+          '<button type="button" data-uv-day="tomorrow"' + (!isToday ? ' class="active"' : '') + (tomorrowHasData ? '' : ' disabled') + '>Demain</button>' +
+        '</div>';
 
       els.uvView.innerHTML =
         '<div class="uv-head">' +
           '<div class="uv-value">' + Math.round(max.uv) + '</div>' +
           '<div class="uv-label">' + lv.name + '<small>' + sub + '</small></div>' +
+          toggleHtml +
         '</div>' +
         '<div class="uv-graph">' +
           '<div class="uv-y-axis">' + yLabels + '</div>' +
@@ -2392,6 +2448,16 @@
     function attachUvScrubberOnce(){
       var view = els.uvView;
       var sState = { active: false, startX: 0, moved: false, lastIdx: -1 };
+
+      // Toggle Aujourd'hui / Demain (délégation sur le parent stable)
+      view.addEventListener('click', function(e){
+        var btn = e.target.closest('[data-uv-day]');
+        if (!btn || btn.disabled) return;
+        var pick = btn.dataset.uvDay;
+        if (pick === state.uvView) return;
+        state.uvView = pick;
+        if (state.data) renderUV(state.data);
+      });
 
       function uvIdxFromClientX(clientX){
         var wrap = document.getElementById('uvSvgWrap');
