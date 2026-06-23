@@ -893,27 +893,49 @@
       font-style: normal;
       font-weight: 500;
     }
-    .uv-bar {
-      position: relative;
-      height: 10px;
-      border-radius: 5px;
-      background: linear-gradient(to right,
-        #4caf50 0%, #4caf50 18%,
-        #ffc107 18%, #ffc107 45%,
-        #ff9800 45%, #ff9800 63%,
-        #f44336 63%, #f44336 90%,
-        #9c27b0 90%, #9c27b0 100%);
-      margin-bottom: .8rem;
+    /* Courbe UV heure par heure (sparkline SVG) */
+    .uv-curve {
+      width: 100%;
+      height: 78px;
+      display: block;
+      margin: .3rem 0 .8rem;
+      color: var(--ink);
+      overflow: visible;
     }
-    .uv-bar-marker {
-      position: absolute;
-      top: -3px;
-      width: 4px;
-      height: 16px;
-      background: var(--ink);
-      border-radius: 2px;
-      transform: translateX(-50%);
-      box-shadow: 0 0 0 2px var(--bg);
+    .uv-curve-line {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .uv-curve-now {
+      stroke: var(--ink);
+      stroke-width: .8;
+      stroke-dasharray: 2 2;
+      opacity: .55;
+    }
+    .uv-curve-dot {
+      fill: var(--ink);
+      stroke: var(--bg);
+      stroke-width: 1.5;
+    }
+    .uv-curve-peak {
+      fill: var(--ink);
+      stroke: var(--bg);
+      stroke-width: 1.2;
+    }
+    .uv-curve-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 9px;
+      letter-spacing: .06em;
+      fill: var(--ink2);
+    }
+    .uv-curve-peak-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 9px;
+      font-weight: 500;
+      fill: var(--ink);
     }
     .uv-window {
       font-family: 'Space Grotesk', sans-serif;
@@ -2160,61 +2182,136 @@
       var now = new Date();
       var tomorrow = new Date(now.getTime() + 24*3600*1000);
 
-      function collect(refDate, fromNow){
+      function collectDay(refDate){
         var bucket = [];
         for (var i = 0; i < times.length; i++) {
           var t = times[i];
           if (!isSameDay(t, refDate)) continue;
-          if (fromNow && t.getTime() < now.getTime() - 3600*1000) continue;
           if (uvs[i] == null) continue;
           bucket.push({ t: t, uv: uvs[i] });
         }
         return bucket;
       }
 
-      // 1. Reste d'aujourd'hui (UV > 0 = soleil encore actif)
-      var todays = collect(now, true).filter(function(x){ return x.uv > 0.1; });
-      var bucket, scopeLabel;
-      if (todays.length) {
-        bucket = todays;
-        scopeLabel = 'UV max aujourd’hui';
+      // 1. Toute la journée d'aujourd'hui (passé + futur)
+      var allToday = collectDay(now);
+      var dayLabel, bucket, isToday;
+      var hasAny = allToday.some(function(x){ return x.uv > 0.1; });
+      if (hasAny) {
+        bucket = allToday;
+        dayLabel = 'aujourd’hui';
+        isToday = true;
       } else {
-        // 2. Fallback : demain en entier
-        bucket = collect(tomorrow, false).filter(function(x){ return x.uv > 0.1; });
-        scopeLabel = 'UV max demain';
-      }
-      if (!bucket.length) {
-        els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
-        return;
+        // 2. Fallback : demain
+        bucket = collectDay(tomorrow);
+        if (!bucket.some(function(x){ return x.uv > 0.1; })) {
+          els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
+          return;
+        }
+        dayLabel = 'demain';
+        isToday = false;
       }
 
+      // Max du jour + heure de pic
       var max = bucket.reduce(function(m, x){ return x.uv > m.uv ? x : m; }, bucket[0]);
       var lv = uvLevel(max.uv);
 
-      // Créneau "à protéger" = heures où uv >= max(3, max.uv * 0.7)
-      var threshold = Math.max(3, max.uv * 0.7);
-      var window = bucket.filter(function(x){ return x.uv >= threshold; });
-      var windowHtml = '';
-      if (window.length) {
-        var first = window[0].t;
-        var lastEnd = new Date(window[window.length - 1].t.getTime() + 3600*1000);
-        var firstH = first.getHours() + 'h';
-        var lastH = lastEnd.getHours() + 'h';
-        windowHtml = (window.length === 1)
-          ? 'pic à <b>' + firstH + '</b>'
-          : 'pic entre <b>' + firstH + '</b> et <b>' + lastH + '</b>';
+      // ── Sparkline SVG ──
+      var W = 280, H = 78;
+      var padL = 8, padR = 8, padT = 6, padB = 18;
+      var innerW = W - padL - padR;
+      var innerH = H - padT - padB;
+      var yMax = Math.max(11, Math.ceil(max.uv + 1));
+
+      function xCoord(i){ return padL + (i / (bucket.length - 1)) * innerW; }
+      function yCoord(uv){ return padT + (1 - uv / yMax) * innerH; }
+
+      // Path Catmull-Rom → Bezier (lissé)
+      var pts = bucket.map(function(d, i){ return { x: xCoord(i), y: yCoord(d.uv) }; });
+      var dPath = '';
+      if (pts.length === 1) {
+        dPath = 'M' + pts[0].x + ',' + pts[0].y;
+      } else {
+        dPath = 'M' + pts[0].x + ',' + pts[0].y;
+        for (var i = 0; i < pts.length - 1; i++) {
+          var p0 = pts[i - 1] || pts[i];
+          var p1 = pts[i];
+          var p2 = pts[i + 1];
+          var p3 = pts[i + 2] || pts[i + 1];
+          var cp1x = p1.x + (p2.x - p0.x) / 6;
+          var cp1y = p1.y + (p2.y - p0.y) / 6;
+          var cp2x = p2.x - (p3.x - p1.x) / 6;
+          var cp2y = p2.y - (p3.y - p1.y) / 6;
+          dPath += ' C' + cp1x + ',' + cp1y + ' ' + cp2x + ',' + cp2y + ' ' + p2.x + ',' + p2.y;
+        }
+      }
+      var dArea = dPath + ' L' + pts[pts.length-1].x + ',' + (padT + innerH) +
+                  ' L' + pts[0].x + ',' + (padT + innerH) + ' Z';
+
+      // Marker "maintenant" (seulement si on regarde aujourd'hui)
+      var nowMarker = '';
+      if (isToday) {
+        var nowHour = now.getHours();
+        var nowIdx = -1;
+        for (var j = 0; j < bucket.length; j++) {
+          if (bucket[j].t.getHours() === nowHour) { nowIdx = j; break; }
+        }
+        if (nowIdx >= 0) {
+          var nx = xCoord(nowIdx);
+          var ny = yCoord(bucket[nowIdx].uv);
+          nowMarker =
+            '<line class="uv-curve-now" x1="' + nx + '" y1="' + padT + '" x2="' + nx + '" y2="' + (padT + innerH) + '"/>' +
+            '<circle class="uv-curve-dot" cx="' + nx + '" cy="' + ny + '" r="3.5"/>';
+        }
       }
 
-      // Position du marker sur la barre (0-11+ → 0-100%)
-      var pct = Math.min(100, Math.max(0, (max.uv / 11) * 100));
+      // Marker pic
+      var peakIdx = bucket.indexOf(max);
+      var px = xCoord(peakIdx);
+      var py = yCoord(max.uv);
+
+      // Labels X (06h, 12h, 18h s'ils existent dans le bucket)
+      var xLabels = '';
+      bucket.forEach(function(d, i){
+        var h = d.t.getHours();
+        if (h === 6 || h === 12 || h === 18) {
+          xLabels += '<text class="uv-curve-label" x="' + xCoord(i) + '" y="' + (H - 4) + '" text-anchor="middle">' + h + 'h</text>';
+        }
+      });
+
+      // Gradient pour l'aire (couleurs UV)
+      var defs =
+        '<defs><linearGradient id="uvGrad" x1="0" y1="100%" x2="0" y2="0%">' +
+          '<stop offset="0%" stop-color="#4caf50" stop-opacity=".15"/>' +
+          '<stop offset="27%" stop-color="#ffc107" stop-opacity=".25"/>' +
+          '<stop offset="55%" stop-color="#ff9800" stop-opacity=".35"/>' +
+          '<stop offset="73%" stop-color="#f44336" stop-opacity=".4"/>' +
+          '<stop offset="100%" stop-color="#9c27b0" stop-opacity=".45"/>' +
+        '</linearGradient></defs>';
+
+      var svg =
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" class="uv-curve" aria-hidden="true">' +
+          defs +
+          '<path d="' + dArea + '" fill="url(#uvGrad)"/>' +
+          '<path class="uv-curve-line" d="' + dPath + '"/>' +
+          nowMarker +
+          // Pic : dot + label "max X"
+          '<circle class="uv-curve-peak" cx="' + px + '" cy="' + py + '" r="3"/>' +
+          '<text class="uv-curve-peak-label" x="' + px + '" y="' + (py - 6) + '" text-anchor="middle">' + Math.round(max.uv) + '</text>' +
+          xLabels +
+        '</svg>';
+
+      // Label dans la card
+      var peakHourLabel = max.t.getHours() + 'h';
+      var headSub = 'max ' + dayLabel + ' à <b>' + peakHourLabel + '</b>';
 
       els.uvView.innerHTML =
         '<div class="uv-head">' +
           '<div class="uv-value">' + Math.round(max.uv) + '</div>' +
-          '<div class="uv-label">' + lv.name + '<small>' + scopeLabel + '</small></div>' +
+          '<div class="uv-label">' + lv.name + '<small>' + (isToday ? 'UV max aujourd’hui' : 'UV max demain') + '</small></div>' +
         '</div>' +
-        '<div class="uv-bar"><div class="uv-bar-marker" style="left:' + pct + '%"></div></div>' +
-        (windowHtml ? '<div class="uv-window">' + windowHtml + '</div>' : '') +
+        svg +
+        '<div class="uv-window">' + headSub + '</div>' +
         '<div class="uv-advice">' + lv.advice + '</div>';
     }
 
