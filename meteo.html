@@ -2251,7 +2251,8 @@
         var nowcast = (rv.radar && rv.radar.nowcast) || [];
         var host = rv.host;
         radarState.frames = past.concat(nowcast).map(function(f){
-          return { time: f.time, path: f.path, url: host + f.path + '/256/{z}/{x}/{y}/2/1_1.png' };
+          // size=512 (HD) pour meilleure netteté visuelle
+          return { time: f.time, path: f.path, url: host + f.path + '/512/{z}/{x}/{y}/2/1_1.png' };
         });
         if (!radarState.frames.length) {
           els.radarView.innerHTML = '<div class="radar-loading">radar indisponible</div>';
@@ -2298,9 +2299,9 @@
           layers: [{ id: 'base', type: 'raster', source: 'base' }]
         },
         center: [loc.lon, loc.lat],
-        zoom: 9,
+        zoom: 7,
         minZoom: 4,
-        maxZoom: 10,    // RainViewer ne fournit pas de tuiles au-delà
+        maxZoom: 7,    // RainViewer : données radar utiles uniquement jusqu'à z=7
         attributionControl: false
       });
       radarState.map.addControl(new ml.AttributionControl({ compact: true }));
@@ -2329,9 +2330,9 @@
         map.addSource(srcId, {
           type: 'raster',
           tiles: [f.url],
-          tileSize: 256,
+          tileSize: 512,  // tuiles HD RainViewer (URL en /512/)
           minzoom: 0,
-          maxzoom: 10  // RainViewer ne sert pas au-delà
+          maxzoom: 7      // au-delà, RainViewer renvoie des tuiles vides
         });
         map.addLayer({ id: layerId, type: 'raster', source: srcId, paint: { 'raster-opacity': 0 } });
         radarState.layerIds.push(layerId);
