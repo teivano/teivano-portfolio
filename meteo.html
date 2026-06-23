@@ -46,11 +46,16 @@
     /* ── Vigilance banner ── */
     [hidden] { display: none !important; }
     .vigi {
-      display: flex; align-items: center; gap: .75rem;
-      padding: .85rem 1rem;
-      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: .85rem;
+      padding: .95rem 1.1rem;
+      margin-bottom: 1.1rem;
+      background: rgba(255,255,255,.92);
       border: 1px solid currentColor;
-      border-radius: 2px;
+      border-left-width: 5px;
+      border-radius: 6px;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       font-family: 'Space Grotesk', sans-serif;
       font-size: .7rem;
       letter-spacing: .08em;
@@ -62,7 +67,7 @@
       border-radius: 50%;
       background: currentColor;
       flex-shrink: 0;
-      box-shadow: 0 0 0 3px rgba(0,0,0,.04);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.4);
     }
     .vigi-text { line-height: 1.4; }
     .vigi-text b { font-weight: 500; letter-spacing: .12em; }
@@ -70,13 +75,14 @@
       display: block;
       text-transform: none;
       letter-spacing: .04em;
-      opacity: .65;
+      opacity: .7;
       font-size: .62rem;
       margin-top: .2rem;
     }
-    .vigi.level-1 { color: #B8930C; background: rgba(255, 215, 0, .08); }
-    .vigi.level-2 { color: #C25A1E; background: rgba(255, 140, 0, .08); }
-    .vigi.level-3 { color: #B72424; background: rgba(220, 20, 20, .08); }
+    /* Couleurs des niveaux : appliquées via currentColor sur border/dot/text */
+    .vigi.level-1 { color: #B8930C; }
+    .vigi.level-2 { color: #C25A1E; }
+    .vigi.level-3 { color: #B72424; }
 
     /* ── Ville (header) ── */
     .city-row {
