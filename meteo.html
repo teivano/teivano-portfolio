@@ -2144,26 +2144,42 @@
       var times = data.hourly.time.map(function(t){ return new Date(t); });
       var uvs   = data.hourly.uv_index;
       var now = new Date();
-      // UV du jour, à partir de maintenant jusqu'à fin de journée
-      var todays = [];
-      for (var i = 0; i < times.length; i++) {
-        var t = times[i];
-        if (!isSameDay(t, now)) continue;
-        if (t.getTime() < now.getTime() - 3600*1000) continue;
-        if (uvs[i] == null) continue;
-        todays.push({ t: t, uv: uvs[i] });
+      var tomorrow = new Date(now.getTime() + 24*3600*1000);
+
+      function collect(refDate, fromNow){
+        var bucket = [];
+        for (var i = 0; i < times.length; i++) {
+          var t = times[i];
+          if (!isSameDay(t, refDate)) continue;
+          if (fromNow && t.getTime() < now.getTime() - 3600*1000) continue;
+          if (uvs[i] == null) continue;
+          bucket.push({ t: t, uv: uvs[i] });
+        }
+        return bucket;
       }
-      if (!todays.length) {
-        els.uvView.innerHTML = '<div class="radar-loading">pas d’UV restant aujourd’hui · journée terminée</div>';
+
+      // 1. Reste d'aujourd'hui (UV > 0 = soleil encore actif)
+      var todays = collect(now, true).filter(function(x){ return x.uv > 0.1; });
+      var bucket, scopeLabel;
+      if (todays.length) {
+        bucket = todays;
+        scopeLabel = 'UV max aujourd’hui';
+      } else {
+        // 2. Fallback : demain en entier
+        bucket = collect(tomorrow, false).filter(function(x){ return x.uv > 0.1; });
+        scopeLabel = 'UV max demain';
+      }
+      if (!bucket.length) {
+        els.uvView.innerHTML = '<div class="radar-loading">indice UV indisponible</div>';
         return;
       }
 
-      var max = todays.reduce(function(m, x){ return x.uv > m.uv ? x : m; }, todays[0]);
+      var max = bucket.reduce(function(m, x){ return x.uv > m.uv ? x : m; }, bucket[0]);
       var lv = uvLevel(max.uv);
 
       // Créneau "à protéger" = heures où uv >= max(3, max.uv * 0.7)
       var threshold = Math.max(3, max.uv * 0.7);
-      var window = todays.filter(function(x){ return x.uv >= threshold; });
+      var window = bucket.filter(function(x){ return x.uv >= threshold; });
       var windowHtml = '';
       if (window.length) {
         var first = window[0].t;
@@ -2181,7 +2197,7 @@
       els.uvView.innerHTML =
         '<div class="uv-head">' +
           '<div class="uv-value">' + Math.round(max.uv) + '</div>' +
-          '<div class="uv-label">' + lv.name + '<small>UV max aujourd’hui</small></div>' +
+          '<div class="uv-label">' + lv.name + '<small>' + scopeLabel + '</small></div>' +
         '</div>' +
         '<div class="uv-bar"><div class="uv-bar-marker" style="left:' + pct + '%"></div></div>' +
         (windowHtml ? '<div class="uv-window">' + windowHtml + '</div>' : '') +
@@ -2268,7 +2284,9 @@
           layers: [{ id: 'base', type: 'raster', source: 'base' }]
         },
         center: [loc.lon, loc.lat],
-        zoom: 8,
+        zoom: 9,
+        minZoom: 4,
+        maxZoom: 10,    // RainViewer ne fournit pas de tuiles au-delà
         attributionControl: false
       });
       radarState.map.addControl(new ml.AttributionControl({ compact: true }));
@@ -2297,7 +2315,9 @@
         map.addSource(srcId, {
           type: 'raster',
           tiles: [f.url],
-          tileSize: 256
+          tileSize: 256,
+          minzoom: 0,
+          maxzoom: 10  // RainViewer ne sert pas au-delà
         });
         map.addLayer({ id: layerId, type: 'raster', source: srcId, paint: { 'raster-opacity': 0 } });
         radarState.layerIds.push(layerId);
