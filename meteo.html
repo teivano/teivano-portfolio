@@ -1204,8 +1204,8 @@
     /* ───── Constantes ───── */
     var DEFAULT_LOC = { name: 'Rennes', country: 'France', admin: 'Bretagne', lat: 48.1113, lon: -1.6800, dept: '35' };
     var CACHE_TTL_MS = 15 * 60 * 1000; // 15 min
-    var GEO_TIMEOUT_MS = 5000;          // 5s : laisse navigator finir avant fallback IP
-    var GEO_MAX_AGE_MS = 5 * 60 * 1000; // 5 min : position cachée plus fraîche
+    var GEO_TIMEOUT_MS = 2000;         // < 2s : précision Wi-Fi suffit, on coupe vite
+    var GEO_MAX_AGE_MS = 60 * 1000;    // 1 min : position cachée très fraîche
     var LAST_LOC_KEY = 'meteo_last_loc';
 
     /* Bounding box France métropolitaine + Corse (AROME ne couvre que la métropole) */
@@ -1351,31 +1351,15 @@
       });
 
       return navGeo.then(function(navPos){
-        if (navPos) return reverseGeocode(navPos.lat, navPos.lon).then(function(loc){ return loc || Object.assign({ name: 'Position actuelle' }, navPos); });
-
-        // 3. Fallback IP
-        return ipGeo().then(function(ipLoc){
-          return ipLoc || DEFAULT_LOC;
+        // Géoloc nav OK → reverse-geocode pour avoir le nom de ville (BAN, FR)
+        if (navPos) return reverseGeocode(navPos.lat, navPos.lon).then(function(loc){
+          return loc || Object.assign({ name: 'Position actuelle' }, navPos);
         });
+        // Géoloc nav KO (refus, timeout, indispo) → Rennes par défaut.
+        // On ne fait PAS de fallback IP : ipapi.co localise souvent au datacenter
+        // du FAI (Paris/Roubaix/Marseille), source du bug "ville à 300km".
+        return DEFAULT_LOC;
       });
-    }
-
-    /* ───── IP geolocation (sans clé) ───── */
-    function ipGeo(){
-      return fetch('https://ipapi.co/json/').then(function(r){
-        if (!r.ok) throw new Error('ipapi http ' + r.status);
-        return r.json();
-      }).then(function(j){
-        if (!j || !j.latitude || !j.longitude) return null;
-        return {
-          lat: j.latitude,
-          lon: j.longitude,
-          name: j.city || 'Position IP',
-          country: j.country_name || '',
-          admin: j.region || '',
-          dept: null
-        };
-      }).catch(function(){ return null; });
     }
 
     /* ───── Reverse geocoding (Open-Meteo) ───── */
