@@ -859,6 +859,80 @@
     .source-share:hover { background: var(--ink); color: var(--bg); }
     .source-share.copied { background: var(--ink); color: var(--bg); }
 
+    /* ── Modal "Hors France" (bloque l'accès) ── */
+    .abroad-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 1.5rem;
+      animation: koalaFadeIn .35s ease;
+    }
+    .abroad-modal[hidden] { display: none; }
+    .abroad-card {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 2.2rem 2rem 1.8rem;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 28px 64px -20px rgba(0,0,0,.4);
+      animation: koalaSlideUp .45s cubic-bezier(.16,1,.3,1);
+    }
+    .abroad-flag {
+      font-size: 2.4rem;
+      line-height: 1;
+      margin-bottom: .8rem;
+    }
+    .abroad-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 1.55rem;
+      color: var(--ink);
+      margin: 0 0 .8rem;
+      line-height: 1.2;
+    }
+    .abroad-message {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1rem;
+      line-height: 1.45;
+      color: var(--ink);
+      margin: 0 0 .6rem;
+    }
+    .abroad-message b { font-weight: 500; }
+    .abroad-detail {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink2);
+      margin: 0 0 1.4rem;
+      font-weight: 500;
+    }
+    .abroad-detail:empty { display: none; }
+    .abroad-ok {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      padding: .75rem 1.4rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      transition: opacity .2s, transform .15s;
+    }
+    .abroad-ok:hover { opacity: .88; }
+    .abroad-ok:active { transform: scale(.97); }
+
     /* ── Modal koala ── */
     .koala-modal {
       position: fixed;
@@ -1079,6 +1153,19 @@
 
   </main>
 
+  <!-- Modal "Hors France" (bloque l'accès si géoloc hors métropole/Corse) -->
+  <div class="abroad-modal" id="abroadModal" hidden>
+    <div class="abroad-card">
+      <div class="abroad-flag" aria-hidden="true">🇫🇷</div>
+      <h2 class="abroad-title">Météo France uniquement</h2>
+      <p class="abroad-message">
+        Cette météo s'appuie sur le modèle <b>AROME</b> de Météo&nbsp;France, qui ne couvre que la métropole et la Corse.
+      </p>
+      <p class="abroad-detail" id="abroadDetail"></p>
+      <button class="abroad-ok" id="abroadOk" type="button">Voir Rennes par défaut</button>
+    </div>
+  </div>
+
   <!-- Modal koala (s'affiche le matin, une fois par jour) -->
   <div class="koala-modal" id="koalaModal" hidden>
     <div class="koala-card">
@@ -1117,8 +1204,16 @@
     /* ───── Constantes ───── */
     var DEFAULT_LOC = { name: 'Rennes', country: 'France', admin: 'Bretagne', lat: 48.1113, lon: -1.6800, dept: '35' };
     var CACHE_TTL_MS = 15 * 60 * 1000; // 15 min
-    var GEO_TIMEOUT_MS = 1500;
+    var GEO_TIMEOUT_MS = 5000;          // 5s : laisse navigator finir avant fallback IP
+    var GEO_MAX_AGE_MS = 5 * 60 * 1000; // 5 min : position cachée plus fraîche
     var LAST_LOC_KEY = 'meteo_last_loc';
+
+    /* Bounding box France métropolitaine + Corse (AROME ne couvre que la métropole) */
+    var FR_BBOX = { latMin: 41.0, latMax: 51.5, lonMin: -5.5, lonMax: 9.8 };
+    function isInFrance(lat, lon){
+      return lat >= FR_BBOX.latMin && lat <= FR_BBOX.latMax
+          && lon >= FR_BBOX.lonMin && lon <= FR_BBOX.lonMax;
+    }
 
     /* ───── DOM refs ───── */
     var $ = function(id){ return document.getElementById(id); };
@@ -1242,9 +1337,16 @@
         var done = false;
         var to = setTimeout(function(){ if(!done){ done = true; resolve(null); } }, GEO_TIMEOUT_MS);
         navigator.geolocation.getCurrentPosition(
-          function(pos){ if(!done){ done = true; clearTimeout(to); resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }); } },
+          function(pos){
+            if(done) return;
+            done = true; clearTimeout(to);
+            var lat = pos.coords && pos.coords.latitude;
+            var lon = pos.coords && pos.coords.longitude;
+            if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) return resolve(null);
+            resolve({ lat: lat, lon: lon });
+          },
           function(){ if(!done){ done = true; clearTimeout(to); resolve(null); } },
-          { timeout: GEO_TIMEOUT_MS, enableHighAccuracy: false, maximumAge: 60*60*1000 }
+          { timeout: GEO_TIMEOUT_MS, enableHighAccuracy: false, maximumAge: GEO_MAX_AGE_MS }
         );
       });
 
@@ -1300,10 +1402,13 @@
       if (!q || q.length < 2) { els.citySuggestions.hidden = true; return; }
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function(){
-        fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=6&language=fr&format=json')
+        // count=10 pour avoir une marge avant le filtre France
+        fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=fr&format=json')
           .then(function(r){ return r.json(); })
           .then(function(j){
-            var results = (j && j.results) || [];
+            var all = (j && j.results) || [];
+            // Filtrer : France uniquement (l'app couvre AROME = métropole + Corse)
+            var results = all.filter(function(r){ return r.country_code === 'FR'; }).slice(0, 6);
             renderSuggestions(results);
           })
           .catch(function(){ renderSuggestions([]); });
@@ -2237,9 +2342,29 @@
       }
     }
 
+    /* ───── Modal "Hors France" — bloque les prévisions ───── */
+    function showAbroadModal(loc){
+      var modal = document.getElementById('abroadModal');
+      var detail = document.getElementById('abroadDetail');
+      if (loc && (loc.name || loc.country)) {
+        var bits = [];
+        if (loc.name) bits.push(loc.name);
+        if (loc.country) bits.push(loc.country);
+        detail.textContent = 'Position détectée : ' + bits.join(' · ');
+      } else {
+        detail.textContent = '';
+      }
+      modal.hidden = false;
+    }
+
     /* ───── Pipeline principal ───── */
     function setLocation(loc, opts){
       opts = opts || {};
+      // Garde : si la loc est hors France métropolitaine + Corse, on bloque
+      if (!isInFrance(loc.lat, loc.lon)) {
+        showAbroadModal(loc);
+        return Promise.resolve();
+      }
       var keepSpinner = !!opts.keepSpinner;
       state.loc = loc;
       renderCity(loc);
@@ -2286,7 +2411,11 @@
         var raw = localStorage.getItem(LAST_LOC_KEY);
         if (!raw) return null;
         var l = JSON.parse(raw);
-        if (l && typeof l.lat === 'number' && typeof l.lon === 'number') return l;
+        if (l && typeof l.lat === 'number' && typeof l.lon === 'number' && !isNaN(l.lat) && !isNaN(l.lon)) {
+          // Cache hors France ignoré (sécurité si l'user a voyagé)
+          if (!isInFrance(l.lat, l.lon)) return null;
+          return l;
+        }
       } catch(e){}
       return null;
     }
@@ -2305,6 +2434,12 @@
     // Scrubber tactile sur le graph
     attachScrubber();
     attachEgg();
+
+    // Modal "Hors France" — bouton "Voir Rennes par défaut"
+    document.getElementById('abroadOk').addEventListener('click', function(){
+      document.getElementById('abroadModal').hidden = true;
+      setLocation(DEFAULT_LOC);
+    });
 
     // Toggle expand/collapse de la card current
     (function attachCurrentToggle(){
@@ -2359,7 +2494,12 @@
       // Résolution réelle en parallèle
       getInitialLoc().then(function(loc){
         if (!loc) return;
-        // Si pas de premier paint, ou si la loc résolue est sensiblement différente → setLocation
+        // Résolution hors France : si on a un cache FR (firstPainted), on le garde silencieusement.
+        // Sinon (premier visiteur à l'étranger), on bloque avec la modal.
+        if (!isInFrance(loc.lat, loc.lon)) {
+          if (!firstPainted) showAbroadModal(loc);
+          return;
+        }
         if (!firstPainted) { setLocation(loc); return; }
         var dLat = Math.abs(loc.lat - lastLoc.lat);
         var dLon = Math.abs(loc.lon - lastLoc.lon);
