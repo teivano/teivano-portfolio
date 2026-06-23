@@ -898,14 +898,7 @@
       font-style: normal;
       font-weight: 500;
     }
-    /* Séparateur jour pour la courbe UV (ligne verticale + badge "DEMAIN") */
-    .uv-day-sep {
-      stroke: var(--ink);
-      stroke-width: 1.2;
-      stroke-dasharray: 4 4;
-      opacity: .55;
-    }
-    /* Courbe UV — même pattern que la courbe horaire (axes HTML, scrubber tactile) */
+    /* Courbe UV — calquée sur la courbe horaire (dimensions, séparateur, badge) */
     .uv-graph {
       width: 100%;
       margin: .6rem 0 .2rem;
@@ -913,9 +906,9 @@
       align-items: stretch;
     }
     .uv-y-axis {
-      flex: 0 0 28px;
+      flex: 0 0 34px;
       position: relative;
-      height: 130px;
+      height: 200px;
     }
     .uv-y-axis span {
       position: absolute;
@@ -936,14 +929,14 @@
     }
     .uv-svg-wrap svg {
       width: 100%;
-      height: 130px;
+      height: 200px;
       display: block;
       overflow: visible;
     }
     .uv-x-axis {
       position: relative;
       height: 22px;
-      margin: 2px 0 .8rem 28px;
+      margin: 2px 0 .8rem 34px;
     }
     .uv-x-axis span {
       position: absolute;
@@ -1329,6 +1322,8 @@
       .current-meta { gap: 2rem; }
       .hour-card { min-width: 72px; padding: .9rem .6rem; }
       .hourly-graph svg { height: 220px; }
+      .uv-svg-wrap svg { height: 220px; }
+      .uv-y-axis { height: 220px; }
     }
 
     /* Reduce motion */
@@ -2357,7 +2352,7 @@
       var sepHtml = '', badgeHtml = '';
       if (dayBreakIdx > 0 && dayBreakIdx < bucket.length) {
         var sepX = xCoord(dayBreakIdx);
-        sepHtml = '<line class="uv-day-sep" x1="' + sepX + '" y1="' + padT + '" x2="' + sepX + '" y2="' + (padT + innerH) + '"/>';
+        sepHtml = '<line class="day-sep" x1="' + sepX + '" y1="' + padT + '" x2="' + sepX + '" y2="' + (padT + innerH) + '"/>';
         badgeHtml = '<span class="day-badge" style="left:' + (sepX / W * 100) + '%">demain</span>';
       }
 
