@@ -41,12 +41,24 @@
 - Toujours ajouter `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
 
 ## Stack technique
-- **Hébergement** : Vercel (déploiement auto sur push `main`)
 - **Frontend** : HTML vanilla + CSS custom + anime.js v4
 - **Carte** : MapLibre GL v4.7.1
 - **APIs** : STAR open data, SNCF, BAN, Esri, NASA, IGN, API-Ninjas, data.economie.gouv.fr
 - **Cache STAR** : localStorage TTL 90s (évite les 429)
 - **Proxies Vercel** : `/api/trains`, `/api/cars`, `/api/motorcycles`
+
+## Environnement & déploiement
+- **Domaine** : teivano.fr
+- **Git** : `github.com/teivano/teivano-portfolio`, branche unique `main` (pas de branche de dev).
+- **Déploiement** : Vercel lié au repo (`.vercel/project.json`). **Un `git push` sur `main` déclenche le déploiement auto** — aucune commande Vercel à lancer.
+- **Pas de build / bundler** : les `.html` à la racine sont servis directement. Une page = un fichier `<nom>.html`.
+
+## Ajouter une page
+1. Créer `<nom>.html` à la racine. En bas de `<body>`, inclure `<script src="/nav.js"></script>` (menu commun) ; ajouter `<script src="/version.js"></script>` si on affiche la version.
+2. Déclarer la page dans le tableau `LINKS` de `nav.js` pour la faire apparaître dans le menu hamburger.
+   - Page publique : `{ href:'/<nom>.html', url:'/<nom>.html', title:'…', desc:'…' }`.
+   - Page protégée par code PIN : mettre `href:'#'`, `pin:'/<nom>.html'` (+ `url` pour marquer « page courante ») et `pinHash` = SHA-256 du code (cf. `pin-guard.js`, comme GR20 `prepa-gr20.html` et Koala `koala.html`).
+3. Commit + `git push` sur `main` → live sur teivano.fr.
 
 ## Ce qu'il ne faut pas casser
 - `gcOf(id)` cherche `.gc` comme ancêtre direct — ne pas imbriquer les `.gc`
