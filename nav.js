@@ -60,6 +60,7 @@
     { href:'/salaire.html',    url:'/salaire.html',    title:'Brut/net',       desc:'Simulateur de salaire · barème 2026' },
     { href:'/encre.html',      url:'/encre.html',      title:'Encre',          desc:'Endless · glisse pour guider la goutte' },
     { href:'/meteo.html',      url:'/meteo.html',      title:'Météo',          desc:'Modèle AROME · Météo France · via Open-Meteo' },
+    { href:'/axelrepar.html',  url:'/axelrepar.html',  title:'Axelrépar',      desc:'Réparation IT · diagnostic en ligne & devis' },
   ];
 
   /* ── Hamburger (skipped si body[data-no-ham]) ── */
