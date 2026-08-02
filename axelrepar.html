@@ -392,16 +392,6 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.035em;line-height:1.02}
 .rv-d1{transition-delay:.07s}.rv-d2{transition-delay:.14s}
 .rv-d3{transition-delay:.21s}.rv-d4{transition-delay:.28s}
 
-/* ═══ Bandeau maquette ═══ */
-.mock{
-  position:fixed;left:0;right:0;bottom:0;z-index:940;
-  background:var(--volt);color:#12160A;
-  font-size:.7rem;font-weight:600;letter-spacing:.04em;text-align:center;
-  padding:.4rem 2.6rem .4rem 1rem;
-}
-.mock button{position:absolute;right:.5rem;top:50%;transform:translateY(-50%);width:26px;height:26px;font-size:1rem;line-height:1;opacity:.6}
-body.has-mock .dock{bottom:38px}
-
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.12s!important;scroll-behavior:auto!important}
   .rv{opacity:1;transform:none}
@@ -1056,12 +1046,6 @@ body.has-mock .dock{bottom:38px}
   <span><b>Diagnostic gratuit</b><small>2 minutes, sans engagement</small></span>
   <span class="btn btn-volt btn-sm">Démarrer</span>
 </a>
-
-<!-- ═══════════ BANDEAU MAQUETTE ═══════════ -->
-<div class="mock" id="mock">
-  Maquette — tarifs, coordonnées et avis fictifs, à remplacer avant mise en ligne
-  <button aria-label="Masquer" onclick="document.getElementById('mock').remove();document.body.classList.remove('has-mock')">×</button>
-</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -2448,9 +2432,6 @@ render();
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>Array.prototype.slice.call(document.querySelectorAll(s));
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* Bandeau maquette */
-if($('#mock'))document.body.classList.add('has-mock');
 
 /* Navbar */
 const nav=$('#nav'),dock=$('#dock'),burger=$('#burger'),sheet=$('#sheet');
