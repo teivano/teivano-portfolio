@@ -29,6 +29,19 @@
 3. Lister les risques (conflits CSS, JS, breaking changes)
 4. Soumettre le plan — attendre validation avant d'écrire
 
+### Règle du GO — non négociable
+**Ne jamais écrire dans un fichier du projet avant un GO formel et explicite.**
+- Un retour, un constat de bug, une capture d'écran, une question ou un
+  « qu'en penses-tu ? » ne sont **pas** des GO.
+- Décrire un problème n'autorise pas à le corriger : on diagnostique, on
+  propose, on attend.
+- Sont autorisés sans GO : lire, chercher, mesurer dans le navigateur,
+  écrire dans le scratchpad, exposer un plan.
+- Le GO se dit : « go », « vas-y », « fais-le », « code », ou une consigne
+  d'action sans ambiguïté. En cas de doute → demander.
+- `git commit` et `git push` demandent leur propre GO, distinct de celui
+  de l'écriture.
+
 ### Modifications HTML/CSS/JS
 - Ne jamais renommer un ID DOM utilisé par du JS existant
 - Ne jamais supprimer une fonction appelée en `onclick` inline

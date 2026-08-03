@@ -493,7 +493,10 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.035em;line-height:1.02}
   transition:padding .45s var(--ease);
 }
 .say .lit{color:var(--paper)}
-.say-part{display:inline;animation:partIn .65s var(--ease) both}
+.say-part{display:inline}
+/* seul le fragment qui vient d'apparaître s'anime : le DOM de l'étape est
+   reconstruit à chaque choix, sans ça toute la phrase se re-fondrait */
+.say-part:last-child{animation:partIn .65s var(--ease) both}
 @keyframes partIn{from{opacity:0;filter:blur(5px)}to{opacity:1;filter:none}}
 /* on réserve la place de la molette pour ne rien recouvrir */
 .say.picking{padding:calc(var(--row) * 2.45) 0}
