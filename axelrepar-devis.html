@@ -182,7 +182,10 @@ body[data-step="done"]  .dv-in{align-items:flex-start}
      de texte, donc aucune collision avec la phrase */
   mask-image:linear-gradient(to bottom,#000 42%,transparent 97%);
   -webkit-mask-image:linear-gradient(to bottom,#000 42%,transparent 97%);
-  cursor:ns-resize;touch-action:pan-y;
+  cursor:ns-resize;
+  /* le geste appartient à la molette : sans ça le doigt fait aussi
+     défiler la page derrière */
+  touch-action:none;
 }
 .wheel{
   display:block;position:relative;min-width:100%;width:max-content;
@@ -1868,9 +1871,10 @@ function drawPicker(slot){
   },{passive:true});
   pop.addEventListener('touchmove',function(e){
     if(y0===null)return;
+    e.preventDefault();          /* filet pour les Safari iOS anciens */
     const dy=y0-e.touches[0].clientY;
     wheel.style.transform='translateY('+(-sel0*rowPx-dy)+'px)';
-  },{passive:true});
+  },{passive:false});
   pop.addEventListener('touchend',function(e){
     if(y0===null)return;
     const dy=y0-(e.changedTouches[0]?e.changedTouches[0].clientY:y0);
