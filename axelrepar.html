@@ -510,16 +510,16 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.035em;line-height:1.02}
 /* case en cours de choix : ancre de la molette */
 .sslot.on{
   display:inline-block;position:relative;vertical-align:baseline;
-  color:transparent;                         /* le mot lisible est la ligne active de la molette */
   text-decoration-color:var(--volt);
-  min-width:3.5em;
-  transition:text-decoration-color .25s;
   animation:slotPulse 2s var(--ease-o) .6s infinite;
 }
+/* doublure invisible : elle donne à la case sa ligne de base et sa largeur,
+   le mot lisible étant celui de la ligne active de la molette */
+.sghost{opacity:0;white-space:nowrap;pointer-events:none;user-select:none}
 @keyframes slotPulse{0%,100%{text-decoration-color:var(--volt)}50%{text-decoration-color:rgba(216,255,62,.3)}}
 
 .wheel-pop{
-  position:absolute;left:0;top:50%;
+  display:block;position:absolute;left:0;top:50%;
   transform:translateY(-50%);
   width:max-content;min-width:100%;
   height:calc(var(--row) * 5);
@@ -529,7 +529,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.035em;line-height:1.02}
   cursor:ns-resize;touch-action:pan-y;
 }
 .wheel{
-  position:absolute;left:0;right:0;top:0;
+  display:block;position:relative;min-width:100%;width:max-content;
   transform:translateY(calc(var(--row) * (2 - var(--sel,0))));
   transition:transform .48s cubic-bezier(.22,1,.3,1);
   will-change:transform;
@@ -574,6 +574,7 @@ h1,h2,h3,h4{font-weight:800;letter-spacing:-.035em;line-height:1.02}
 @keyframes paneIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
 @keyframes paneOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-22px)}}
 .step-pane.back{animation:paneInBack .5s var(--ease) both}
+.step-pane.quiet{animation:none}
 @keyframes paneInBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
 
 .q-kicker{font-size:.72rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--volt);margin-bottom:.85rem}
@@ -2163,7 +2164,8 @@ function setCrumbs(){
 
 /* ── Rendu d'un panneau ── */
 function paint(html,dir){
-  body.innerHTML='<div class="step-pane'+(dir==='back'?' back':'')+'">'+html+'</div>';
+  const mod=dir==='back'?' back':dir==='same'?' quiet':'';
+  body.innerHTML='<div class="step-pane'+mod+'">'+html+'</div>';
   setBar();setCrumbs();
 }
 function scrollIn(){
@@ -2218,7 +2220,7 @@ function stepIdent(dir){
 
   function slot(i,label){
     if(i>active)return '';
-    if(i===active)return '<span class="sslot on" data-sl="'+i+'">'+esc(label||'')+'</span>';
+    if(i===active)return '<span class="sslot on" data-sl="'+i+'"><span class="sghost">'+esc(label||'')+'</span></span>';
     return '<span class="sslot done" data-sl="'+i+'" role="button" tabindex="0" title="Modifier">'+esc(label)+'</span>';
   }
   /* on n'écrit que ce qui est déjà décidé, plus la case en cours */
@@ -2247,7 +2249,7 @@ function stepIdent(dir){
       if(i===0){S.cat=null;S.brand=null;S.model=null}
       else if(i===1){S.brand=null;S.model=null}
       else{S.model=null}
-      render();
+      render('same');
     };
     sl.onclick=go;
     sl.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}};
@@ -2302,6 +2304,7 @@ function drawPicker(slot){
 
   const host=body.querySelector('.sslot.on');
   if(!host)return;
+  const ghost=host.querySelector('.sghost');
   const pop=document.createElement('span');
   pop.className='wheel-pop';
   pop.setAttribute('role','listbox');
@@ -2310,21 +2313,21 @@ function drawPicker(slot){
   host.appendChild(pop);
   const wheel=pop.querySelector('.wheel');
 
-  /* règle invisible pour mesurer les largeurs et éviter que la phrase sursaute */
-  const rule=document.createElement('span');
-  rule.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;pointer-events:none;left:0;top:0';
-  host.appendChild(rule);
-  function widthOf(t){rule.textContent=t;return Math.ceil(rule.offsetWidth)+4}
+  let list=rows,sel=0,timer=null;
 
-  let list=rows,sel=0,timer=null,widths=[];
+  /* la molette s'étale sur sa plus longue ligne, sans sortir de la carte */
+  function fit(){
+    pop.style.width='';                      /* retour à max-content */
+    const dispo=body.getBoundingClientRect().right-host.getBoundingClientRect().left-10;
+    if(pop.offsetWidth>dispo)pop.style.width=Math.max(dispo,140)+'px';
+  }
 
   function paintRows(){
     wheel.innerHTML=list.map(function(r,i){
       return '<button class="wv" type="button" role="option" data-i="'+i+'" data-d="'+Math.min(4,Math.abs(i-sel))+'"'+
         ' aria-selected="'+(i===sel)+'">'+esc(r.l)+(r.s?'<small>'+esc(r.s)+'</small>':'')+'</button>';
     }).join('');
-    widths=list.map(function(r){return widthOf(r.l)});
-    apply();
+    apply();fit();
     wheel.querySelectorAll('.wv').forEach(function(b){
       b.onclick=function(){
         const i=+b.dataset.i;
@@ -2336,7 +2339,7 @@ function drawPicker(slot){
   }
   function apply(){
     wheel.style.setProperty('--sel',sel);
-    host.style.minWidth=(widths[sel]||60)+'px';
+    if(ghost)ghost.textContent=list[sel]?list[sel].l:'';
     wheel.querySelectorAll('.wv').forEach(function(b,i){
       b.dataset.d=Math.min(4,Math.abs(i-sel));
       b.setAttribute('aria-selected',i===sel);
@@ -2357,7 +2360,7 @@ function drawPicker(slot){
       S.model=r.v<0?{n:'un modèle non précisé',t:2}:{n:src[r.v][0],t:src[r.v][1]};
       save();
     }
-    render();
+    render('same');
   }
 
   paintRows();
