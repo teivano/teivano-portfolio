@@ -594,11 +594,11 @@ body[data-step="done"]  .dv-in{align-items:flex-start}
     Axelrépar
   </a>
   <nav class="nav-tabs" aria-label="Sections">
-    <span class="nav-tab" aria-disabled="true" title="Bientôt">Appareils</span>
-    <span class="nav-tab" aria-disabled="true" title="Bientôt">Tarifs</span>
-    <span class="nav-tab" aria-disabled="true" title="Bientôt">Garantie</span>
-    <span class="nav-tab" aria-disabled="true" title="Bientôt">Avis</span>
-    <span class="nav-tab" aria-disabled="true" title="Bientôt">FAQ</span>
+    <a class="nav-tab" href="/axelrepar.html#appareils">Appareils</a>
+    <a class="nav-tab" href="/axelrepar.html#tarifs">Tarifs</a>
+    <a class="nav-tab" href="/axelrepar.html#garantie">Garantie</a>
+    <a class="nav-tab" href="/axelrepar.html#avis">Avis</a>
+    <a class="nav-tab" href="/axelrepar.html#faq">FAQ</a>
   </nav>
   <a class="btn btn-ghost btn-sm nav-cta" href="/axelrepar.html">Le site</a>
   <button class="nav-burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">
@@ -608,11 +608,11 @@ body[data-step="done"]  .dv-in{align-items:flex-start}
 
 <div class="sheet" id="sheet">
   <a href="/axelrepar.html" data-close>Le site <svg width="18" height="18" viewBox="0 0 24 24" style="color:var(--volt)"><use href="#ic-arr"/></svg></a>
-  <span class="sheet-item">Appareils</span>
-  <span class="sheet-item">Tarifs</span>
-  <span class="sheet-item">Garantie</span>
-  <span class="sheet-item">Avis</span>
-  <span class="sheet-item">FAQ</span>
+  <a href="/axelrepar.html#appareils" data-close>Appareils</a>
+  <a href="/axelrepar.html#tarifs" data-close>Tarifs</a>
+  <a href="/axelrepar.html#garantie" data-close>Garantie</a>
+  <a href="/axelrepar.html#avis" data-close>Avis</a>
+  <a href="/axelrepar.html#faq" data-close>FAQ</a>
   <div class="sheet-foot">
     <a class="btn btn-ghost btn-full" href="/axelrepar.html" data-close>Retour au site</a>
     <p class="tiny" style="margin-top:1.2rem;text-align:center">Un projet de <a href="/" style="color:#9A9AA2;text-decoration:underline;text-underline-offset:3px">teivano.fr</a></p>
@@ -635,7 +635,7 @@ body[data-step="done"]  .dv-in{align-items:flex-start}
 </main>
 
 <footer class="dv-foot">
-  Devis indicatif et non contractuel · <a href="/axelrepar.html">Axelrépar</a> · <a href="tel:+33299001234">02 99 00 12 34</a>
+  <a href="/axelrepar.html">Quitter le diagnostic</a> · Devis indicatif et non contractuel · <a href="tel:+33299001234">02 99 00 12 34</a>
 </footer>
 
 <script>
@@ -1685,7 +1685,8 @@ function stepIdent(dir){
     return '<span class="sslot done" data-sl="'+i+'" role="button" tabindex="0" title="Modifier">'+esc(label)+'</span>';
   }
   /* on n'écrit que ce qui est déjà décidé, plus la case en cours */
-  let say='<p class="say'+(active<3?' picking':'')+'" id="say">';
+  let say='<p class="q-kicker">Votre appareil</p>';
+  say+='<p class="say'+(active<3?' picking':'')+'" id="say">';
   say+='<span class="say-part"><span class="lit">J\'ai </span>'+slot(0,S.cat?CATSAY[S.cat]:'')+'</span>';
   if(active>=1)say+='<span class="say-part"><span class="lit"> de marque </span>'+slot(1,brand?brand.l:'')+'</span>';
   if(active>=2)say+='<span class="say-part"><span class="lit">, modèle </span>'+slot(2,S.model?S.model.n:'')+'</span>';
@@ -1820,12 +1821,23 @@ function drawPicker(slot){
       const src=MODELS[S.cat+':'+S.brand]||[];
       S.model=r.v<0?{n:'un modèle non précisé',t:2}:{n:src[r.v][0],t:src[r.v][1]};
       save();
+      /* le modèle est la dernière case : on enchaîne sur la panne
+         sans écran de confirmation intermédiaire */
+      S.hist.push({step:'ident'});
+      S.step='tree';S.node=(S.cat==='tablet'?'phone':S.cat)+':root';
+      S.trace=[];S.flags={};
+      render();scrollIn();
+      return;
     }
     render('same');
   }
 
   paintRows();
   const q=box.querySelector('#mq');
+  if(window.matchMedia('(hover:hover)').matches){
+    /* flèches et frappe immédiatement actives, sans clic préalable */
+    setTimeout(function(){(q||host).focus({preventScroll:true})},60);
+  }
   if(q){
     q.oninput=function(){
       const f=q.value.trim();
@@ -1847,14 +1859,25 @@ function drawPicker(slot){
     else if(e.key==='ArrowUp'){e.preventDefault();move(-1)}
     else if(e.key==='Enter'){e.preventDefault();commit()}
   });
-  let y0=null;
-  pop.addEventListener('touchstart',function(e){y0=e.touches[0].clientY},{passive:true});
+  /* glissement continu : la molette suit le doigt puis se cale */
+  let y0=null,sel0=0,rowPx=0;
+  pop.addEventListener('touchstart',function(e){
+    y0=e.touches[0].clientY;sel0=sel;
+    rowPx=wheel.firstElementChild?wheel.firstElementChild.getBoundingClientRect().height:52;
+    wheel.style.transition='none';
+  },{passive:true});
   pop.addEventListener('touchmove',function(e){
     if(y0===null)return;
     const dy=y0-e.touches[0].clientY;
-    if(Math.abs(dy)>26){move(dy>0?1:-1);y0=e.touches[0].clientY}
+    wheel.style.transform='translateY('+(-sel0*rowPx-dy)+'px)';
   },{passive:true});
-  pop.addEventListener('touchend',function(){y0=null},{passive:true});
+  pop.addEventListener('touchend',function(e){
+    if(y0===null)return;
+    const dy=y0-(e.changedTouches[0]?e.changedTouches[0].clientY:y0);
+    y0=null;wheel.style.transition='';wheel.style.transform='';
+    const n=Math.max(0,Math.min(list.length-1,sel0+Math.round(dy/rowPx)));
+    if(n!==sel){sel=n;apply()}
+  },{passive:true});
 }
 
 function stepTree(dir){
@@ -1862,13 +1885,13 @@ function stepTree(dir){
   if(!n){return leaf(FALLBACK[S.cat])}
   const depth=S.trace.length;
   if(n.tip){
-    paint('<p class="q-kicker">Étape 4 sur 5 · vérification</p><h3 class="q-title">'+esc(n.q)+'</h3>'+
+    paint('<p class="q-kicker">La panne · vérification</p><h3 class="q-title">'+esc(n.q)+'</h3>'+
       '<p class="q-hint">'+esc(n.h)+'</p>'+
       '<div class="tip"><h4>'+ico('ic-info')+' À faire maintenant</h4><ul>'+n.li.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
       '<div class="opts g1">'+n.o.map(function(o,i){return optHTML(o,i)}).join('')+'</div>'+
       foot(true,true),dir);
   }else{
-    paint(head('Étape 4 sur 5 · question '+(depth+1),n.q,n.h)+
+    paint(head('La panne · question '+(depth+1),n.q,n.h)+
       '<div class="opts g'+(n.cols||1)+'">'+n.o.map(function(o,i){return optHTML(o,i)}).join('')+'</div>'+
       foot(true,true),dir);
   }
@@ -1981,7 +2004,7 @@ function stepQuote(){
 function stepForm(dir){
   const rappel=S.cta==='rappel';
   const d=DIAG[S.diag],p=priceOf(d,S.model.t),free=d.free||(p.lo===0&&p.hi===0);
-  let h=head('Étape 5 sur 5',rappel?'On vous rappelle quand ?':'Où récupérer l\'appareil ?',
+  let h=head('Votre devis · coordonnées',rappel?'On vous rappelle quand ?':'Où récupérer l\'appareil ?',
     rappel?'Un technicien vous appelle pour confirmer le diagnostic et convenir d\'un dépôt. Aucun engagement.'
           :'On vous envoie une étiquette prépayée par e-mail. Vous n\'avez qu\'à emballer et déposer le colis.');
   h+='<div class="form-grid">';
