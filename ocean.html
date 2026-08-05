@@ -65,16 +65,16 @@
         </button>
         <div class="tune-p" id="tuneP" hidden>
             <div class="tune-h">Réglages de l'eau</div>
-            <label><span class="tune-row">Intensité du soleil<b class="tune-val">·</b></span><input type="range" data-gh="sunI" min="0.3" max="2.2" step="0.01" value="2.2"></label>
-            <label><span class="tune-row">Position du soleil<b class="tune-val">·</b></span><input type="range" data-gh="sunPos" min="-1" max="1" step="0.01" value="0.55"></label>
-            <label><span class="tune-row">Saturation de l'eau<b class="tune-val">·</b></span><input type="range" data-gh="sat" min="0.5" max="1.8" step="0.01" value="1.8"></label>
-            <label><span class="tune-row">Teinte : marine, turquoise, cyan<b class="tune-val">·</b></span><input type="range" data-gh="hue" min="0" max="1" step="0.01" value="0.05"></label>
-            <label><span class="tune-row">Scintillement<b class="tune-val">·</b></span><input type="range" data-gh="sparkle" min="0" max="2.5" step="0.01" value="2.5"></label>
-            <label><span class="tune-row">Taille des vagues<b class="tune-val">·</b></span><input type="range" data-gh="waveH" min="0.4" max="1.8" step="0.01" value="1.3"></label>
-            <label><span class="tune-row">Vitesse de la houle<b class="tune-val">·</b></span><input type="range" data-gh="speed" min="0.3" max="1.6" step="0.01" value="1.25"></label>
-            <label><span class="tune-row">Profondeur / transparence<b class="tune-val">·</b></span><input type="range" data-gh="depth" min="0" max="1" step="0.01" value="0.55"></label>
-            <label><span class="tune-row">Bloom<b class="tune-val">·</b></span><input type="range" data-gh="bloom" min="0" max="2" step="0.01" value="0.4"></label>
-            <label><span class="tune-row">Réalisme / cinéma<b class="tune-val">·</b></span><input type="range" data-gh="cine" min="0" max="1" step="0.01" value="0.65"></label>
+            <label><span class="tune-row">Intensité du soleil<b class="tune-val">·</b></span><input type="range" data-gh="sunI" min="0.3" max="4.4" step="0.01" value="2.2"></label>
+            <label><span class="tune-row">Position du soleil<b class="tune-val">·</b></span><input type="range" data-gh="sunPos" min="-1" max="2" step="0.01" value="0.55"></label>
+            <label><span class="tune-row">Saturation de l'eau<b class="tune-val">·</b></span><input type="range" data-gh="sat" min="0.5" max="3.6" step="0.01" value="1.8"></label>
+            <label><span class="tune-row">Teinte : marine, turquoise, cyan<b class="tune-val">·</b></span><input type="range" data-gh="hue" min="0" max="2" step="0.01" value="0.05"></label>
+            <label><span class="tune-row">Scintillement<b class="tune-val">·</b></span><input type="range" data-gh="sparkle" min="0" max="5" step="0.01" value="2.5"></label>
+            <label><span class="tune-row">Taille des vagues<b class="tune-val">·</b></span><input type="range" data-gh="waveH" min="0.4" max="3.6" step="0.01" value="1.3"></label>
+            <label><span class="tune-row">Vitesse de la houle<b class="tune-val">·</b></span><input type="range" data-gh="speed" min="0.3" max="3.2" step="0.01" value="1.25"></label>
+            <label><span class="tune-row">Profondeur / transparence<b class="tune-val">·</b></span><input type="range" data-gh="depth" min="0" max="2" step="0.01" value="0.55"></label>
+            <label><span class="tune-row">Bloom<b class="tune-val">·</b></span><input type="range" data-gh="bloom" min="0" max="4" step="0.01" value="0.4"></label>
+            <label><span class="tune-row">Réalisme / cinéma<b class="tune-val">·</b></span><input type="range" data-gh="cine" min="0" max="2" step="0.01" value="0.65"></label>
         </div>
     </div>
 
@@ -233,7 +233,7 @@
             oCamera.position.set(-12, 5.2, 11);
             oCamera.up.set(0.06, 0.98, 0);
             oCamera.lookAt(14, -2, -14);
-            const geo = new THREE.PlaneGeometry(95, 72, 96, 72);
+            const geo = new THREE.PlaneGeometry(95, 72, 192, 144);
             geo.rotateX(-Math.PI / 2);
             oUni = {
                 uT: { value: 0 }, uSpeed: { value: GH.speed }, uWaveH: { value: GH.waveH },
@@ -394,8 +394,9 @@ void main() {
     deep = mix(deep, uTint * 0.58, uTintA);
     azur = mix(azur, mix(uTint, vec3(1.0), 0.40), uTintA);
     vec3 bg = mix(deep, azur, clamp(uv.x * 0.8 + uv.y * 0.45, 0.0, 1.0));
-    float az = (uv.x - 0.5) * 2.4;
+    float aspect = uRes.x / max(uRes.y, 1.0);
     float el = mix(0.12, 0.75, uv.y);
+    float az = (uv.x - 0.5) * (0.75 - 0.12) * aspect;   // champ horizontal lié au ratio : les nuages ne sont plus étirés
     vec3 ro = vec3(0.0, 0.1, 0.0);
     vec3 rd = vec3(cos(el) * sin(az), sin(el), -cos(el) * cos(az));
     vec3 sd = normalize(vec3(uAz, 0.83, -0.36));
