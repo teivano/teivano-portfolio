@@ -52,6 +52,11 @@
         .tune-p .tune-val { font-size: 11px; font-weight: 800; color: var(--blue-dark); font-variant-numeric: tabular-nums; }
         .tune-p input[type="range"] { width: 100%; margin: 3px 0 0; accent-color: var(--blue); }
         .tune-sub { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-top: 4px; }
+        .tune-amb { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 4px; }
+        .amb-btn { flex: 1 1 auto; font-size: 11px; font-weight: 700; color: var(--text-secondary); background: #eef1f7; border: 1.5px solid transparent; border-radius: 9px; padding: 6px 7px; cursor: pointer; white-space: nowrap; transition: background .12s, color .12s, border-color .12s; }
+        .amb-btn:hover { background: #e3e8f3; }
+        .amb-btn.on { background: var(--blue); color: #fff; border-color: var(--blue-dark); }
+        #flash { position: fixed; inset: 0; background: #eaf2ff; opacity: 0; pointer-events: none; z-index: 3; }
         .tune-colors { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 2px; }
         .tune-sw { width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .9); box-shadow: 0 0 0 1px var(--gray-200); cursor: pointer; padding: 0; transition: transform .12s, box-shadow .12s; }
         .tune-sw:hover { transform: scale(1.15); }
@@ -63,6 +68,7 @@
 <body>
     <div id="sky" aria-hidden="true"></div>
     <div id="ocean" aria-hidden="true"></div>
+    <div id="flash" aria-hidden="true"></div>
 
     <div class="tune" id="tune">
         <button class="tune-t" id="tuneT" type="button" aria-expanded="false" aria-label="Réglages de l'eau">
@@ -70,6 +76,14 @@
         </button>
         <div class="tune-p" id="tuneP" hidden>
             <div class="tune-h">Réglages de l'eau</div>
+            <div class="tune-sub">Ambiance</div>
+            <div class="tune-amb" id="ambBtns">
+                <button class="amb-btn on" type="button" data-amb="jour">☀️ Jour</button>
+                <button class="amb-btn" type="button" data-amb="aube">🌅 Aube</button>
+                <button class="amb-btn" type="button" data-amb="coucher">🌇 Coucher</button>
+                <button class="amb-btn" type="button" data-amb="nuit">🌙 Nuit</button>
+            </div>
+            <label><span class="tune-row">Météo : calme → tempête<b class="tune-val" id="wxVal">0 %</b></span><input type="range" id="wxSlider" min="0" max="100" step="1" value="0"></label>
             <div class="tune-sub">Couleur du ciel</div>
             <div class="tune-colors" id="skyColors">
                 <button class="tune-sw on" type="button" data-tint="" style="background:#8fb7e6;background:linear-gradient(135deg,#bcd6f5,#7fa8dd)" title="D'origine" aria-label="D'origine"></button>
@@ -252,7 +266,7 @@
             const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
         }
 
-        let oRenderer, oScene, oCamera, oMat, oUni, oRaf = null, oT0 = null, oCont, oSparkle, oSparkleData;
+        let oRenderer, oScene, oCamera, oMat, oUni, oRaf = null, oT0 = null, oCont, oSparkle, oSparkleData, oLast = 0;
 
         function oceanInit() {
             oCont = document.getElementById('ocean');
@@ -299,7 +313,10 @@
         function oceanFrame(ts) {
             if (oT0 === null) oT0 = ts;
             const t = (ts - oT0) / 1000;
+            const dt = Math.min(0.05, oLast ? (ts - oLast) / 1000 : 0.016); oLast = ts;
             oUni.uT.value = t; oUni.uCam.value.copy(oCamera.position);
+            ambStep();
+            applyWeather(dt);
             oRenderer.render(oScene, oCamera);
             oRaf = requestAnimationFrame(oceanFrame);
         }
@@ -517,10 +534,8 @@ void main() {
             return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
         }
         function setSkyTint(hex) {
-            let t = [0, 0, 0], a = 0;
-            if (hex) { t = hexToRGB(hex); a = 0.88; }
-            oUni.uTint.value.set(t[0], t[1], t[2]); oUni.uTintA.value = a;
-            skyMat.uniforms.uTint.value.set(t[0], t[1], t[2]); skyMat.uniforms.uTintA.value = a;
+            if (hex) { const t = hexToRGB(hex); baseSky.rgb = [t[0], t[1], t[2]]; baseSky.a = 0.88; }
+            else { baseSky.rgb = [0, 0, 0]; baseSky.a = 0; }
         }
         function setWaterTint(hex) {
             let t = [0, 0, 0], a = 0;
@@ -545,6 +560,150 @@ void main() {
             tt.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
         showVals();
+
+        /* =========================================================
+           Ambiances (jour/aube/coucher/nuit) + météo (calme → tempête).
+           Point d'écriture unique des uniforms : applyWeather(), appelé
+           à chaque frame. Les curseurs pilotent la base (GH + baseSky +
+           baseCloud), les presets l'animent, la météo se superpose.
+           ========================================================= */
+        let baseSky = { rgb: [0, 0, 0], a: 0 };
+        let baseCloud = { light: 1.8, white: 1.075 };
+        let wx = 0;   // météo 0..1
+
+        const AMB = {
+            jour:    { sunI: 2.2, sunPos: 0.55, sat: 1.8, hue: 0.05, cine: 0.65, bloom: 0.4, waveH: 1.3, speed: 1.25, sparkle: 2.5, sky: [0, 0, 0], skyA: 0, cloudLight: 1.8, cloudWhite: 1.075 },
+            aube:    { sunI: 1.5, sunPos: -0.25, sat: 1.5, hue: 0.12, cine: 1.2, bloom: 1.0, waveH: 1.1, speed: 1.0, sparkle: 2.0, sky: [1.0, 0.62, 0.48], skyA: 0.5, cloudLight: 1.3, cloudWhite: 1.0 },
+            coucher: { sunI: 2.0, sunPos: 0.95, sat: 1.7, hue: 0.02, cine: 1.6, bloom: 1.7, waveH: 1.2, speed: 1.1, sparkle: 2.4, sky: [1.0, 0.5, 0.24], skyA: 0.62, cloudLight: 1.5, cloudWhite: 1.03 },
+            nuit:    { sunI: 0.55, sunPos: 0.3, sat: 1.15, hue: 0.03, cine: 0.85, bloom: 0.3, waveH: 1.15, speed: 1.05, sparkle: 1.4, sky: [0.05, 0.10, 0.24], skyA: 0.9, cloudLight: 0.7, cloudWhite: 0.8 }
+        };
+        const AMB_T = Object.assign({}, AMB.jour, { sky: AMB.jour.sky.slice() });   // cible d'animation
+        let ambTweening = false;
+        const GHKEYS = ['sunI', 'sunPos', 'sat', 'hue', 'cine', 'bloom', 'waveH', 'speed', 'sparkle'];
+
+        function setAmbiance(name) {
+            const p = AMB[name]; if (!p) return;
+            GHKEYS.forEach(k => AMB_T[k] = p[k]);
+            AMB_T.sky = p.sky.slice(); AMB_T.skyA = p.skyA;
+            AMB_T.cloudLight = p.cloudLight; AMB_T.cloudWhite = p.cloudWhite;
+            ambTweening = true;
+        }
+        function ambStep() {
+            if (!ambTweening) return;
+            const k = 0.06; let done = true;
+            GHKEYS.forEach(key => {
+                GH[key] += (AMB_T[key] - GH[key]) * k;
+                if (Math.abs(AMB_T[key] - GH[key]) > 1e-3) done = false;
+            });
+            for (let i = 0; i < 3; i++) baseSky.rgb[i] += (AMB_T.sky[i] - baseSky.rgb[i]) * k;
+            baseSky.a += (AMB_T.skyA - baseSky.a) * k;
+            baseCloud.light += (AMB_T.cloudLight - baseCloud.light) * k;
+            baseCloud.white += (AMB_T.cloudWhite - baseCloud.white) * k;
+            if (Math.abs(AMB_T.skyA - baseSky.a) > 1e-3) done = false;
+            syncSlidersFromGH();
+            if (done) {
+                GHKEYS.forEach(key => GH[key] = AMB_T[key]);
+                baseSky.rgb = AMB_T.sky.slice(); baseSky.a = AMB_T.skyA;
+                baseCloud.light = AMB_T.cloudLight; baseCloud.white = AMB_T.cloudWhite;
+                ambTweening = false; syncSlidersFromGH();
+            }
+        }
+        function syncSlidersFromGH() {
+            panel.querySelectorAll('input[data-gh]').forEach(r => { if (GH[r.dataset.gh] !== undefined) r.value = GH[r.dataset.gh]; });
+            showVals();
+        }
+
+        /* Pluie (points GPU, créés à la 1re tempête) */
+        let rain = null, rainSpeed = null;
+        function makeRainTex() {
+            const c = document.createElement('canvas'); c.width = 8; c.height = 32; const g = c.getContext('2d');
+            const lg = g.createLinearGradient(0, 0, 0, 32);
+            lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.5, 'rgba(255,255,255,0.95)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = lg; g.fillRect(3, 0, 2, 32);
+            return new THREE.CanvasTexture(c);
+        }
+        function ensureRain() {
+            if (rain) return;
+            const N = 1600; const pos = new Float32Array(N * 3); rainSpeed = new Float32Array(N);
+            for (let i = 0; i < N; i++) {
+                pos[i * 3] = (Math.random() - 0.5) * 70;
+                pos[i * 3 + 1] = Math.random() * 34;
+                pos[i * 3 + 2] = 6 - Math.random() * 60;
+                rainSpeed[i] = 26 + Math.random() * 18;
+            }
+            const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            rain = new THREE.Points(g, new THREE.PointsMaterial({ map: makeRainTex(), color: 0xcfe0ff, size: 1.4, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false }));
+            rain.frustumCulled = false;
+            oScene.add(rain);
+        }
+        function updateRain(w, dt) {
+            if (w < 0.02) { if (rain) rain.material.opacity = 0; return; }
+            ensureRain();
+            rain.material.opacity = Math.min(0.55, (w - 0.02) * 0.7);
+            const p = rain.geometry.attributes.position, N = p.count;
+            for (let i = 0; i < N; i++) {
+                let y = p.getY(i) - rainSpeed[i] * dt;
+                if (y < -1) y += 35;
+                p.setY(i, y);
+            }
+            p.needsUpdate = true;
+        }
+
+        /* Éclairs (à forte météo) */
+        const flashEl = document.getElementById('flash');
+        let flashV = 0;
+        function updateLightning(w) {
+            if (w > 0.45 && Math.random() < (w - 0.45) * 0.02) flashV = 0.55 + Math.random() * 0.35;
+            if (flashV > 0.002) {
+                flashV *= 0.8;
+                if (flashEl) flashEl.style.opacity = flashV.toFixed(3);
+                if (skyMat) skyMat.uniforms.uLight.value += flashV * 2.2;
+            } else if (flashEl) flashEl.style.opacity = '0';
+        }
+
+        function applyWeather(dt) {
+            const w = wx;
+            oUni.uSpeed.value = GH.speed + w * 0.9;
+            oUni.uWaveH.value = GH.waveH + w * 1.9;
+            oUni.uSunI.value = GH.sunI * (1 - w * 0.55);
+            oUni.uSat.value = GH.sat * (1 - w * 0.25);
+            oUni.uHue.value = GH.hue;
+            oUni.uSparkle.value = GH.sparkle * (1 - w * 0.8);
+            oUni.uDepth.value = GH.depth;
+            oUni.uBloom.value = GH.bloom * (1 - w * 0.5);
+            oUni.uCine.value = GH.cine + w * 0.3;
+            oUni.uSunDir.value.copy(ghSunDir());
+            /* teinte du ciel : base ambiance/picker, virée au gris en tempête */
+            let r = baseSky.rgb[0], g = baseSky.rgb[1], b = baseSky.rgb[2], a = baseSky.a;
+            if (w > 0.001) {
+                const br = a > 0 ? r : 0.13, bg = a > 0 ? g : 0.35, bb = a > 0 ? b : 0.62;
+                r = br * (1 - w) + 0.34 * w; g = bg * (1 - w) + 0.37 * w; b = bb * (1 - w) + 0.42 * w;
+                a = Math.max(a, w * 0.85);
+            }
+            oUni.uTint.value.set(r, g, b); oUni.uTintA.value = a;
+            if (skyMat) {
+                const u = skyMat.uniforms;
+                u.uTint.value.set(r, g, b); u.uTintA.value = a;
+                u.uAz.value = GH.sunPos;
+                u.uLight.value = baseCloud.light * (1 - w * 0.5);
+                u.uWhite.value = baseCloud.white * (1 - w * 0.3);
+                u.uShadow.value = 0.75 + w * 0.9;
+                u.uDensity.value = 1.6 + w * 1.3;
+                u.uWind.value = 0.1 + w * 0.5;
+                const count = 7 + w * 2.5; u.uGapP.value = (7 - count) * 0.07 + 0.14;
+            }
+            updateRain(w, dt);
+            updateLightning(w);
+        }
+
+        /* Wiring ambiance + météo */
+        document.getElementById('ambBtns').addEventListener('click', e => {
+            const b = e.target.closest('.amb-btn'); if (!b) return;
+            setAmbiance(b.dataset.amb);
+            document.querySelectorAll('#ambBtns .amb-btn').forEach(x => x.classList.toggle('on', x === b));
+        });
+        const wxSlider = document.getElementById('wxSlider'), wxVal = document.getElementById('wxVal');
+        wxSlider.addEventListener('input', () => { wx = parseFloat(wxSlider.value) / 100; wxVal.textContent = Math.round(wx * 100) + ' %'; });
 
         /* ---- Démarrage ---- */
         skyInit(); skyRaf = requestAnimationFrame(skyFrame);
