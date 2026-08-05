@@ -61,6 +61,7 @@
     { href:'/encre.html',      url:'/encre.html',      title:'Encre',          desc:'Endless · glisse pour guider la goutte' },
     { href:'/meteo.html',      url:'/meteo.html',      title:'Météo',          desc:'Modèle AROME · Météo France · via Open-Meteo' },
     { href:'/axelrepar.html',  url:'/axelrepar.html',  title:'Axelrépar',      desc:'Réparation IT · diagnostic en ligne & devis' },
+    { href:'/ocean.html',      url:'/ocean.html',      title:'Océan',          desc:'Mer & ciel WebGL · Three.js · panneau de réglages' },
   ];
 
   /* ── Hamburger (skipped si body[data-no-ham]) ── */
