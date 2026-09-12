@@ -1,23 +1,23 @@
 /* konduite-day.js — Animations "conduite" pour meteo.html
- * Actif uniquement le 12/09/2026 (garde en tête).
+ * Actif en "mode conduite" : mercredi toute la journée + samedi 0h-12h.
  * - Bandeau route en bas avec koala qui roule
  * - Passages random de koalas (6-12s) — direction/altitude/vitesse variées
  * - Confettis au load (à chaque reload)
  * - Fumée d'échappement au scroll rapide + trainée derrière chaque koala
  * Overlay pointer-events:none : n'intercepte AUCUNE interaction (scrubbers, cards, bandeau pluie).
- * À retirer manuellement après le 12/09/2026.
  */
 (function () {
-  var CONDUITE_DAY = '2026-09-12';
 
-  function todayISO() {
+  /* getDay() : 0=dim, 1=lun, 2=mar, 3=mer, 4=jeu, 5=ven, 6=sam */
+  function isConduiteMode() {
     var d = new Date();
-    return d.getFullYear() + '-' +
-           String(d.getMonth() + 1).padStart(2, '0') + '-' +
-           String(d.getDate()).padStart(2, '0');
+    var day = d.getDay();
+    if (day === 3) return true;                              // mercredi toute la journée
+    if (day === 6 && d.getHours() < 12) return true;         // samedi jusqu'à midi
+    return false;
   }
 
-  if (todayISO() !== CONDUITE_DAY) return;
+  if (!isConduiteMode()) return;
 
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reducedMotion) return;
