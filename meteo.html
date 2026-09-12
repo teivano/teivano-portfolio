@@ -2731,14 +2731,26 @@
 
       var now = new Date();
       var today = todayISO();
-
-      /* ── Logique normale : 7h–11h, 1×/jour ──
-         (Le bloc ponctuel "conduite" du 12/09/2026 a été retiré : il est
-         désormais remplacé par le "mode conduite" récurrent — mercredi
-         toute la journée + samedi 0h-12h — géré par konduite-day.js pour
-         les animations. Le message du modal reste le message par jour
-         de la semaine défini dans KOALA_DAY_MESSAGES.) */
+      var day = now.getDay();  // 0=dim, 3=mer, 6=sam
       var hour = now.getHours();
+
+      /* ── Mode "conduite" — mercredi toute la journée + samedi 0h-12h ──
+         Sur ces plages, le modal affiche le message "Bonne chance pour ta
+         conduite mon bb !!" (prioritaire, remplace le message quotidien
+         normal). 1×/jour via localStorage. */
+      var CONDUITE_KEY = 'meteo_koala_conduite_shown';
+      var inConduiteMode = (day === 3) || (day === 6 && hour < 12);
+      if (inConduiteMode) {
+        var lastConduite = null;
+        try { lastConduite = localStorage.getItem(CONDUITE_KEY); } catch(e){}
+        if (lastConduite === today) return;
+        koalaShownThisSession = true;
+        try { localStorage.setItem(CONDUITE_KEY, today); } catch(e){}
+        showKoalaModal('Bonne chance pour ta conduite mon bb !! #KoalaPilote 🐨🚘');
+        return;
+      }
+
+      /* ── Logique normale : 7h–11h, 1×/jour (autres jours) ── */
       if (hour < 7 || hour >= 11) return;
 
       var last = null;
