@@ -372,6 +372,15 @@
     .td-r .num { text-align: right; white-space: nowrap; }
     .td-r .p { color: var(--mute); font-size: .78rem; }
     .td-note { font-size: .78rem; color: var(--mute); margin-top: 1.2rem; line-height: 1.5; }
+    .to { display: grid; grid-template-columns: 18px 3.6rem minmax(0, 1fr) auto; gap: .7rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--line2); font-size: .88rem; cursor: pointer; }
+    .to input { width: 17px; height: 17px; accent-color: var(--ok); }
+    .to-d { color: var(--mute); font-size: .78rem; }
+    .to-n { min-width: 0; overflow-wrap: anywhere; }
+    .to-n small { display: block; font-size: .72rem; color: var(--mute); }
+    .to-a { font-weight: 600; white-space: nowrap; }
+    .to.off .to-n, .to.off .to-a { color: var(--mute2); font-weight: 500; }
+    .trips-h { display: flex; justify-content: flex-end; margin: -.4rem 0 .8rem; }
+    #bdNewTrip { margin: 0 0 1rem; }
 
     /* ── Panneau « À classer » ── */
     .sheet { position: fixed; inset: 0; z-index: 1100; }
@@ -542,6 +551,13 @@
 
     <section class="sec" aria-labelledby="bdTripsT">
       <div class="sec-h"><h2 id="bdTripsT">Voyages et événements</h2><p class="sub" id="bdTripsSub"></p></div>
+      <div class="trips-h"><button type="button" class="btn btn-sm" id="bdNewTripBtn" aria-expanded="false" aria-controls="bdNewTrip">Créer un événement</button></div>
+      <form class="add" id="bdNewTrip" autocomplete="off" hidden>
+        <label class="f"><span>Nom</span><input class="inp" name="name" required maxlength="60" placeholder="Ex. Road trip Bordeaux"></label>
+        <label class="f"><span>Du</span><input class="inp" name="start" type="date" required></label>
+        <label class="f"><span>Au</span><input class="inp" name="end" type="date" required></label>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </form>
       <div class="trip-banner" id="bdTripsBanner" hidden>
         <span id="bdTripsBannerTxt"></span>
         <button type="button" class="btn btn-sm" id="bdTripsAll">Tout confirmer</button>
@@ -629,12 +645,12 @@
         <summary>Hypothèses</summary>
         <div class="acc-b">
           <ul>
-            <li>Train de vie : moyenne de tes dépenses réelles sur les 3 derniers mois complets, hors voyages. Postes courants (courses, restos, essence…) à leur niveau réel ; charges fixes, prélèvements annuels et provisions à leur montant prévu ; dépenses non classées et hors budget à leur niveau médian, sans les virements non classés.</li>
-            <li>Sans relevé complet, la projection utilise les montants prévus de chaque poste.</li>
+            <li>Projection des mois à venir : postes prévus jusqu'au palier Confort (charges fixes, provisions, dépenses courantes budgétées), plus les dépenses attendues : prélèvements annuels et événements ponctuels comme la taxe foncière.</li>
+            <li>Train de vie réel (affiché dans « Budget par palier ») : moyenne de tes dépenses des 3 derniers mois complets, hors voyages et hors virements non classés.</li>
             <li>Revenus : allocation et éventuel salaire, selon le Scénario. Épargne hors compte courant non incluse.</li>
             <li>Dépassement : un poste dépasse quand sa dépense du mois excède son montant prévu ; il est « à surveiller » quand son rythme à date dépasse de plus de 10 % ce montant au prorata.</li>
-            <li>Voyages : seuls les paiements par carte loin de chez toi et les réservations (vols, hébergements) sont comptés ; prélèvements, abonnements et achats habituels sont exclus.</li>
-            <li>Export Crédit Agricole lu dans le navigateur. Sont conservés : soldes journaliers, totaux par poste et par mois, résumés de voyages et opérations notables. Jamais la liste complète des opérations.</li>
+            <li>Voyages détectés : paiements par carte loin de chez toi et réservations liées (vols, hébergements). Chaque transaction peut être retirée ou ajoutée depuis la fiche du voyage ; un événement peut aussi être créé à la main sur une période.</li>
+            <li>Export Crédit Agricole lu dans le navigateur. Sont conservés dans l'espace privé : soldes journaliers, totaux par poste et par mois, voyages, et la liste des opérations des 24 derniers mois (date, libellé sans numéro de carte, montant) pour pouvoir retoucher les voyages.</li>
           </ul>
         </div>
       </details>
@@ -871,9 +887,15 @@
         name: String(t.name || 'Voyage'), named: !!t.named, merged: !!t.merged,
         places: Array.isArray(t.places) ? t.places.map(String) : [],
         total: num(t.total), types: isObj(t.types) ? t.types : {}, alloc: isObj(t.alloc) ? t.alloc : {},
-        status: ['suggested', 'confirmed', 'dismissed'].indexOf(t.status) >= 0 ? t.status : 'suggested'
+        status: ['suggested', 'confirmed', 'dismissed'].indexOf(t.status) >= 0 ? t.status : 'suggested',
+        ops: Array.isArray(t.ops) ? t.ops.map(String) : null, edited: !!t.edited, manual: !!t.manual
       };
     });
+    var O = o.ops;
+    s.ops = O && Array.isArray(O.labels) && Array.isArray(O.rows) ? {
+      labels: O.labels.map(String),
+      rows: O.rows.filter(function (r) { return Array.isArray(r) && r.length === 3 && isFinite(r[0]) && isFinite(r[1]) && O.labels[r[2]] != null; })
+    } : null;
     return s;
   }
   function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
@@ -965,15 +987,19 @@
     if (H && H.other > 0) list.push({ id: '_other', label: 'Autres dépenses', amount: H.other, sched: 'd', day: 1, month: 1, tier: 0, on: true });
     return list;
   }
-  function monthlySpend() { return calc.items.reduce(function (s, it) { return s + it.amount; }, 0); }
+  function monthlySpend(list) { return (list || calc.items).reduce(function (s, it) { return s + it.amount; }, 0); }
 
+  /* Projection : postes budgétés jusqu'au palier Confort + dépenses attendues (événements, annuels, provisions) */
+  var PROJ_TIER = 2;
   function compute() {
     var start = toN(state.asOf), endN = Math.max(toN(state.horizon), addMonths(start, 26), start + 1);
-    var H = habits(), items = realItems(H);
+    var H = habits();
     return {
-      start: start, endN: endN, items: items, habits: H,
-      sel: simulate(3, endN, false, items),
-      longRun: simulate(3, start + 365 * 12, false, items),
+      start: start, endN: endN, habits: H,
+      items: state.items.filter(function (it) { return it.on && it.tier <= PROJ_TIER; }),
+      real: H ? monthlySpend(realItems(H)) : null,
+      sel: simulate(PROJ_TIER, endN),
+      longRun: simulate(PROJ_TIER, start + 365 * 12),
       tt: totals()
     };
   }
@@ -1235,17 +1261,19 @@
         Object.keys(d.types).forEach(function (k) { ex.types[k] = round2((ex.types[k] || 0) + d.types[k]); });
         Object.keys(d.alloc).forEach(function (k) { addAlloc(ex.alloc[k] = ex.alloc[k] || {}, d.alloc[k]); });
         ex.places = ex.places.concat(d.places.filter(function (p) { return ex.places.indexOf(p) < 0; })).slice(0, 4);
+        ex.ops = (ex.ops || []).concat(d.ops.map(function (o) { return o.id; }));
         if (!ex.named && d.total > ex.total - d.total) ex.name = d.name;
         d.ref = ex;
       } else if (ex) {
-        if (!ex.merged && periodFrom <= (ex.first != null ? ex.first : ex.start)) {
+        if (!ex.merged && !ex.edited && periodFrom <= (ex.first != null ? ex.first : ex.start)) {
           ex.start = d.start; ex.end = d.end; ex.first = d.first; ex.total = d.total; ex.types = d.types; ex.alloc = d.alloc; ex.places = d.places;
+          ex.ops = d.ops.map(function (o) { return o.id; });
           if (!ex.named) ex.name = d.name;
           touched.add(ex);
         }
         d.ref = ex;
       } else {
-        var nt = { id: uid(), start: d.start, end: d.end, first: d.first, name: d.name, named: false, merged: false, places: d.places, total: d.total, types: d.types, alloc: d.alloc, status: 'suggested' };
+        var nt = { id: uid(), start: d.start, end: d.end, first: d.first, name: d.name, named: false, merged: false, places: d.places, total: d.total, types: d.types, alloc: d.alloc, status: 'suggested', ops: d.ops.map(function (o) { return o.id; }), edited: false, manual: false };
         state.trips.push(nt);
         touched.add(nt);
         d.ref = nt;
@@ -1265,15 +1293,23 @@
   }
 
   function ingestOps(res) {
-    var ops = res.ops.map(parseOp);
+    var ops = res.ops.map(function (o) {
+      var op = parseOp(o);
+      op.raw = rawLabel(o);
+      op.cents = o.debit > 0 ? -Math.round(o.debit * 100) : Math.round(o.credit * 100);
+      return op;
+    });
+    giveIds(ops);
     if (!ops.length) return { ops: 0, trips: 0, unk: Object.keys(unkTotals()).length };
     var to = toN(res.date), from = res.from != null ? res.from : Math.min.apply(null, ops.map(function (o) { return o.n; }));
     mergeHistory(buildHistory(res.balance, to, from, ops));
+    storeOps(ops, from, to);
 
     collectFeed(ops, from, to);
     detectAnomalies(ops);
     var det = detectTrips(ops), added = mergeTrips(det, from), inTrip = new Set();
-    det.forEach(function (d) { if (d.ref.status !== 'dismissed') d.ops.forEach(function (o) { inTrip.add(o); }); });
+    state.trips.forEach(function (t) { if (t.status !== 'dismissed' && t.ops) t.ops.forEach(function (id) { inTrip.add(id); }); });
+    det.forEach(function (d) { if (d.ref.status !== 'dismissed' && !d.ref.ops) d.ops.forEach(function (o) { inTrip.add(o.id); }); });
 
     var months = {}, n = from;
     while (n <= to) {
@@ -1285,7 +1321,7 @@
       var M = months[monthKey(op.kind === 'card' ? op.day : op.n)];
       if (!M) return;
       if (op.credit > 0) { if (!/^(AVOIR|ANNUL)/.test(op.text)) M.inc = round2(M.inc + op.credit); return; }
-      if (!(op.debit > 0) || inTrip.has(op)) return;
+      if (!(op.debit > 0) || inTrip.has(op.id)) return;
       addAmt(M, classify(op), op.debit, op);
     });
     Object.keys(months).forEach(function (k) {
@@ -1293,6 +1329,77 @@
       if (!old || !old.cov || months[k].cov[0] <= old.cov[0]) state.actuals[k] = months[k];
     });
     return { ops: ops.length, trips: added, unk: Object.keys(unkTotals()).length };
+  }
+
+  /* ── Opérations conservées (24 mois) : [jour, centimes signés, libellé] ── */
+  var OPS_KEEP = 731, opCache = null;
+  function opHash(str) { var h = 5381; for (var i = 0; i < str.length; i++) h = (h * 33 + str.charCodeAt(i)) >>> 0; return h.toString(36); }
+  function rawLabel(o) { return String(o.label).split('\n')[0].trim().replace(/X\d{4}/g, 'X0000'); }
+  function giveIds(list) {
+    var seen = {};
+    list.forEach(function (op) {
+      var b = op.n + ':' + op.cents + ':' + opHash(op.raw);
+      seen[b] = (seen[b] || 0) + 1;
+      op.id = seen[b] > 1 ? b + '#' + seen[b] : b;
+    });
+  }
+  function storeOps(ops, from, to) {
+    var old = state.ops || { labels: [], rows: [] }, lab = [], li = {}, rows = [], lim = todayN() - OPS_KEEP;
+    var L = function (x) { if (li[x] == null) { li[x] = lab.length; lab.push(x); } return li[x]; };
+    old.rows.forEach(function (r) { if ((r[0] < from || r[0] > to) && r[0] >= lim) rows.push([r[0], r[1], L(old.labels[r[2]])]); });
+    ops.forEach(function (op) { rows.push([op.n, op.cents, L(op.raw)]); });
+    rows.sort(function (a, b) { return a[0] - b[0]; });
+    state.ops = { labels: lab, rows: rows };
+    opCache = null;
+  }
+  function opIndex() {
+    if (opCache && opCache.src === state.ops) return opCache.map;
+    var list = [], map = {};
+    if (state.ops) state.ops.rows.forEach(function (r) {
+      var raw = state.ops.labels[r[2]], op = parseOp({ n: r[0], label: raw, debit: r[1] < 0 ? -r[1] / 100 : 0, credit: r[1] > 0 ? r[1] / 100 : 0 });
+      op.cents = r[1]; op.raw = raw;
+      list.push(op);
+    });
+    giveIds(list);
+    list.forEach(function (op) { map[op.id] = op; });
+    opCache = { src: state.ops, map: map, list: list };
+    return map;
+  }
+  function opMonth(op) { return monthKey(op.kind === 'card' ? op.day : op.n); }
+
+  /* Voyage recalculé à partir de ses opérations */
+  function recomputeTrip(t) {
+    if (!t.ops) return;
+    var idx = opIndex(), types = {}, alloc = {}, total = 0, first = null;
+    t.ops.forEach(function (id) {
+      var op = idx[id];
+      if (!op || !(op.debit > 0)) return;
+      total += op.debit;
+      var ty = tripType(op.text);
+      types[ty] = round2((types[ty] || 0) + op.debit);
+      addAmt(alloc[opMonth(op)] = alloc[opMonth(op)] || {}, classify(op), op.debit, op);
+      first = first === null ? op.day : Math.min(first, op.day);
+    });
+    t.total = round2(total); t.types = types; t.alloc = alloc;
+    if (first !== null) t.first = Math.min(first, t.start);
+  }
+  function tripOfOp(id, except) {
+    for (var i = 0; i < state.trips.length; i++) {
+      var t = state.trips[i];
+      if (t !== except && t.status !== 'dismissed' && t.ops && t.ops.indexOf(id) >= 0) return t;
+    }
+    return null;
+  }
+  function toggleTripOp(t, id, on) {
+    var op = opIndex()[id];
+    if (!op || !(op.debit > 0) || t.status === 'dismissed') return;
+    t.ops = t.ops || [];
+    var i = t.ops.indexOf(id), M = state.actuals[opMonth(op)];
+    if (on === (i >= 0)) return;
+    if (on) { t.ops.push(id); if (M) addAmt(M, classify(op), -op.debit, op); }
+    else { t.ops.splice(i, 1); if (M) addAmt(M, classify(op), op.debit, op); }
+    t.edited = true;
+    recomputeTrip(t);
   }
 
   /* ── Fil d'activité : opérations notables (pas la liste complète) ── */
@@ -1462,6 +1569,7 @@
     if (!t.named) t.name = t.name.split(' → ')[0] + ' → ' + u.name.split(' → ').slice(-1)[0];
     t.merged = true;
     t.status = 'confirmed';
+    if (t.ops || u.ops) t.ops = (t.ops || []).concat((u.ops || []).filter(function (id) { return !t.ops || t.ops.indexOf(id) < 0; }));
     state.trips.splice(state.trips.indexOf(u), 1);
   }
 
@@ -1513,18 +1621,19 @@
 
 
   function renderLadder() {
-    var cum = calc.tt.cum, real = monthlySpend(), max = Math.max(cum[3], real) * 1.06 || 1, h = '', lv, i;
+    var cum = calc.tt.cum, real = calc.real, max = Math.max(cum[3], real || 0) * 1.06 || 1, h = '', lv, i;
     for (var t = 0; t < 4; t++) {
       h += '<div class="rung"><span class="rung-n"><span class="dot" style="background:' + TCOL[t] + '"></span>' + TIERS[t] + '</span>' +
         '<span class="rung-track" aria-hidden="true"><span class="rung-fill" style="width:' + (cum[t] / max * 100).toFixed(2) + '%;background:' + TCOL[t] + '"></span>' +
-        '<span class="rung-tick real" style="left:' + (real / max * 100).toFixed(2) + '%"></span></span>' +
+        (real != null ? '<span class="rung-tick real" style="left:' + (real / max * 100).toFixed(2) + '%"></span>' : '') + '</span>' +
         '<span class="rung-a num">' + eur(cum[t]) + '</span></div>';
     }
     $('bdLadder').innerHTML = h;
+    if (real == null) { $('bdLadderLegend').innerHTML = '<span>La projection suit le palier <b>' + TIERS[PROJ_TIER] + '</b>. Importe un mois complet pour situer ton train de vie réel.</span>'; return; }
     if (real < cum[0]) lv = 'sous l\'Incompressible';
     else if (real >= cum[3]) lv = 'au-delà du Luxe';
     else for (i = 1; i < 4; i++) if (real < cum[i]) { lv = 'entre ' + TIERS[i - 1] + ' et ' + TIERS[i]; break; }
-    $('bdLadderLegend').innerHTML = '<span><span class="sw v" style="background:var(--info)"></span>Ton train de vie réel : <b>' + esc(eur(real)) + ' / mois</b>, ' + esc(lv) + '</span>';
+    $('bdLadderLegend').innerHTML = '<span><span class="sw v" style="background:var(--info)"></span>Ton train de vie réel (3 derniers mois, hors voyages) : <b>' + esc(eur(real)) + ' / mois</b>, ' + esc(lv) + '. La projection suit le palier <b>' + TIERS[PROJ_TIER] + '</b>.</span>';
   }
 
   var RANGE_M = { '3': 3, '6': 6, '12': 12, 'all': 0 };
@@ -1550,7 +1659,7 @@
     var pl = 4, pr = 4, pt = 28, pb = 24, iw = W - pl - pr, ih = H - pt - pb;
     var c = calc, th = state.threshold, st = c.start, sb = state.startBalance, today = todayN();
     var win = chartWindow(), n0 = win[0], n1 = win[1];
-    var sim = n1 > c.endN ? simulate(3, n1, false, c.items) : c.sel;
+    var sim = n1 > c.endN ? simulate(PROJ_TIER, n1) : c.sel;
 
     var hist = [], h = state.history, i;
     if (h) for (i = 0; i < h.bal.length; i++) {
@@ -1637,7 +1746,7 @@
     var cross = c.longRun.cross, cm = cross === null ? Infinity : (cross - t) / 30.44;
     var cls = cm < 12 ? 'bad' : cm < 36 ? 'warn' : 'ok';
     var h = '<span class="pill ' + cls + '">' + (cls === 'ok' ? 'Tenable' : cls === 'warn' ? 'À surveiller' : 'Pas tenable') + '</span>' +
-      'À train de vie égal, tu dépenses environ <b class="num">' + esc(eur(monthlySpend())) + '</b> par mois' +
+      'Avec ton budget ' + TIERS[PROJ_TIER] + ', tu dépenses environ <b class="num">' + esc(eur(monthlySpend())) + '</b> par mois' +
       (incM > 1 ? ' pour <b class="num">' + esc(eur(incM)) + '</b> de revenus en moyenne' : ', sans revenu prévu') + '. ';
     h += Math.abs(slope) < 15 ? 'Ton solde reste stable sur les 12 prochains mois. '
       : 'Ton solde ' + (slope < 0 ? 'baisse' : 'monte') + ' d\'environ <b class="num">' + esc(eur(Math.abs(slope))) + '</b> par mois sur les 12 prochains mois. ';
@@ -1645,14 +1754,14 @@
     else if (cross <= t) h += '<span class="key bad">Tu es déjà sous ton seuil de ' + esc(eur(th)) + '.</span>';
     else h += '<span class="key ' + cls + '">Tu passes sous ton seuil de ' + esc(eur(th)) + ' en <b>' + esc(fDate(cross, { month: 'long', year: 'numeric' })) + '</b></span>, dans ' + esc(fMonths(cm)) + '.';
     $('bdVerdict').innerHTML = h;
-    var fix = 0, cur = 0, oth = 0;
-    c.items.forEach(function (it) { if (it.id === '_other') oth += it.amount; else if (it.sched === 'd' && !it.from) cur += it.amount; else fix += it.amount; });
+    var fix = 0, cur = 0;
+    c.items.forEach(function (it) { if (it.sched === 'd' && !it.from) cur += it.amount; else fix += it.amount; });
+    var evs = state.events.filter(function (e) { var n = toN(e.date); return n > t0 && n <= t1 && e.amount < 0; });
     $('bdSplit').innerHTML = '<span><b>' + esc(eur(fix)) + '</b>charges fixes et provisions</span>' +
-      '<span><b>' + esc(eur(cur)) + '</b>dépenses courantes</span>' +
-      (oth ? '<span><b>' + esc(eur(oth)) + '</b>hors budget et non classé</span>' : '');
-    $('bdHeroF').textContent = H
-      ? 'Calcul sur tes dépenses réelles de ' + H.months.map(function (k) { return monthLabel(k, true).replace(/ \d{4}$/, ''); }).join(', ').replace(/, ([^,]*)$/, ' et $1') + ', hors voyages.'
-      : 'Pas encore de mois complet importé : calcul sur les montants prévus de tes postes.';
+      '<span><b>' + esc(eur(cur)) + '</b>dépenses courantes budgétées</span>' +
+      (evs.length ? '<span><b>' + esc(eur(-evs.reduce(function (a, e) { return a + e.amount; }, 0))) + '</b>ponctuel sur 12 mois (' + esc(evs.map(function (e) { return e.label; }).join(', ')) + ')</span>' : '');
+    $('bdHeroF').textContent = 'Projection : postes prévus jusqu\'au palier ' + TIERS[PROJ_TIER] + ', plus les dépenses attendues (prélèvements annuels, provisions, événements ponctuels).' +
+      (c.real != null ? ' Ton train de vie réel récent : ' + eur(c.real) + ' par mois.' : '');
   }
 
   /* ── Escalier : solde prévu en fin de mois ── */
@@ -2010,6 +2119,7 @@
   function renderTripSheet() {
     var t = tripOpen && findById(state.trips, tripOpen);
     if (!t || t.status === 'dismissed') { closeTrip(); return; }
+    var keep = $('bdTripBody').scrollTop;
     var days = t.end - t.start + 1, nd = normalDay(), pd = t.total / days, sg = t.status === 'suggested';
     var post = {}, mon = {};
     Object.keys(t.alloc || {}).forEach(function (mk) {
@@ -2030,11 +2140,36 @@
       '<div class="td-h">Par type de dépense</div>' + tdRows(t.types || {}, t.total, true) +
       '<div class="td-h">Par poste de ton budget</div>' + tdRows(post, t.total, false) +
       (Object.keys(monL).length > 1 ? '<div class="td-h">Par mois</div>' + tdRows(monL, t.total, false) : '') +
-      '<p class="td-note">Seuls les paiements par carte loin de chez toi et les réservations liées (vols, hébergements, locations) sont comptés. Prélèvements, abonnements et achats habituels de la période sont exclus automatiquement.</p>' +
+      tripOpsHtml(t) +
       '<div class="act-foot">' + (sg ? '<button type="button" class="btn btn-primary btn-sm" data-act="ok">Confirmer ce voyage</button>' : '<span></span>') +
         '<button type="button" class="btn btn-ghost btn-sm" data-act="no">Pas un voyage</button></div>';
     $('bdTripBody').innerHTML = h;
+    $('bdTripBody').scrollTop = keep;
   }
+  function tripOpsHtml(t) {
+    if (!t.ops) return '<p class="td-note">Pour voir et retoucher les transactions de ce voyage, réimporte un export Crédit Agricole qui couvre ces dates.</p>';
+    var idx = opIndex(), inT = {}, list = [];
+    t.ops.forEach(function (id) { if (idx[id]) { inT[id] = 1; list.push(idx[id]); } });
+    (opCache ? opCache.list : []).forEach(function (op) {
+      if (inT[op.id] || !(op.debit > 0) || op.day < t.start || op.day > t.end) return;
+      list.push(op);
+    });
+    list.sort(function (a, b) { return a.day - b.day || b.debit - a.debit; });
+    var n = Object.keys(inT).length;
+    var h = '<div class="td-h">Transactions · ' + n + ' comptée' + (n > 1 ? 's' : '') + ' sur ' + list.length + '</div>' +
+      '<p class="td-note" style="margin:0 0 .4rem">Décoche ce qui n\'a rien à voir avec le voyage, coche ce qui en fait partie : le total se recalcule.</p>';
+    list.forEach(function (op) {
+      var other = !inT[op.id] && tripOfOp(op.id, t);
+      h += '<label class="to' + (inT[op.id] ? '' : ' off') + '">' +
+        '<input type="checkbox" data-op="' + esc(op.id) + '"' + (inT[op.id] ? ' checked' : '') + (other ? ' disabled' : '') + '>' +
+        '<span class="to-d num">' + esc(fDate(op.day, { day: 'numeric', month: 'short' })) + '</span>' +
+        '<span class="to-n">' + esc(op.name || op.raw) + (other ? '<small>dans « ' + esc(other.name) + ' »</small>' : '') + '</span>' +
+        '<span class="to-a num">' + esc(eur(op.debit, true)) + '</span></label>';
+    });
+    if (!list.length) h += '<p class="empty-row">Aucune dépense enregistrée sur cette période.</p>';
+    return h;
+  }
+
   function openTrip(id, opener) {
     tripOpen = id;
     tripOpener = opener || null;
@@ -2073,7 +2208,7 @@
         '<td class="num' + (lvl ? ' low' + lvl : '') + '">' + (lvl === 'bad' ? '⚠ ' : '') + eur(r.low) + '</td></tr>';
     });
     $('bdTable').innerHTML = h + '</tbody>';
-    $('bdTableSub').textContent = 'À train de vie égal. Marqueur rouge : le point bas du mois passe sous le seuil ; orange : moins de 1,5 × le seuil.';
+    $('bdTableSub').textContent = 'Au budget ' + TIERS[PROJ_TIER] + '. Marqueur rouge : le point bas du mois passe sous le seuil ; orange : moins de 1,5 × le seuil.';
   }
 
   /* ── Rendu : entrées ── */
@@ -2659,6 +2794,33 @@
     });
     $('bdTrips').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && e.target.classList.contains('trip-name')) e.target.blur();
+    });
+    $('bdNewTripBtn').addEventListener('click', function () {
+      var f = $('bdNewTrip'), open = f.hidden;
+      f.hidden = !open;
+      this.setAttribute('aria-expanded', String(open));
+      if (open) f.elements.name.focus();
+    });
+    $('bdNewTrip').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = this.elements, name = f.name.value.trim(), a = f.start.value, b = f.end.value;
+      if (!name || !validDate(a) || !validDate(b)) return;
+      var s0 = Math.min(toN(a), toN(b)), s1 = Math.max(toN(a), toN(b));
+      var t = { id: uid(), start: s0, end: s1, first: s0, name: name, named: true, merged: false, places: [], total: 0, types: {}, alloc: {}, status: 'confirmed', ops: [], edited: true, manual: true };
+      state.trips.push(t);
+      this.reset();
+      this.hidden = true;
+      $('bdNewTripBtn').setAttribute('aria-expanded', 'false');
+      save();
+      renderOutputs();
+      openTrip(t.id, $('bdNewTripBtn'));
+    });
+    $('bdTripBody').addEventListener('change', function (e) {
+      var el = e.target, t = tripOpen && findById(state.trips, tripOpen);
+      if (!el.dataset.op || !t) return;
+      toggleTripOp(t, el.dataset.op, el.checked);
+      save();
+      renderOutputs();
     });
     $('bdTripSheet').addEventListener('click', function (e) {
       if (e.target.closest('[data-close]')) { closeTrip(); return; }

@@ -10,7 +10,7 @@ var DATA_PATH = 'budget/state.json';
 var LOCK_PATH = 'budget/lock.json';
 var COOKIE = 'bd_s';
 var SESSION_S = 30 * 24 * 3600;
-var MAX_BYTES = 256 * 1024;
+var MAX_BYTES = 1024 * 1024;
 
 function sessionKey() {
   return crypto.createHash('sha256').update('budget-session:' + process.env.BLOB_READ_WRITE_TOKEN).digest();
