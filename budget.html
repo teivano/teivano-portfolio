@@ -186,9 +186,51 @@
     .sync { font-size: .68rem; color: var(--ink2); align-self: center; min-width: 6.5rem; text-align: right; }
     .sync.err { color: var(--bad); }
     .bd-loading { font-size: .85rem; color: var(--ink2); }
-    .login { display: flex; gap: .6rem; align-items: flex-end; max-width: 340px; margin-top: 1rem; }
-    .login .f { flex: 1; }
     .empty p.err { color: var(--bad); font-size: .8rem; min-height: 1.2em; }
+
+    /* ── Déverrouillage : fond flouté, points, secousse ── */
+    .bd { transition: filter .9s cubic-bezier(.2, .7, .2, 1); }
+    body.locked .bd { filter: blur(12px) saturate(.75); pointer-events: none; user-select: none; }
+    .lock { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(245, 240, 232, .35); animation: lockIn .35s ease both; }
+    .lock.out { animation: lockOut .38s ease forwards; }
+    @keyframes lockIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lockOut { to { opacity: 0; transform: scale(1.03); } }
+    .lock-box { background: var(--card); border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); width: min(360px, 100%); padding: 2rem 1.5rem 1.6rem; text-align: center; }
+    .lock-box h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 300; font-size: 2.6rem; line-height: 1; margin: .35rem 0 .5rem; }
+    .lock-box .sub { font-size: .8rem; }
+    .lock-box .err { color: var(--bad); font-size: .8rem; min-height: 1.3em; margin-top: .4rem; }
+    .pin-field { position: relative; display: block; width: fit-content; margin: 1.5rem auto .6rem; cursor: text; }
+    .pin-field input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; background: transparent; color: transparent; caret-color: transparent; font-size: 16px; cursor: text; }
+    .pin-dots { display: flex; align-items: center; justify-content: center; gap: .85rem; min-height: 2.6rem; padding: .6rem .9rem; }
+    .pin-field:focus-within .pin-dots { outline: 2px solid var(--info); outline-offset: 2px; }
+    .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--ink); transition: background .12s, border-color .2s, transform .12s; }
+    .pin-dot.on { background: var(--ink); transform: scale(1.1); }
+    .pin-field.bad .pin-dot { border-color: var(--bad); }
+    .pin-field.bad .pin-dot.on { background: var(--bad); }
+    .pin-field.ok .pin-dot { border-color: var(--ok); background: var(--ok); }
+    .pin-field.busy .pin-dot.on { animation: pinPulse .7s ease-in-out infinite alternate; }
+    .pin-field.shake { animation: pinShake .45s cubic-bezier(.36, .07, .19, .97) both; }
+    @keyframes pinPulse { to { opacity: .35; } }
+    @keyframes pinShake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-10px); } 30% { transform: translateX(9px); }
+      45% { transform: translateX(-7px); }  60% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }  90% { transform: translateX(2px); }
+    }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    .ghost-bar { height: 3.4rem; border: 1.5px dashed var(--ink3); margin-bottom: 1.25rem; }
+    .ghost-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1.75rem; }
+    @media (min-width: 720px)  { .ghost-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
+    @media (min-width: 1100px) { .ghost-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    .ghost-tiles i { display: block; height: 5.4rem; border: 1.5px solid var(--ink); background: linear-gradient(var(--ink3), var(--ink3)) .9rem 1rem / 45% 6px no-repeat, linear-gradient(var(--ink), var(--ink)) .9rem 2.1rem / 62% 15px no-repeat, var(--card); }
+    .ghost-chart svg { display: block; width: 100%; height: 230px; }
+    .ghost-block { height: 280px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bd { transition: none; }
+      .lock, .lock.out, .pin-field.shake, .pin-field.busy .pin-dot.on { animation: none; }
+    }
     .msg { border: 1px solid var(--ink3); border-left: 4px solid var(--ok); background: var(--card); padding: .6rem .85rem; font-size: .85rem; margin-bottom: 1.25rem; }
     .msg.bad { border-left-color: var(--bad); }
     .upd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; border: 1.5px dashed var(--ink); padding: .8rem 1rem; margin-bottom: 1.25rem; font-size: .85rem; transition: background .15s; }
@@ -202,7 +244,7 @@
   </style>
 </head>
 <body>
-<main class="bd">
+<main class="bd" id="bdMain">
 
   <header class="bd-head">
     <div>
@@ -222,15 +264,18 @@
 
   <p class="bd-loading" id="bdLoading">Connexion…</p>
 
-  <section class="card empty" id="bdLogin" hidden>
-    <h2>Accès protégé</h2>
-    <p>Entre ton code pour afficher tes données.</p>
-    <form class="login" id="bdLoginForm" autocomplete="off">
-      <label class="f"><span>Code</span><input class="inp num" id="bdPin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" required></label>
-      <button type="submit" class="btn">Déverrouiller</button>
-    </form>
-    <p class="err" id="bdLoginErr" role="alert"></p>
-  </section>
+  <div id="bdGhost" aria-hidden="true" hidden>
+    <div class="ghost-bar"></div>
+    <div class="ghost-tiles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="card ghost-chart">
+      <svg viewBox="0 0 600 230" preserveAspectRatio="none">
+        <path d="M0,70 C50,80 80,120 140,112 S240,80 300,96 S410,60 460,74 S550,50 600,58" fill="none" stroke="#6B1A1A" stroke-opacity=".35" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <path d="M0,70 C50,92 90,140 150,136 S250,118 310,132 S420,108 470,124 S560,104 600,116" fill="none" stroke="#9C4A2A" stroke-width="3" vector-effect="non-scaling-stroke"/>
+        <line x1="0" x2="600" y1="190" y2="190" stroke="#B3261E" stroke-width="1.5" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+    <div class="cols"><div class="card ghost-block"></div><div class="card ghost-block"></div></div>
+  </div>
 
   <section class="card empty" id="bdEmpty" hidden>
     <h2>Aucune donnée enregistrée</h2>
@@ -349,6 +394,23 @@
   </div>
 </main>
 
+<div class="lock" id="bdLogin" hidden>
+  <div class="lock-box" role="dialog" aria-modal="true" aria-labelledby="bdLockTitle" aria-describedby="bdLockSub">
+    <div class="eyebrow">Accès protégé</div>
+    <h2 id="bdLockTitle">Budget</h2>
+    <p class="sub" id="bdLockSub">Entre ton code pour dévoiler tes données.</p>
+    <form id="bdLoginForm" autocomplete="off">
+      <label class="pin-field" id="bdPinField">
+        <span class="sr">Code d'accès</span>
+        <input id="bdPin" type="password" autocomplete="current-password" maxlength="12" aria-describedby="bdLoginErr">
+        <span class="pin-dots" id="bdDots" aria-hidden="true"></span>
+      </label>
+      <button type="submit" class="btn" id="bdPinGo" hidden>Déverrouiller</button>
+    </form>
+    <p class="err" id="bdLoginErr" role="alert"></p>
+  </div>
+</div>
+
 <input type="file" id="bdFile" accept=".json,.xlsx,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 
 <script src="/nav.js"></script>
@@ -358,7 +420,7 @@
 
   var API    = '/api/budget';
   var UI_KEY = 'budget_ui_v1';
-  var PANES  = ['bdLoading', 'bdLogin', 'bdEmpty', 'bdError', 'bdApp'];
+  var PANES  = ['bdLoading', 'bdGhost', 'bdEmpty', 'bdError', 'bdApp'];
   var TIERS  = ['Incompressible', 'Vital', 'Confort', 'Luxe'];
   var TCOL   = ['#6B1A1A', '#9C4A2A', '#B8733A', '#A8864C'];
   var C_BAD = '#B3261E', C_INFO = '#2E5E8C', C_OK = '#2E6B3F', C_INK = '#6B1A1A';
@@ -921,11 +983,92 @@
     if (id !== 'bdApp') $('bdAsof').textContent = '';
   }
   function showApp() { showOnly('bdApp'); renderAll(); }
+
+  /* ── Déverrouillage ── */
+  var pinInfo = { length: 0, numeric: false }, pinBusy = false;
+
+  function setPinInfo(p) {
+    if (p && p.length > 0 && p.length <= 12) pinInfo = { length: +p.length, numeric: !!p.numeric };
+  }
+  function renderDots() {
+    var typed = $('bdPin').value.length, n = pinInfo.length || Math.max(4, typed), h = '';
+    for (var i = 0; i < n; i++) h += '<span class="pin-dot' + (i < typed ? ' on' : '') + '"></span>';
+    $('bdDots').innerHTML = h;
+  }
   function showLogin(msg) {
-    showOnly('bdLogin');
+    if (!state || $('bdApp').hidden) showOnly('bdGhost');
+    var input = $('bdPin');
+    pinBusy = false;
+    input.readOnly = false;
+    input.value = '';
+    input.maxLength = pinInfo.length || 12;
+    input.setAttribute('inputmode', pinInfo.numeric ? 'numeric' : 'text');
+    $('bdPinGo').hidden = !!pinInfo.length;
+    $('bdPinField').className = 'pin-field';
     $('bdLoginErr').textContent = msg || '';
-    $('bdPin').value = '';
-    $('bdPin').focus();
+    renderDots();
+    document.body.classList.add('locked');
+    $('bdMain').inert = true;
+    var lock = $('bdLogin');
+    lock.classList.remove('out');
+    lock.hidden = false;
+    setTimeout(function () { input.focus(); }, 60);
+  }
+  function closeLock() {
+    var lock = $('bdLogin');
+    $('bdMain').inert = false;
+    void document.body.offsetWidth;
+    document.body.classList.remove('locked');
+    if (lock.hidden) return;
+    lock.classList.add('out');
+    setTimeout(function () { lock.hidden = true; lock.classList.remove('out'); pinBusy = false; }, 380);
+  }
+  function submitPin() {
+    var input = $('bdPin'), pin = pinInfo.numeric ? input.value : input.value.trim();
+    if (!pin || pinBusy) return;
+    pinBusy = true;
+    input.readOnly = true;
+    $('bdPinField').classList.add('busy');
+    $('bdLoginErr').textContent = '';
+    api('POST', { action: 'login', pin: pin }).then(function (r) {
+      if (r.status === 204) { loginOk(); return; }
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (d.pin) setPinInfo(d.pin);
+        var wait = d.retryAfter ? Math.ceil(d.retryAfter / 60) : 0;
+        loginFail(
+          r.status === 429 ? 'Trop d\'essais. Réessaie dans ' + wait + ' min.' :
+          r.status === 401 ? 'Code incorrect.' + (wait ? ' Accès bloqué ' + wait + ' min.' : '') :
+          'Erreur serveur (' + r.status + ').');
+      });
+    }).catch(function () { loginFail('Connexion impossible.'); });
+  }
+  function loginFail(msg) {
+    var input = $('bdPin'), field = $('bdPinField');
+    pinBusy = false;
+    input.readOnly = false;
+    field.classList.remove('busy', 'shake');
+    void field.offsetWidth;
+    field.classList.add('shake', 'bad');
+    if (navigator.vibrate) { try { navigator.vibrate([70, 50, 70]); } catch (e) {} }
+    $('bdLoginErr').textContent = msg;
+    setTimeout(function () { input.value = ''; renderDots(); input.focus(); }, 450);
+  }
+  function loginOk() {
+    var field = $('bdPinField');
+    field.classList.remove('busy');
+    field.classList.add('ok');
+    if (state && dirty) { showApp(); closeLock(); flush(); greet(); return; }
+    boot({ reveal: true });
+  }
+  function greet() {
+    if (!state) return;
+    var h = new Date().getHours(), hello = h >= 5 && h < 18 ? 'Bonjour' : 'Bonsoir';
+    var age = todayN() - toN(state.asOf);
+    var when = age <= 0 ? 'aujourd\'hui' : age === 1 ? 'hier' : 'il y a ' + age + ' jours';
+    var txt = hello + ', bon retour ! Solde actualisé ' + when + '.';
+    if (age > 20) txt += ' Pense à déposer un export bancaire récent.';
+    else if (calc && calc.sel.cross !== null) txt += ' Attention : passage sous le seuil prévu le ' + fDate(calc.sel.cross) + '.';
+    notify(txt);
   }
   function notify(text, bad) {
     var m = $('bdMsg');
@@ -936,14 +1079,25 @@
     notify.t = setTimeout(function () { m.hidden = true; }, 9000);
   }
 
-  function boot() {
-    showOnly('bdLoading');
+  function boot(opts) {
+    var reveal = !!(opts && opts.reveal);
+    if (!reveal) showOnly('bdLoading');
     api('GET').then(function (r) {
-      if (r.status === 200) return r.json().then(function (d) { state = normalize(d); dirty = false; showApp(); setSync('Enregistré ✓'); });
-      if (r.status === 404) { state = null; showOnly('bdEmpty'); return; }
-      if (r.status === 401) { showLogin(); return; }
+      if (r.status === 200) return r.json().then(function (d) {
+        state = normalize(d);
+        dirty = false;
+        showApp();
+        setSync('Enregistré ✓');
+        if (reveal) { closeLock(); greet(); }
+      });
+      if (r.status === 404) { state = null; showOnly('bdEmpty'); closeLock(); return; }
+      if (r.status === 401) return r.json().catch(function () { return {}; }).then(function (d) {
+        if (d.pin) setPinInfo(d.pin);
+        showLogin(reveal ? 'Session refusée par le navigateur : vérifie que les cookies sont autorisés.' : '');
+      });
       throw new Error(r.status === 503 ? 'L\'espace de stockage privé n\'est pas encore configuré sur Vercel.' : 'Erreur serveur (' + r.status + ').');
     }).catch(function (err) {
+      closeLock();
       $('bdErrorMsg').textContent = err && err.message ? err.message : 'Connexion impossible.';
       showOnly('bdError');
     });
@@ -1121,25 +1275,15 @@
       readFile(e.dataTransfer && e.dataTransfer.files[0]);
     });
 
-    $('bdLoginForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var pin = $('bdPin').value.trim(), btn = this.querySelector('button');
-      if (!pin) return;
-      btn.disabled = true;
+    $('bdLoginForm').addEventListener('submit', function (e) { e.preventDefault(); submitPin(); });
+    $('bdPin').addEventListener('input', function () {
+      if (pinBusy) return;
+      if (pinInfo.numeric) this.value = this.value.replace(/\D/g, '');
+      if (pinInfo.length && this.value.length > pinInfo.length) this.value = this.value.slice(0, pinInfo.length);
+      $('bdPinField').classList.remove('bad', 'shake');
       $('bdLoginErr').textContent = '';
-      api('POST', { action: 'login', pin: pin }).then(function (r) {
-        btn.disabled = false;
-        if (r.status === 204) { if (state && dirty) { showApp(); flush(); } else boot(); return; }
-        return r.json().catch(function () { return {}; }).then(function (d) {
-          var wait = d.retryAfter ? Math.ceil(d.retryAfter / 60) : 0;
-          $('bdLoginErr').textContent =
-            r.status === 429 ? 'Trop d\'essais. Réessaie dans ' + wait + ' min.' :
-            r.status === 401 ? 'Code incorrect.' + (wait ? ' Accès bloqué ' + wait + ' min.' : '') :
-            'Erreur serveur (' + r.status + ').';
-          $('bdPin').value = '';
-          $('bdPin').focus();
-        });
-      }).catch(function () { btn.disabled = false; $('bdLoginErr').textContent = 'Connexion impossible.'; });
+      renderDots();
+      if (pinInfo.length && this.value.length === pinInfo.length) submitPin();
     });
 
     $('bdLogout').addEventListener('click', function () {

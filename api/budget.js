@@ -39,6 +39,10 @@ function getCookie(req) {
 function setCookie(res, value, maxAge) {
   res.setHeader('Set-Cookie', COOKIE + '=' + value + '; Path=/api/budget; HttpOnly; Secure; SameSite=Strict; Max-Age=' + maxAge);
 }
+function pinInfo() {
+  var p = String(process.env.BUDGET_PIN || '');
+  return { length: p.length, numeric: /^\d+$/.test(p) };
+}
 function parseBody(req) {
   var b = req.body;
   if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = null; } }
@@ -66,7 +70,7 @@ async function login(res, pin) {
     var mins = lock.fails >= 10 ? 1440 : lock.fails >= 5 ? 15 : 0;
     lock.until = mins ? now + mins * 60000 : 0;
     await writeJson(LOCK_PATH, lock);
-    return res.status(401).json({ error: 'pin', retryAfter: mins * 60 });
+    return res.status(401).json({ error: 'pin', retryAfter: mins * 60, pin: pinInfo() });
   }
 
   if (lock.fails) await writeJson(LOCK_PATH, { fails: 0, until: 0 });
@@ -90,7 +94,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'action' });
     }
 
-    if (!checkToken(getCookie(req))) return res.status(401).json({ error: 'auth' });
+    if (!checkToken(getCookie(req))) return res.status(401).json({ error: 'auth', pin: pinInfo() });
 
     if (req.method === 'GET') {
       var data = await readJson(DATA_PATH);
