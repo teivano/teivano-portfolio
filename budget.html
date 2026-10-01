@@ -238,6 +238,75 @@
     .upd .late { color: var(--warn); }
     body.dragging .upd, body.dragging .drop { background: var(--ink4); }
 
+    /* ── Trajectoire (carte principale) ── */
+    .hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem 1.5rem; margin-bottom: .8rem; }
+    .hero-l { min-width: 0; }
+    .hero-v { font-weight: 500; font-size: clamp(2.3rem, 7vw, 3.6rem); letter-spacing: -.03em; line-height: 1.02; margin: .3rem 0 .25rem; }
+    .hero-d { font-size: .88rem; font-weight: 500; min-height: 1.3em; }
+    .hero-d.up { color: var(--ok); }
+    .hero-d.down { color: var(--bad); }
+    .hero-f { font-size: .75rem; color: var(--ink2); margin-top: .2rem; min-height: 1.2em; }
+    .ranges, .months { display: flex; gap: .35rem; margin-top: .75rem; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .months { margin: 0 0 1.1rem; }
+    .range { flex: none; background: none; border: 1.5px solid var(--ink3); color: var(--ink); font-size: .7rem; font-weight: 500; letter-spacing: .06em; padding: .45rem .8rem; min-height: 36px; cursor: pointer; }
+    .range:hover { border-color: var(--ink); }
+    .range[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+    .range:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+    .chart .tl { font-size: 10px; fill: #2E5E8C; }
+    .chart .today { font-size: 10px; fill: #6B1A1A; font-weight: 500; }
+    .sw.dashc { background: repeating-linear-gradient(90deg, var(--c) 0 5px, transparent 5px 8px); }
+    .sw.band { height: 10px; background: rgba(46, 94, 140, .16); }
+
+    /* ── Réel vs budget ── */
+    .act-sum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem 1rem; margin-bottom: 1.2rem; }
+    @media (min-width: 720px) { .act-sum { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1100px) { .act-sum { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+    .act-sum > div { border-left: 3px solid var(--ink3); padding-left: .65rem; min-width: 0; }
+    .act-sum > div.bad { border-left-color: var(--bad); }
+    .act-sum > div.ok { border-left-color: var(--ok); }
+    .act-sum .k { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); }
+    .act-sum .v { font-size: 1.15rem; font-weight: 500; margin: .15rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .act-sum .h { font-size: .68rem; color: var(--ink2); }
+    .act-row { display: grid; grid-template-columns: minmax(0, 10rem) minmax(0, 1fr) 9rem 3.6rem; gap: .8rem; align-items: center; padding: .4rem 0; border-bottom: 1px solid var(--ink4); font-size: .82rem; }
+    .act-l { overflow-wrap: anywhere; }
+    .act-bar { position: relative; height: 10px; background: var(--ink4); }
+    .act-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); }
+    .act-bar i.over { background: var(--bad); }
+    .act-bar b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+    .act-v, .act-d { text-align: right; white-space: nowrap; }
+    .act-d { font-weight: 500; }
+    .act-d.over { color: var(--bad); }
+    .act-d.under { color: var(--ok); }
+    @media (max-width: 600px) {
+      .act-row { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "l v d" "b b b"; gap: .35rem .7rem; }
+      .act-l { grid-area: l; } .act-v { grid-area: v; } .act-d { grid-area: d; } .act-bar { grid-area: b; }
+    }
+    .unk { margin-top: 1.4rem; }
+    .unk:empty { display: none; }
+    .unk-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 11rem); gap: .6rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid var(--ink4); font-size: .82rem; }
+    .unk-row span:first-child { overflow-wrap: anywhere; }
+    .unk-row select.inp { min-height: 34px; padding: .25rem 1.6rem .25rem .45rem; font-size: .78rem; }
+    @media (max-width: 520px) { .unk-row { grid-template-columns: minmax(0, 1fr) auto; } .unk-row select { grid-column: 1 / -1; } }
+
+    /* ── Voyages ── */
+    .trips { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 1rem; }
+    .trip { border: 1.5px solid var(--ink); background: var(--bg); padding: 1rem; display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+    .trip.sugg { border-style: dashed; }
+    .trip-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .7rem; color: var(--ink2); }
+    .badge { font-size: .55rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; border: 1px solid currentColor; padding: .05rem .35rem; white-space: nowrap; }
+    .badge.sugg { color: var(--info); }
+    .badge.ok { color: var(--ok); }
+    .trip-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.55rem; line-height: 1.1; background: none; border: none; border-bottom: 1px dashed transparent; width: 100%; color: var(--ink); padding: 0; border-radius: 0; }
+    .trip-name:hover, .trip-name:focus { border-bottom-color: var(--ink3); outline: none; }
+    .trip-total { font-size: 1.5rem; font-weight: 500; }
+    .trip-pd { font-size: .74rem; color: var(--ink2); margin-top: -.35rem; }
+    .trip-bar { display: flex; height: 8px; background: var(--ink4); overflow: hidden; }
+    .trip-bar span { display: block; height: 100%; }
+    .trip-leg { display: flex; flex-wrap: wrap; gap: .2rem .75rem; font-size: .68rem; color: var(--ink2); }
+    .trip-leg i { display: inline-block; width: 8px; height: 8px; margin-right: .3rem; vertical-align: middle; }
+    .trip-act { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .25rem; }
+    .trip-act .btn { min-height: 34px; padding: .35rem .6rem; font-size: .6rem; }
+
     /* ── Mode discret ── */
     body.discreet .amt-in { filter: blur(6px); }
     body.discreet .amt-in:focus { filter: none; }
@@ -265,8 +334,6 @@
   <p class="bd-loading" id="bdLoading">Connexion…</p>
 
   <div id="bdGhost" aria-hidden="true" hidden>
-    <div class="ghost-bar"></div>
-    <div class="ghost-tiles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="card ghost-chart">
       <svg viewBox="0 0 600 230" preserveAspectRatio="none">
         <path d="M0,70 C50,80 80,120 140,112 S240,80 300,96 S410,60 460,74 S550,50 600,58" fill="none" stroke="#6B1A1A" stroke-opacity=".35" stroke-width="2" vector-effect="non-scaling-stroke"/>
@@ -274,6 +341,8 @@
         <line x1="0" x2="600" y1="190" y2="190" stroke="#B3261E" stroke-width="1.5" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>
       </svg>
     </div>
+    <div class="ghost-bar"></div>
+    <div class="ghost-tiles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="cols"><div class="card ghost-block"></div><div class="card ghost-block"></div></div>
   </div>
 
@@ -291,6 +360,29 @@
   </section>
 
   <div id="bdApp" hidden>
+    <section class="card hero-card" aria-label="Trajectoire du solde">
+      <div class="hero">
+        <div class="hero-l">
+          <div class="eyebrow" id="bdHeroL">Solde aujourd'hui</div>
+          <div class="hero-v num" id="bdHeroV">—</div>
+          <div class="hero-d num" id="bdHeroD"></div>
+          <div class="hero-f num" id="bdHeroF"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="bdOthers"> Autres paliers</label>
+      </div>
+      <div class="chart" id="bdChart">
+        <div id="bdSvg"></div>
+        <div class="tip" id="bdTip" aria-hidden="true"></div>
+      </div>
+      <div class="ranges" role="group" aria-label="Période affichée">
+        <button type="button" class="range" data-range="3">±3 mois</button>
+        <button type="button" class="range" data-range="6">±6 mois</button>
+        <button type="button" class="range" data-range="12">±1 an</button>
+        <button type="button" class="range" data-range="all">Tout</button>
+      </div>
+      <div class="marks" id="bdMarks"></div>
+    </section>
+
     <div class="upd">
       <div><b>Mise à jour</b><span id="bdUpdTxt"></span></div>
       <button type="button" class="btn" id="bdImport">Importer l'export bancaire (.xlsx)</button>
@@ -301,27 +393,34 @@
     <section class="card">
       <div class="card-h">
         <div>
+          <h2>Réel vs budget</h2>
+          <p class="sub" id="bdActSub">Tes dépenses réelles, poste par poste, hors voyages.</p>
+        </div>
+      </div>
+      <div id="bdActual"></div>
+      <div class="unk" id="bdUnk"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <div>
+          <h2>Voyages</h2>
+          <p class="sub" id="bdTripsSub"></p>
+        </div>
+        <button type="button" class="btn btn-sm" id="bdTripsAll" hidden>Tout confirmer</button>
+      </div>
+      <div class="trips" id="bdTrips"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-h">
+        <div>
           <h2>Paliers</h2>
           <p class="sub">Clique un palier pour le simuler. Barres = dépenses mensuelles cumulées · % = couverture par l'ARE.</p>
         </div>
       </div>
       <div class="ladder" id="bdLadder" role="radiogroup" aria-label="Palier simulé"></div>
       <div class="legend" id="bdLadderLegend"></div>
-    </section>
-
-    <section class="card">
-      <div class="card-h">
-        <div>
-          <h2>Trajectoire du solde</h2>
-          <p class="sub" id="bdChartSub"></p>
-        </div>
-        <label class="chk"><input type="checkbox" id="bdOthers"> Afficher les autres paliers</label>
-      </div>
-      <div class="chart" id="bdChart">
-        <div id="bdSvg"></div>
-        <div class="tip" id="bdTip" aria-hidden="true"></div>
-      </div>
-      <div class="marks" id="bdMarks"></div>
     </section>
 
     <div class="cols">
@@ -427,7 +526,7 @@
   var DAY    = 864e5;
 
   var state = null;
-  var ui    = { discreet: false, others: true };
+  var ui    = { discreet: false, others: true, range: '3' };
   var calc  = null;
   var geo   = null;
 
@@ -518,7 +617,11 @@
   function loadUi() {
     try {
       var s = JSON.parse(localStorage.getItem(UI_KEY) || 'null');
-      if (s) { ui.discreet = !!s.discreet; ui.others = s.others !== false; }
+      if (s) {
+        ui.discreet = !!s.discreet;
+        ui.others = s.others !== false;
+        ui.range = RANGE_M[s.range] != null ? s.range : '3';
+      }
     } catch (e) {}
   }
   function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {} }
@@ -557,8 +660,25 @@
     };
     s.are.enabled = !!s.are.enabled;
     s.job.enabled = !!s.job.enabled;
+
+    var h = o.history;
+    s.history = h && isFinite(h.start) && Array.isArray(h.bal) && h.bal.length ? { start: +h.start, bal: h.bal.map(Number) } : null;
+    s.actuals = isObj(o.actuals) ? o.actuals : {};
+    s.rules = isObj(o.rules) ? o.rules : {};
+    s.names = isObj(o.names) ? o.names : {};
+    s.home = Array.isArray(o.home) ? o.home.map(String).slice(0, 500) : [];
+    s.trips = (Array.isArray(o.trips) ? o.trips : []).filter(function (t) { return t && isFinite(t.start) && isFinite(t.end); }).map(function (t) {
+      return {
+        id: String(t.id || uid()), start: +t.start, end: +t.end, first: isFinite(t.first) ? +t.first : +t.start,
+        name: String(t.name || 'Voyage'), named: !!t.named, merged: !!t.merged,
+        places: Array.isArray(t.places) ? t.places.map(String) : [],
+        total: num(t.total), types: isObj(t.types) ? t.types : {}, alloc: isObj(t.alloc) ? t.alloc : {},
+        status: ['suggested', 'confirmed', 'dismissed'].indexOf(t.status) >= 0 ? t.status : 'suggested'
+      };
+    });
     return s;
   }
+  function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
 
   /* ── Moteur de simulation (pas journalier) ── */
   function simulate(tier, endN, noJob) {
@@ -654,6 +774,353 @@
     return list.sort(function (a, b) { return a[0] - b[0]; });
   }
 
+  /* ── Opérations bancaires : classement, historique, voyages ── */
+  var ONLINE  = /APPLE|MICROSOFT|GOOGLE|YOUTUBE|LINKEDIN|SWILE|VINTED|AMAZON|PAYPAL|SHOTGUN|INGENUITY|SUMUP|WWW|NETFLIX|SPOTIFY|ANTHROPIC|CLAUDE|ALIEXPRESS|SHOWROOM|DEEZER|DISNEY|UBER EATS|DELIVEROO|KEOLIS/;
+  var TRAVEL  = /VINCI|APRR|SANEF|\bASF\b|COFIROUTE|PEAGE|AUTOROUTE|HOTEL|AIRBNB|BOOKING|AIR FRANCE|AIR TAHITI|FRENCH BEE|TRANSAVIA|EASYJET|RYANAIR|VOLOTEA|CAMPING|SIXT|HERTZ|EUROPCAR|\bAVIS\b/;
+  var PREBOOK = /HOTEL|AIRBNB|BOOKING|AIR FRANCE|AIR TAHITI|FRENCH BEE|TRANSAVIA|EASYJET|RYANAIR|VOLOTEA|CAMPING/;
+  var GENERIC = {};
+  ('SARL SAS EURL CASINO CHAMPION STATION AVIA TOTAL ESSO DYNEFF SHELL LIDL INTERMARCHE CARREFOUR LECLERC MAGIC SERVICE SERVICES ' +
+   'RESTAURANT HOTEL CAFE PARKING VINCI AUTOROUTES FRENCH EXPRESS SUPER MARKET BOULANGERIE PHARMACIE SAINT SAINTE MIXTE REGIE ' +
+   'RECETTE PAIEMENT CARTE TEKOA CHEZ SNACK AQUARIUM DUNE STORE SHOP').split(' ').forEach(function (w) { GENERIC[w] = 1; });
+
+  var AUTO = [
+    [/\bPRET\b/, 'prets'],
+    [/COTISATION CARTE|COTISATION OFFRE/, 'carte'],
+    [/MAAF/, 'assu-veh'],
+    [/\bEDF\b/, 'edf'],
+    [/BOUYGUES/, 'bouygues'],
+    [/PACIFICA|ASSURANCE HABITATION/, 'habitation'],
+    [/SURAVENIR/, 'suravenir'],
+    [/SYNDIC|\bCOPRO|FONCIA|NEXITY|CITYA/, 'copro'],
+    [/IMPOTS|DGFIP|FINANCES PUBLIQUES|DIRECTION GENERALE DES FINANCES|TRESORERIE|AMENDES/, '_hors'],
+    [/ANTHROPIC|CLAUDE/, 'claude'],
+    [/BASIC FIT|MICROSOFT|GOOGLE|YOUTUBE|APPLE|NETFLIX|SPOTIFY|DISNEY|DEEZER|CANAL/, 'abos'],
+    [/PADEL|URBAN ?SOCCER|SQUASH|\bFIVE\b/, 'sport'],
+    [/BARBER|COIFF/, 'coiffeur'],
+    [/PHARMA|DOCTOLIB|MEDEC|DENTI|LABO|OPTIC|KINE|OSTEO/, 'sante'],
+    [/\bAVIA\b|TOTAL|ESSO|DYNEFF|SHELL|\bBP\b|AGIP|CARBU/, 'essence'],
+    [/LECLERC|LIDL|SUPER U|U EXPRESS|\bHYPER\b|INTERMARCH|CARREFOUR|AUCHAN|MONOPRIX|FRANPRIX|CASINO|BIOCOOP|ALDI|NETTO|SPAR|PICARD|CHAMPION|GRAND FRAIS|\bALIM\b/, 'courses'],
+    [/\bBAR\b|\bPUB\b|BRASSERIE|DISCOTHEQUE|NIGHT CLUB|\bCLUB\b|GUINGUETTE|SHOTGUN/, 'soirees'],
+    [/MC ?DONALD|BURGER|KFC|SUBWAY|PIZZ|RESTAU|CREPERIE|SUSHI|KEBAB|BISTRO|UBER EATS|DELIVEROO|TACOS|BOULANG|SWILE/, 'restos'],
+    [/ZARA|VINTED|\bACTION\b|AMAZON|ALIEXPRESS|IKEA|SHOWROOM|VEEPEE|DECATHLON|FNAC|DARTY|BOULANGER|CONFORAMA|CULTURA|SEPHORA|COURIR|\bLEGO\b|UNIQLO|KIABI|UNDIZ|ZALANDO|LEROY MERLIN|CASTORAMA|LA POSTE|KEOLIS|SNCF|NAVIGO|CITEDIA|INDIGO|PARKING|\bUBER\b|BLABLACAR|DRFIP|NORAUTO|SPEEDY|LINKEDIN|RETRAIT/, '_hors']
+  ];
+
+  var TYPES = {
+    transport:   ['Transport', '#2E5E8C', /VINCI|APRR|SANEF|\bASF\b|COFIROUTE|PEAGE|AUTOROUTE|\bAVIA\b|TOTAL|ESSO|DYNEFF|SHELL|\bBP\b|AGIP|STATION|CARBU|\bAIR\b|FRENCH BEE|TRANSAVIA|EASYJET|RYANAIR|VOLOTEA|SNCF|SIXT|HERTZ|EUROPCAR|\bAVIS\b|UBER|TAXI|WAYMO|PARKING|INDIGO|METRO|NAVIGO|FERRY/],
+    hebergement: ['Hébergement', '#6B1A1A', /HOTEL|AIRBNB|BOOKING|CAMPING|GITE|HOSTEL|IBIS|NOVOTEL|MERCURE|PENSION|LODGE|RESORT/],
+    restos:      ['Restos & bars', '#B8733A', /RESTAU|BRASSERIE|\bBAR\b|\bPUB\b|CAFE|PIZZ|BURGER|MC ?DONALD|KFC|SUSHI|CREPERIE|BISTRO|SNACK|FRINGALE|GLACE|BOULANG|TRAITEUR|ROULOTTE/],
+    courses:     ['Courses', '#A8864C', /LECLERC|LIDL|SUPER U|U EXPRESS|HYPER U|INTERMARCH|CARREFOUR|AUCHAN|MONOPRIX|FRANPRIX|CASINO|CHAMPION|SPAR|ALDI|NETTO|MARKET|SUPERETTE|EPICERIE/],
+    activites:   ['Activités', '#2E6B3F', /AQUARIUM|MUSEE|MUSEUM|PARC|DUNE|PLAGE|SURF|KAYAK|PLONGEE|DIVING|ZOO|CINEMA|ASTERIX|TICKET|EXCURSION|\bTOUR\b|LOCATION|RECETTE/],
+    autres:      ['Autres', '#9A8F86', null]
+  };
+
+  function cleanKey(s) {
+    return String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim();
+  }
+  function words(s) { return cleanKey(s).match(/[A-Z]{3,}/g) || []; }
+  function titleCase(s) {
+    return String(s).toLowerCase().replace(/(^|[\s\-'])([a-zà-ÿ])/g, function (m, a, b) { return a + b.toUpperCase(); });
+  }
+  function monthKey(n) { var o = ymd(n); return o.y + '-' + pad(o.m); }
+  function sumDebit(list) { return list.reduce(function (s, o) { return s + o.debit; }, 0); }
+  function itemById(id) { return findById(state.items, id); }
+
+  function parseOp(o) {
+    var line = String(o.label).split('\n')[0].trim(), m, p;
+    var r = { n: o.n, day: o.n, debit: o.debit, credit: o.credit, kind: 'other', key: '', name: '', place: '', text: cleanKey(line) };
+    if ((m = /^Paiement par carte - X\d{4} (.{1,20}?)\s*(\d\d)\/(\d\d)(?: - (.*))?$/.exec(line))) {
+      var y = ymd(o.n).y, d = dn(y, +m[3], +m[2]);
+      if (d > o.n) d = dn(y - 1, +m[3], +m[2]);
+      r.kind = 'card'; r.place = cleanKey(m[1]); r.day = d; r.brand = cleanKey(m[4] || '');
+      r.name = (m[4] || '').trim() || titleCase(m[1].trim());
+      r.key = cleanKey(m[4] || m[1]).slice(0, 32);
+    } else if (/^Remboursement de pr/i.test(line)) { r.kind = 'loan'; r.key = 'PRET'; r.name = 'Remboursement de prêt'; }
+    else if (/^Cotisation/i.test(line)) { r.kind = 'fee'; r.key = 'COTISATION CARTE'; r.name = 'Cotisation bancaire'; }
+    else if (/^Pr.l.vement/i.test(line)) {
+      p = line.split(' - ');
+      r.kind = 'debit'; r.name = (p[2] && !/^\d/.test(p[2]) ? p[2] : p[1] || line).trim(); r.key = cleanKey(r.name).slice(0, 32);
+    } else if ((m = /^Virement .mis.*?vers (.+)$/i.exec(line))) { r.kind = 'transfer'; r.name = 'Virement à ' + m[1].trim(); r.key = cleanKey('VIR ' + m[1]).slice(0, 32); }
+    else if (/^Retrait/i.test(line)) { r.kind = 'cash'; r.key = 'RETRAIT'; r.name = 'Retraits d\'espèces'; }
+    else { r.name = line.split(' - ')[0]; r.key = cleanKey(r.name).slice(0, 32); }
+    return r;
+  }
+
+  function classify(op) {
+    if (op.key && state.rules[op.key]) return state.rules[op.key];
+    var s = op.key + ' | ' + op.text;
+    for (var i = 0; i < AUTO.length; i++) {
+      if (AUTO[i][0].test(s)) { var t = AUTO[i][1]; if (t === '_hors' || itemById(t)) return t; }
+    }
+    return '_unk';
+  }
+
+  function addAmt(M, cat, amt, op) {
+    if (cat === '_ignore' || !amt) return;
+    if (cat === '_hors') M.hors = round2((M.hors || 0) + amt);
+    else if (cat === '_unk') {
+      M.unk = M.unk || {};
+      M.unk[op.key] = round2((M.unk[op.key] || 0) + amt);
+      if (op.name) state.names[op.key] = op.name;
+    } else {
+      M.p = M.p || {};
+      M.p[cat] = round2((M.p[cat] || 0) + amt);
+    }
+  }
+  function addAlloc(target, A) {
+    Object.keys(A.p || {}).forEach(function (c) { addAmt(target, c, A.p[c]); });
+    if (A.hors) addAmt(target, '_hors', A.hors);
+    Object.keys(A.unk || {}).forEach(function (k) { addAmt(target, '_unk', A.unk[k], { key: k, name: state.names[k] }); });
+  }
+
+  function tripType(text) {
+    for (var k in TYPES) if (TYPES[k][2] && TYPES[k][2].test(text)) return k;
+    return 'autres';
+  }
+
+  function buildHistory(balance, endN, fromN, ops) {
+    var net = {}, start = fromN - 1, arr = [], bal = balance, n;
+    ops.forEach(function (o) { net[o.n] = (net[o.n] || 0) + (o.credit || 0) - (o.debit || 0); });
+    for (n = endN; n >= start; n--) { arr.push(round2(bal)); bal -= net[n] || 0; }
+    return { start: start, bal: arr.reverse() };
+  }
+  function mergeHistory(h) {
+    var map = {}, lo = h.start, hi = h.start + h.bal.length - 1, old = state.history, i, n, last = null, arr = [];
+    if (old) {
+      for (i = 0; i < old.bal.length; i++) map[old.start + i] = old.bal[i];
+      lo = Math.min(lo, old.start); hi = Math.max(hi, old.start + old.bal.length - 1);
+    }
+    for (i = 0; i < h.bal.length; i++) map[h.start + i] = h.bal[i];
+    for (n = lo; n <= hi; n++) { if (map[n] != null) last = map[n]; arr.push(last); }
+    state.history = { start: lo, bal: arr };
+  }
+
+  function tripPlaces(ops, home) {
+    var score = {}, order = [];
+    ops.forEach(function (o) {
+      var ws = words(o.place), brand = o.brand ? words(o.brand) : [];
+      ws.forEach(function (w, k) {
+        if (home[w] || GENERIC[w] || w.length < 4 || brand.indexOf(w) >= 0) return;
+        if (score[w] == null) { order.push(w); score[w] = 0; }
+        score[w] += 1 + (k === ws.length - 1 ? 1.5 : 0);
+      });
+    });
+    var out = [];
+    order.slice().sort(function (a, b) { return score[b] - score[a] || order.indexOf(a) - order.indexOf(b); }).forEach(function (w) {
+      for (var i = 0; i < out.length; i++) {
+        if (out[i].indexOf(w) === 0) return;
+        if (w.indexOf(out[i]) === 0) { out[i] = w; return; }
+      }
+      out.push(w);
+    });
+    return out.slice(0, 4);
+  }
+  function tripName(places, order) {
+    var top = places.slice(0, 2).sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+    return top.length ? top.map(titleCase).join(' → ') : 'Voyage';
+  }
+
+  function detectTrips(ops) {
+    var cards = ops.filter(function (o) { return o.kind === 'card' && o.debit > 0; });
+    var tokM = {}, merM = {}, home = {}, i;
+    cards.forEach(function (o) {
+      var mk = monthKey(o.day);
+      words(o.place).forEach(function (w) { (tokM[w] = tokM[w] || {})[mk] = 1; });
+      (merM[o.key] = merM[o.key] || {})[mk] = 1;
+    });
+    state.home.forEach(function (w) { home[w] = 1; });
+    Object.keys(tokM).forEach(function (w) { if (Object.keys(tokM[w]).length >= 3) home[w] = 1; });
+    state.home = Object.keys(home).slice(0, 500);
+
+    var away = cards.filter(function (o) {
+      if (ONLINE.test(o.text)) return false;
+      if (TRAVEL.test(o.text)) return true;
+      if (Object.keys(merM[o.key] || {}).length >= 3) return false;
+      var ws = words(o.place);
+      return ws.length > 0 && !ws.some(function (w) { return home[w]; });
+    }).sort(function (a, b) { return a.day - b.day; });
+
+    var cl = [], cur = null;
+    away.forEach(function (o) {
+      if (cur && o.day - cur.end <= 3) { cur.end = Math.max(cur.end, o.day); cur.ops.push(o); }
+      else { cur = { start: o.day, end: o.day, ops: [o], pre: [] }; cl.push(cur); }
+    });
+
+    var isPre = function (c) {
+      var bk = c.ops.filter(function (o) { return PREBOOK.test(o.text); }), pre = sumDebit(bk);
+      return pre > 0 && pre >= sumDebit(c.ops) * 0.5 && c.ops.length - bk.length <= 2;
+    };
+    var isTrip = function (c) {
+      var days = c.end - c.start + 1, hasT = c.ops.some(function (o) { return TRAVEL.test(o.text); });
+      return (c.ops.length >= 3 && (days >= 2 || hasT)) || (hasT && c.ops.length >= 2);
+    };
+    cl = cl.filter(function (c) { return isTrip(c) || isPre(c); });
+
+    for (i = cl.length - 1; i > 0; i--) {
+      var a = tripPlaces(cl[i - 1].ops, home), b = tripPlaces(cl[i].ops, home);
+      if (cl[i].start - cl[i - 1].end <= 10 && !isPre(cl[i - 1]) && a.some(function (w) { return b.indexOf(w) >= 0; })) {
+        cl[i - 1].end = Math.max(cl[i - 1].end, cl[i].end);
+        cl[i - 1].ops = cl[i - 1].ops.concat(cl[i].ops);
+        cl.splice(i, 1);
+      }
+    }
+
+    var out = [];
+    for (i = 0; i < cl.length; i++) {
+      var c = cl[i], next = cl[i + 1];
+      if (next && isPre(c) && next.start - c.end <= 45) { next.pre = next.pre.concat(c.pre, c.ops); continue; }
+      if (isTrip(c)) out.push(buildTrip(c, home));
+    }
+    return out;
+  }
+
+  function buildTrip(c, home) {
+    var all = c.ops.concat(c.pre), types = {}, alloc = {}, total = 0, order = [];
+    all.forEach(function (o) {
+      total += o.debit;
+      var ty = tripType(o.text);
+      types[ty] = round2((types[ty] || 0) + o.debit);
+      var mk = monthKey(o.day);
+      addAmt(alloc[mk] = alloc[mk] || {}, classify(o), o.debit, o);
+    });
+    c.ops.forEach(function (o) { words(o.place).forEach(function (w) { if (order.indexOf(w) < 0) order.push(w); }); });
+    var places = tripPlaces(c.ops, home);
+    var first = all.reduce(function (m, o) { return Math.min(m, o.day); }, c.start);
+    return { start: c.start, end: c.end, first: first, name: tripName(places, order), places: places.map(titleCase), total: round2(total), types: types, alloc: alloc, ops: all };
+  }
+
+  function mergeTrips(det, periodFrom) {
+    var added = 0, touched = new Set();
+    det.forEach(function (d) {
+      var hits = state.trips.filter(function (t) { return t.start <= d.end + 2 && d.start <= t.end + 2; });
+      var ex = hits.filter(function (t) { return t.status !== 'suggested' || t.named; })[0] || hits[0] || null;
+      hits.forEach(function (t) {
+        if (t !== ex && t.status === 'suggested' && !t.named) state.trips.splice(state.trips.indexOf(t), 1);
+      });
+      if (ex && touched.has(ex)) {
+        ex.start = Math.min(ex.start, d.start);
+        ex.end = Math.max(ex.end, d.end);
+        ex.first = Math.min(ex.first, d.first);
+        ex.total = round2(ex.total + d.total);
+        Object.keys(d.types).forEach(function (k) { ex.types[k] = round2((ex.types[k] || 0) + d.types[k]); });
+        Object.keys(d.alloc).forEach(function (k) { addAlloc(ex.alloc[k] = ex.alloc[k] || {}, d.alloc[k]); });
+        ex.places = ex.places.concat(d.places.filter(function (p) { return ex.places.indexOf(p) < 0; })).slice(0, 4);
+        if (!ex.named && d.total > ex.total - d.total) ex.name = d.name;
+        d.ref = ex;
+      } else if (ex) {
+        if (!ex.merged && periodFrom <= (ex.first != null ? ex.first : ex.start)) {
+          ex.start = d.start; ex.end = d.end; ex.first = d.first; ex.total = d.total; ex.types = d.types; ex.alloc = d.alloc; ex.places = d.places;
+          if (!ex.named) ex.name = d.name;
+          touched.add(ex);
+        }
+        d.ref = ex;
+      } else {
+        var nt = { id: uid(), start: d.start, end: d.end, first: d.first, name: d.name, named: false, merged: false, places: d.places, total: d.total, types: d.types, alloc: d.alloc, status: 'suggested' };
+        state.trips.push(nt);
+        touched.add(nt);
+        d.ref = nt;
+        added++;
+      }
+    });
+    return added;
+  }
+
+  function unkTotals() {
+    var t = {};
+    Object.keys(state.actuals).forEach(function (k) {
+      var u = state.actuals[k].unk || {};
+      Object.keys(u).forEach(function (key) { t[key] = (t[key] || 0) + u[key]; });
+    });
+    return t;
+  }
+
+  function ingestOps(res) {
+    var ops = res.ops.map(parseOp);
+    if (!ops.length) return { ops: 0, trips: 0, unk: Object.keys(unkTotals()).length };
+    var to = toN(res.date), from = res.from != null ? res.from : Math.min.apply(null, ops.map(function (o) { return o.n; }));
+    mergeHistory(buildHistory(res.balance, to, from, ops));
+
+    var det = detectTrips(ops), added = mergeTrips(det, from), inTrip = new Set();
+    det.forEach(function (d) { if (d.ref.status !== 'dismissed') d.ops.forEach(function (o) { inTrip.add(o); }); });
+
+    var months = {}, n = from;
+    while (n <= to) {
+      var o = ymd(n), last = dn(o.y, o.m, dim(o.y, o.m));
+      months[monthKey(n)] = { cov: [n, Math.min(last, to)], p: {}, unk: {}, hors: 0, inc: 0 };
+      n = last + 1;
+    }
+    ops.forEach(function (op) {
+      var M = months[monthKey(op.kind === 'card' ? op.day : op.n)];
+      if (!M) return;
+      if (op.credit > 0) { if (!/^(AVOIR|ANNUL)/.test(op.text)) M.inc = round2(M.inc + op.credit); return; }
+      if (!(op.debit > 0) || inTrip.has(op)) return;
+      addAmt(M, classify(op), op.debit, op);
+    });
+    Object.keys(months).forEach(function (k) {
+      var old = state.actuals[k];
+      if (!old || !old.cov || months[k].cov[0] <= old.cov[0]) state.actuals[k] = months[k];
+    });
+    return { ops: ops.length, trips: added, unk: Object.keys(unkTotals()).length };
+  }
+
+  function applyRule(key, target) {
+    state.rules[key] = target;
+    var mv = function (M) {
+      var a = M.unk && M.unk[key];
+      if (!a) return;
+      delete M.unk[key];
+      addAmt(M, target, a, { key: key, name: state.names[key] });
+    };
+    Object.keys(state.actuals).forEach(function (k) { mv(state.actuals[k]); });
+    state.trips.forEach(function (t) { Object.keys(t.alloc || {}).forEach(function (k) { mv(t.alloc[k]); }); });
+    if (target !== '_unk') delete state.names[key];
+  }
+
+  function dismissTrip(t) {
+    if (t.status === 'dismissed') return;
+    Object.keys(t.alloc || {}).forEach(function (k) { if (state.actuals[k]) addAlloc(state.actuals[k], t.alloc[k]); });
+    t.status = 'dismissed';
+  }
+
+  function activeTrips() {
+    return state.trips.filter(function (t) { return t.status !== 'dismissed'; }).sort(function (a, b) { return a.start - b.start; });
+  }
+
+  function mergeWithNext(t) {
+    var list = activeTrips(), i = list.indexOf(t), u = list[i + 1];
+    if (!u) return;
+    t.start = Math.min(t.start, u.start);
+    t.end = Math.max(t.end, u.end);
+    t.total = round2(t.total + u.total);
+    Object.keys(u.types).forEach(function (k) { t.types[k] = round2((t.types[k] || 0) + u.types[k]); });
+    Object.keys(u.alloc || {}).forEach(function (k) { addAlloc(t.alloc[k] = t.alloc[k] || {}, u.alloc[k]); });
+    t.places = t.places.concat(u.places.filter(function (p) { return t.places.indexOf(p) < 0; })).slice(0, 4);
+    if (!t.named) t.name = t.name.split(' → ')[0] + ' → ' + u.name.split(' → ').slice(-1)[0];
+    t.merged = true;
+    t.status = 'confirmed';
+    state.trips.splice(state.trips.indexOf(u), 1);
+  }
+
+  function tripAt(n) {
+    for (var i = 0; i < state.trips.length; i++) {
+      var t = state.trips[i];
+      if (t.status !== 'dismissed' && n >= t.start && n <= t.end) return t;
+    }
+    return null;
+  }
+
+  function normalDay() {
+    var tot = 0, days = 0;
+    Object.keys(state.actuals).forEach(function (k) {
+      var M = state.actuals[k];
+      if (!M.cov) return;
+      var s = M.hors || 0;
+      state.items.forEach(function (it) { if (it.tier >= 1 && M.p && M.p[it.id]) s += M.p[it.id]; });
+      tot += s;
+      days += M.cov[1] - M.cov[0] + 1;
+    });
+    return days >= 28 ? tot / days : null;
+  }
+
   /* ── Rendu : sorties ── */
   function renderOutputs() {
     calc = compute();
@@ -662,11 +1129,14 @@
     $('bdUpdTxt').innerHTML = 'Solde du ' + esc(fDate(calc.start)) +
       (age > 20 ? ' <span class="late">(il y a ' + age + ' jours)</span>' : '') +
       ' · dépose l\'export des opérations Crédit Agricole pour l\'actualiser.';
+    renderChart();
+    renderHero();
+    renderMarks();
     renderAlerts();
     renderTiles();
+    renderActuals();
+    renderTrips();
     renderLadder();
-    renderChart();
-    renderMarks();
     renderTable();
     for (var t = 0; t < 4; t++) { var el = $('bdTot' + t); if (el) el.textContent = eur(calc.tt.own[t], true) + ' / mois'; }
   }
@@ -767,73 +1237,155 @@
     return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
   }
 
+  var RANGE_M = { '3': 3, '6': 6, '12': 12, 'all': 0 };
+  var RANGE_TXT = { '3': 'sur 3 mois', '6': 'sur 6 mois', '12': 'sur 1 an' };
+
+  function chartWindow() {
+    var t = todayN(), m = RANGE_M[ui.range];
+    if (m) return [addMonths(t, -m), addMonths(t, m)];
+    var lo = state.history ? state.history.start : calc.start;
+    return [Math.min(lo, t - 30), Math.max(calc.endN, t + 30)];
+  }
+
+  function valueAt(n, sims) {
+    var st = calc.start, h = state.history;
+    if (n === st) return state.startBalance;
+    if (n < st) return h && n >= h.start && n < h.start + h.bal.length ? h.bal[n - h.start] : null;
+    var d = (sims || calc.sims)[state.tier].days[n - st - 1];
+    return d ? d.bal : null;
+  }
+
   function renderChart() {
-    var wrap = $('bdSvg'), W = Math.max(260, wrap.clientWidth || 600), small = W < 600, H = small ? 240 : 320;
-    var pl = small ? 42 : 54, pr = 10, pt = 14, pb = 26, iw = W - pl - pr, ih = H - pt - pb;
-    var c = calc, th = state.threshold, n0 = c.start, n1 = c.endN, sb = state.startBalance;
+    var wrap = $('bdSvg'), W = Math.max(260, wrap.clientWidth || 600), small = W < 600, H = small ? 270 : 380;
+    var pl = 6, pr = small ? 40 : 50, pt = 26, pb = 26, iw = W - pl - pr, ih = H - pt - pb;
+    var c = calc, th = state.threshold, st = c.start, sb = state.startBalance, today = todayN();
+    var win = chartWindow(), n0 = win[0], n1 = win[1];
+    var sims = n1 > c.endN ? [0, 1, 2, 3].map(function (t) { return simulate(t, n1); }) : c.sims;
     var show = ui.others ? [0, 1, 2, 3] : [state.tier];
 
-    var lo = Math.min(th, sb), hi = Math.max(th, sb);
-    show.forEach(function (t) { c.sims[t].days.forEach(function (d) { if (d.bal < lo) lo = d.bal; if (d.bal > hi) hi = d.bal; }); });
+    var hist = [], h = state.history, i;
+    if (h) for (i = 0; i < h.bal.length; i++) {
+      var hn = h.start + i;
+      if (hn >= n0 && hn <= Math.min(n1, st)) hist.push([hn, h.bal[i]]);
+    }
+    if (hist.length && hist[hist.length - 1][0] < st && st <= n1) hist.push([st, sb]);
+    var proj = {};
+    show.forEach(function (t) {
+      var out = st >= n0 && st <= n1 ? [[st, sb]] : [];
+      sims[t].days.forEach(function (d) { if (d.n >= n0 && d.n <= n1) out.push([d.n, d.bal]); });
+      proj[t] = out;
+    });
+
+    var lo = th, hi = th;
+    var grow = function (p) { if (p[1] < lo) lo = p[1]; if (p[1] > hi) hi = p[1]; };
+    hist.forEach(grow);
+    show.forEach(function (t) { proj[t].forEach(grow); });
     var step = niceStep(Math.max(hi - lo, 1000) / 4);
     lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
 
     function X(n) { return pl + (n - n0) / (n1 - n0) * iw; }
     function Y(v) { return pt + (hi - v) / (hi - lo) * ih; }
+    function line(pts) { return pts.map(function (p, k) { return (k ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1); }).join(''); }
 
-    var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Trajectoire du solde, palier ' + TIERS[state.tier] + '">';
+    var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Solde réel et projeté, du ' + fDate(n0) + ' au ' + fDate(n1) + '">' +
+      '<defs><linearGradient id="bdGrad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6B1A1A" stop-opacity=".16"/><stop offset="1" stop-color="#6B1A1A" stop-opacity="0"/></linearGradient></defs>';
 
     var yT = Y(th);
-    if (yT < pt + ih) s += '<rect x="' + pl + '" y="' + Math.max(pt, yT) + '" width="' + iw + '" height="' + (pt + ih - Math.max(pt, yT)) + '" fill="' + C_BAD + '" fill-opacity=".06"/>';
+    if (yT < pt + ih) s += '<rect x="' + pl + '" y="' + Math.max(pt, yT) + '" width="' + iw + '" height="' + (pt + ih - Math.max(pt, yT)) + '" fill="' + C_BAD + '" fill-opacity=".05"/>';
+
+    state.trips.forEach(function (t) {
+      if (t.status === 'dismissed' || t.end < n0 || t.start > n1) return;
+      var x1 = X(Math.max(t.start, n0)), x2 = X(Math.min(t.end + 1, n1)), w = Math.max(3, x2 - x1);
+      s += '<rect x="' + x1.toFixed(1) + '" y="' + pt + '" width="' + w.toFixed(1) + '" height="' + ih + '" fill="#2E5E8C" fill-opacity=".09"/>';
+      if (w > 46) s += '<text class="tl" x="' + (x1 + w / 2).toFixed(1) + '" y="' + (pt + 12) + '" text-anchor="middle">' + esc(t.name.split(' → ')[0]) + '</text>';
+    });
 
     for (var v = lo; v <= hi + 1e-6; v += step) {
       var y = Y(v);
-      s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y + '" y2="' + y + '" stroke="' + C_INK + '" stroke-opacity="' + (Math.abs(v) < 1e-6 ? '.45' : '.1') + '"/>';
-      s += '<text x="' + (pl - 6) + '" y="' + (y + 3.5) + '" text-anchor="end">' + kEur(v) + '</text>';
+      s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y + '" y2="' + y + '" stroke="' + C_INK + '" stroke-opacity="' + (Math.abs(v) < 1e-6 ? '.4' : '.08') + '"/>';
+      s += '<text x="' + (W - pr + 6) + '" y="' + (y + 3.5) + '">' + kEur(v) + '</text>';
     }
 
-    var every = W < 480 ? 3 : W < 820 ? 2 : 1, o = ymd(n0), mi = 0;
-    for (var m = dn(o.y, o.m, 1) + dim(o.y, o.m); m <= n1; m = addMonths(m, 1), mi++) {
+    var span = (n1 - n0) / 30.44, every = Math.max(1, Math.ceil(span / Math.max(3, iw / 72))), o = ymd(n0), mi = 0;
+    for (var m = dn(o.y, o.m, 1) + (o.d > 1 ? dim(o.y, o.m) : 0); m <= n1; m = addMonths(m, 1), mi++) {
       var x = X(m);
-      s += '<line x1="' + x + '" x2="' + x + '" y1="' + pt + '" y2="' + (pt + ih) + '" stroke="' + C_INK + '" stroke-opacity=".06"/>';
-      if (mi % every === 0 && x < W - 18) s += '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="middle">' + fDate(m, { month: 'short', year: '2-digit' }) + '</text>';
+      s += '<line x1="' + x + '" x2="' + x + '" y1="' + pt + '" y2="' + (pt + ih) + '" stroke="' + C_INK + '" stroke-opacity=".05"/>';
+      if (mi % every === 0 && x > pl + 14 && x < W - pr - 14) s += '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="middle">' + fDate(m, { month: 'short', year: '2-digit' }) + '</text>';
     }
 
     markers().forEach(function (mk) {
+      if (mk[0] < n0 || mk[0] > n1) return;
       var x = X(mk[0]);
-      s += '<line x1="' + x + '" x2="' + x + '" y1="' + pt + '" y2="' + (pt + ih) + '" stroke="' + mk[3] + '" stroke-opacity=".55" stroke-dasharray="2 3"/>';
+      s += '<line x1="' + x + '" x2="' + x + '" y1="' + pt + '" y2="' + (pt + ih) + '" stroke="' + mk[3] + '" stroke-opacity=".5" stroke-dasharray="2 3"/>';
     });
 
     s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yT + '" y2="' + yT + '" stroke="' + C_BAD + '" stroke-width="1.25" stroke-dasharray="5 4"/>';
     s += '<text x="' + (W - pr) + '" y="' + (yT - 5) + '" text-anchor="end" style="fill:' + C_BAD + '">Seuil ' + kEur(th) + '</text>';
 
-    function path(sim) {
-      var p = 'M' + X(n0).toFixed(1) + ',' + Y(sb).toFixed(1);
-      for (var i = 0; i < sim.days.length; i++) p += 'L' + X(sim.days[i].n).toFixed(1) + ',' + Y(sim.days[i].bal).toFixed(1);
-      return p;
+    if (hist.length > 1) {
+      var hp = line(hist);
+      s += '<path d="' + hp + 'L' + X(hist[hist.length - 1][0]).toFixed(1) + ',' + (pt + ih) + 'L' + X(hist[0][0]).toFixed(1) + ',' + (pt + ih) + 'Z" fill="url(#bdGrad)"/>';
+      s += '<path d="' + hp + '" fill="none" stroke="' + C_INK + '" stroke-width="2.25" stroke-linejoin="round"/>';
     }
     show.forEach(function (t) {
-      if (t !== state.tier) s += '<path d="' + path(c.sims[t]) + '" fill="none" stroke="' + TCOL[t] + '" stroke-opacity=".45" stroke-width="1.25"/>';
+      if (t !== state.tier && proj[t].length > 1) s += '<path d="' + line(proj[t]) + '" fill="none" stroke="' + TCOL[t] + '" stroke-opacity=".4" stroke-width="1.25" stroke-dasharray="4 4"/>';
     });
-    s += '<path d="' + path(c.sel) + '" fill="none" stroke="' + TCOL[state.tier] + '" stroke-width="2.5" stroke-linejoin="round"/>';
+    if (proj[state.tier].length > 1) s += '<path d="' + line(proj[state.tier]) + '" fill="none" stroke="' + TCOL[state.tier] + '" stroke-width="2.25" stroke-dasharray="6 4" stroke-linejoin="round"/>';
+
+    if (today >= n0 && today <= n1) {
+      var xt = X(today);
+      s += '<line x1="' + xt + '" x2="' + xt + '" y1="' + (pt - 6) + '" y2="' + (pt + ih) + '" stroke="' + C_INK + '" stroke-opacity=".55"/>';
+      s += '<text class="today" x="' + xt + '" y="' + (pt - 10) + '" text-anchor="middle">Aujourd\'hui</text>';
+      if (!small) {
+        s += '<text x="' + (xt - 8) + '" y="' + (pt + ih - 6) + '" text-anchor="end">réel</text>';
+        s += '<text x="' + (xt + 8) + '" y="' + (pt + ih - 6) + '">projection</text>';
+      }
+      var tv = valueAt(today, sims);
+      if (tv != null) s += '<circle cx="' + xt + '" cy="' + Y(tv).toFixed(1) + '" r="4" fill="' + C_INK + '"/>';
+    }
 
     s += '<line id="bdCur" x1="0" x2="0" y1="' + pt + '" y2="' + (pt + ih) + '" stroke="' + C_INK + '" stroke-opacity=".4" visibility="hidden"/>';
-    s += '<circle id="bdDot" r="4.5" cx="0" cy="0" fill="#F5F0E8" stroke="' + TCOL[state.tier] + '" stroke-width="2" visibility="hidden"/>';
+    s += '<circle id="bdDot" r="5" cx="0" cy="0" fill="#F5F0E8" stroke="' + C_INK + '" stroke-width="2" visibility="hidden"/>';
     s += '</svg>';
+    if (!hist.length && n0 < st) s = s.replace('</svg>', '<text x="' + (pl + 8) + '" y="' + (pt + ih / 2) + '">Importe un export bancaire pour afficher ton historique.</text></svg>');
 
     wrap.innerHTML = s;
-    geo = { X: X, Y: Y, n0: n0, n1: n1, pl: pl, iw: iw, W: W };
-    $('bdChartSub').textContent = 'Palier ' + TIERS[state.tier] + ' · du ' + fDate(n0) + ' au ' + fDate(n1) + '. Survole la courbe pour le détail du jour.';
+    geo = { X: X, Y: Y, n0: n0, n1: n1, pl: pl, iw: iw, W: W, sims: sims };
+    document.querySelectorAll('.ranges .range').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.range === ui.range)); });
     hideTip();
   }
 
+  function setDelta(d, suffix, base) {
+    var el = $('bdHeroD');
+    if (d == null) { el.textContent = ''; el.className = 'hero-d num'; return; }
+    var pc = base ? Math.round(d / Math.abs(base) * 1000) / 10 : null;
+    el.textContent = (d >= 0 ? '▲ ' : '▼ ') + sEur(d) + (pc != null && !ui.discreet ? ' (' + (pc >= 0 ? '+' : '−') + String(Math.abs(pc)).replace('.', ',') + ' %)' : '') + ' ' + suffix;
+    el.className = 'hero-d num ' + (d >= 0 ? 'up' : 'down');
+  }
+
+  function renderHero() {
+    if (!calc || !geo) return;
+    var t = todayN(), v = valueAt(t, geo.sims);
+    $('bdHeroL').textContent = t > calc.start ? 'Solde estimé aujourd\'hui' : 'Solde aujourd\'hui';
+    $('bdHeroV').textContent = v == null ? '—' : eur(v);
+    var hs = state.history ? state.history.start : null, from = hs == null ? null : Math.max(geo.n0, hs);
+    var past = from != null && from < t ? valueAt(from, geo.sims) : null;
+    if (past != null && v != null) setDelta(v - past, ui.range === 'all' || from > geo.n0 ? 'depuis le ' + fDate(from) : RANGE_TXT[ui.range], past);
+    else { setDelta(null); $('bdHeroD').textContent = 'Importe un export bancaire pour voir ton historique.'; }
+    var f = valueAt(geo.n1, geo.sims);
+    $('bdHeroF').textContent = f == null ? '' : 'Projection au ' + fDate(geo.n1) + ' : ' + eur(f) + ' · palier ' + TIERS[state.tier];
+  }
+
   function renderMarks() {
-    var h = [];
+    var h = ['<span><span class="sw" style="background:#6B1A1A"></span>Réel</span>'];
     (ui.others ? [0, 1, 2, 3] : [state.tier]).forEach(function (t) {
-      h.push('<span><span class="sw" style="background:' + TCOL[t] + (t === state.tier ? '' : ';opacity:.5') + '"></span>' + TIERS[t] + '</span>');
+      h.push('<span><span class="sw dashc" style="--c:' + TCOL[t] + (t === state.tier ? '' : ';opacity:.5') + '"></span>' + TIERS[t] + '</span>');
     });
     h.push('<span><span class="sw dash"></span>Seuil de sécurité</span>');
+    if (state.trips.some(function (t) { return t.status !== 'dismissed'; })) h.push('<span><span class="sw band"></span>Voyage</span>');
+    var win = geo ? [geo.n0, geo.n1] : [calc.start, calc.endN];
     markers().forEach(function (mk) {
+      if (mk[0] < win[0] || mk[0] > win[1]) return;
       h.push('<span><b>' + fDate(mk[0], { day: 'numeric', month: 'short', year: '2-digit' }) + '</b> ' + esc(mk[1]) + (mk[2] == null ? '' : ' ' + sEur(mk[2])) + '</span>');
     });
     $('bdMarks').innerHTML = h.join('');
@@ -844,30 +1396,37 @@
     var cur = $('bdCur'), dot = $('bdDot');
     if (cur) cur.setAttribute('visibility', 'hidden');
     if (dot) dot.setAttribute('visibility', 'hidden');
+    if (geo && calc && state) renderHero();
   }
 
   function onChartMove(e) {
     if (!geo || !calc) return;
     var r = $('bdSvg').getBoundingClientRect(), x = e.clientX - r.left;
     var n = Math.round(geo.n0 + (x - geo.pl) / geo.iw * (geo.n1 - geo.n0));
-    n = Math.max(geo.n0 + 1, Math.min(geo.n1, n));
-    var idx = n - geo.n0 - 1, d = calc.sel.days[idx];
-    if (!d) return;
-    var cx = geo.X(d.n), cy = geo.Y(d.bal);
+    n = Math.max(geo.n0, Math.min(geo.n1, n));
+    var v = valueAt(n, geo.sims);
+    if (v == null) { hideTip(); return; }
+    var future = n > calc.start, cx = geo.X(n), cy = geo.Y(v);
     var cur = $('bdCur'), dot = $('bdDot');
     cur.setAttribute('x1', cx); cur.setAttribute('x2', cx); cur.setAttribute('visibility', 'visible');
     dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.setAttribute('visibility', 'visible');
+    dot.setAttribute('stroke', future ? TCOL[state.tier] : C_INK);
 
-    var h = '<div class="td">' + esc(fDate(d.n, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</div>' +
-            '<div class="tb num">' + eur(d.bal) + '</div>';
-    if (ui.others) {
-      [0, 1, 2, 3].forEach(function (t) {
-        if (t !== state.tier) h += '<div class="tr"><span>' + TIERS[t] + '</span><span class="num">' + eur(calc.sims[t].days[idx].bal) + '</span></div>';
+    var h = '<div class="td">' + esc(fDate(n, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + (future ? ' · projection' : ' · réel') + '</div>' +
+            '<div class="tb num">' + eur(v) + '</div>';
+    if (future) {
+      var idx = n - calc.start - 1, d = geo.sims[state.tier].days[idx];
+      if (ui.others) [0, 1, 2, 3].forEach(function (t) {
+        var dd = geo.sims[t].days[idx];
+        if (t !== state.tier && dd) h += '<div class="tr"><span>' + TIERS[t] + '</span><span class="num">' + eur(dd.bal) + '</span></div>';
       });
-    }
-    if (d.fl.length) {
-      h += '<div class="sep"></div>';
-      d.fl.forEach(function (f) { h += '<div class="tr"><span>' + esc(f[0]) + '</span><span class="num">' + sEur(f[1], true) + '</span></div>'; });
+      if (d && d.fl.length) {
+        h += '<div class="sep"></div>';
+        d.fl.forEach(function (f) { h += '<div class="tr"><span>' + esc(f[0]) + '</span><span class="num">' + sEur(f[1], true) + '</span></div>'; });
+      }
+    } else {
+      var tr = tripAt(n);
+      if (tr) h += '<div class="sep"></div><div class="tr"><span>✈ ' + esc(tr.name) + '</span></div>';
     }
     var tip = $('bdTip');
     tip.innerHTML = h;
@@ -876,6 +1435,132 @@
     if (left + tw > geo.W) left = Math.max(0, cx - 14 - tw);
     tip.style.left = left + 'px';
     tip.style.top = '6px';
+
+    var base = valueAt(todayN(), geo.sims);
+    $('bdHeroL').textContent = fDate(n, { day: 'numeric', month: 'long', year: 'numeric' }) + (future ? ' · projection' : '');
+    $('bdHeroV').textContent = eur(v);
+    if (n === todayN()) setDelta(null); else setDelta(base != null ? v - base : null, 'vs aujourd\'hui', base);
+  }
+
+  /* ── Réel vs budget ── */
+  var actMonth = null;
+  function monthLabel(k, long) {
+    var p = k.split('-');
+    return fDate(dn(+p[0], +p[1], 1), long ? { month: 'long', year: 'numeric' } : { month: 'short', year: '2-digit' });
+  }
+  function block(k, v, h, cls) {
+    return '<div class="' + (cls || '') + '"><div class="k">' + esc(k) + '</div><div class="v num" title="' + esc(v) + '">' + esc(v) + '</div><div class="h">' + esc(h) + '</div></div>';
+  }
+
+  function renderActuals() {
+    var keys = Object.keys(state.actuals).sort(), box = $('bdActual');
+    if (!keys.length) {
+      box.innerHTML = '<p class="empty-row">Importe un export Crédit Agricole : tes dépenses réelles seront comparées à ton budget, mois par mois.</p>';
+      $('bdActSub').textContent = 'Tes dépenses réelles, poste par poste, hors voyages.';
+      $('bdUnk').innerHTML = '';
+      return;
+    }
+    if (keys.indexOf(actMonth) < 0) actMonth = keys[keys.length - 1];
+    var M = state.actuals[actMonth], p = M.p || {}, pp = actMonth.split('-'), md = dim(+pp[0], +pp[1]);
+    var cov = M.cov || [dn(+pp[0], +pp[1], 1), dn(+pp[0], +pp[1], md)], ratio = Math.min(1, (cov[1] - cov[0] + 1) / md), partial = ratio < 0.97;
+    var cum = calc.tt.cum, aVar = 0, bVar = 0, aFix = 0, bFix = 0, tripAmt = 0, t;
+    var vars = state.items.filter(function (it) { return it.on && it.tier >= 1; });
+    state.items.forEach(function (it) {
+      if (!it.on || it.tier !== 0 || it.sched !== 'm') return;
+      aFix += p[it.id] || 0; bFix += it.amount;
+    });
+    vars.forEach(function (it) { aVar += p[it.id] || 0; bVar += it.amount * ratio; });
+    var lived = cum[0] * ratio + aVar, lt = -1;
+    for (t = 0; t < 4; t++) if (cum[t] * ratio >= lived - 0.5) { lt = t; break; }
+    state.trips.forEach(function (tr) {
+      var A = tr.status !== 'dismissed' && tr.alloc && tr.alloc[actMonth];
+      if (!A) return;
+      tripAmt += A.hors || 0;
+      Object.keys(A.p || {}).forEach(function (c) { tripAmt += A.p[c]; });
+      Object.keys(A.unk || {}).forEach(function (c) { tripAmt += A.unk[c]; });
+    });
+
+    var h = '<div class="months" role="group" aria-label="Mois analysé">' + keys.slice().reverse().map(function (k) {
+      return '<button type="button" class="range" data-month="' + k + '" aria-pressed="' + (k === actMonth) + '">' + monthLabel(k) + '</button>';
+    }).join('') + '</div>';
+    h += '<div class="act-sum">' +
+      block('Dépenses courantes', eur(aVar), 'budget ' + eur(bVar) + (partial ? ' à date' : ''), aVar > bVar * 1.02 ? 'bad' : 'ok') +
+      block('Palier vécu', lt < 0 ? 'Au-delà du Luxe' : TIERS[lt], 'palier simulé : ' + TIERS[state.tier]) +
+      block('Charges fixes', eur(aFix), 'prélevées · prévu ' + eur(bFix)) +
+      block('Hors budget', eur(M.hors || 0), 'shopping, transports, parking…') +
+      block('En voyage', eur(tripAmt), 'exclu des postes') +
+      block('Entrées', eur(M.inc || 0), 'virements et allocations reçus') +
+      '</div>';
+    vars.forEach(function (it) {
+      var a = p[it.id] || 0, b = it.amount * ratio, sc = Math.max(a, b) * 1.12 || 1, d = b > 0 ? a / b - 1 : null;
+      h += '<div class="act-row"><span class="act-l">' + esc(it.label) + '</span>' +
+        '<span class="act-bar" aria-hidden="true"><i class="' + (a > b ? 'over' : '') + '" style="width:' + (a / sc * 100).toFixed(1) + '%"></i><b style="left:' + (b / sc * 100).toFixed(1) + '%"></b></span>' +
+        '<span class="act-v num">' + eur(a) + ' / ' + eur(b) + '</span>' +
+        '<span class="act-d num' + (d == null ? '' : d > 0.05 ? ' over' : d < -0.05 ? ' under' : '') + '">' +
+          (d == null ? '—' : (d >= 0 ? '+' : '−') + Math.abs(Math.round(d * 100)) + ' %') + '</span></div>';
+    });
+    box.innerHTML = h;
+    $('bdActSub').textContent = monthLabel(actMonth, true) +
+      (partial ? ' · du ' + fDate(cov[0], { day: 'numeric', month: 'short' }) + ' au ' + fDate(cov[1], { day: 'numeric', month: 'short' }) + ', budget proratisé' : '') +
+      ' · hors voyages. Le trait vertical marque le budget.';
+    renderUnk();
+  }
+
+  function renderUnk() {
+    var tot = unkTotals(), keys = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }), box = $('bdUnk');
+    if (!keys.length) { box.innerHTML = ''; return; }
+    var all = keys.reduce(function (s, k) { return s + tot[k]; }, 0);
+    var opts = '<option value="">À classer…</option>' +
+      state.items.filter(function (it) { return it.on; }).map(function (it) { return '<option value="' + esc(it.id) + '">' + esc(it.label) + '</option>'; }).join('') +
+      '<option value="_hors">Hors budget</option><option value="_ignore">Ignorer (virement interne…)</option>';
+    box.innerHTML = '<div class="fs-h"><span>À classer · ' + keys.length + ' commerçant' + (keys.length > 1 ? 's' : '') + ' · un clic, retenu pour la suite</span><span class="num">' + eur(all) + '</span></div>' +
+      keys.slice(0, 12).map(function (k) {
+        var nm = state.names[k] || k;
+        return '<div class="unk-row"><span>' + esc(nm) + '</span><span class="num">' + eur(tot[k]) + '</span>' +
+          '<select class="inp" data-unk="' + esc(k) + '" aria-label="Classer ' + esc(nm) + '">' + opts + '</select></div>';
+      }).join('') +
+      (keys.length > 12 ? '<p class="empty-row">+ ' + (keys.length - 12) + ' autres, plus petits.</p>' : '');
+  }
+
+  /* ── Voyages ── */
+  function tripDates(t) {
+    var a = ymd(t.start), b = ymd(t.end);
+    if (t.start === t.end) return fDate(t.start);
+    if (a.y === b.y && a.m === b.m) return a.d + ' → ' + fDate(t.end);
+    return fDate(t.start, { day: 'numeric', month: 'short' }) + ' → ' + fDate(t.end);
+  }
+
+  function renderTrips() {
+    var list = activeTrips().reverse(), ign = state.trips.length - list.length, nd = normalDay();
+    var sugg = list.filter(function (t) { return t.status === 'suggested'; }).length;
+    var yr = ymd(todayN()).y, yTot = 0, yN = 0;
+    list.forEach(function (t) { if (t.status === 'confirmed' && ymd(t.start).y === yr) { yTot += t.total; yN++; } });
+    $('bdTripsSub').textContent = list.length
+      ? yN + ' voyage' + (yN > 1 ? 's' : '') + ' confirmé' + (yN > 1 ? 's' : '') + ' en ' + yr + ' · ' + eur(yTot) +
+        (sugg ? ' · ' + sugg + ' à confirmer' : '') + (ign ? ' · ' + ign + ' ignoré' + (ign > 1 ? 's' : '') : '')
+      : 'Détectés automatiquement dans tes exports bancaires.';
+    $('bdTripsAll').hidden = sugg < 2;
+    if (!list.length) { $('bdTrips').innerHTML = '<p class="empty-row">Aucun voyage détecté pour l\'instant.</p>'; return; }
+    $('bdTrips').innerHTML = list.map(function (t, i) {
+      var days = t.end - t.start + 1, pd = t.total / days, sg = t.status === 'suggested', bar = '', leg = '';
+      Object.keys(TYPES).forEach(function (k) {
+        var v = t.types[k];
+        if (!v || !t.total) return;
+        bar += '<span style="width:' + (v / t.total * 100).toFixed(1) + '%;background:' + TYPES[k][1] + '"></span>';
+        leg += '<span><i style="background:' + TYPES[k][1] + '"></i>' + TYPES[k][0] + ' ' + eur(v) + '</span>';
+      });
+      return '<article class="trip' + (sg ? ' sugg' : '') + '" data-id="' + esc(t.id) + '">' +
+        '<div class="trip-top"><span>' + esc(tripDates(t)) + ' · ' + days + ' j</span><span class="badge ' + (sg ? 'sugg' : 'ok') + '">' + (sg ? 'Suggestion' : 'Confirmé') + '</span></div>' +
+        '<input class="trip-name" value="' + esc(t.name) + '" maxlength="60" aria-label="Nom du voyage">' +
+        '<div class="trip-total num">' + eur(t.total) + '</div>' +
+        '<div class="trip-pd num">' + eur(pd) + ' / jour' + (nd ? ' · ×' + String(Math.round(pd / nd * 10) / 10).replace('.', ',') + ' un jour normal' : '') + '</div>' +
+        '<div class="trip-bar" aria-hidden="true">' + bar + '</div><div class="trip-leg">' + leg + '</div>' +
+        '<div class="trip-act">' +
+          (sg ? '<button type="button" class="btn" data-act="ok">✓ Confirmer</button>' : '') +
+          '<button type="button" class="btn btn-ghost" data-act="no">✕ Pas un voyage</button>' +
+          (i > 0 ? '<button type="button" class="btn btn-ghost" data-act="merge">Fusionner avec le suivant</button>' : '') +
+        '</div></article>';
+    }).join('');
   }
 
   function renderTable() {
@@ -1149,24 +1834,45 @@
           return each.call(si.getElementsByTagName('t'), function (t) { return t.textContent; }).join('');
         });
       }
+      var cellValue = function (c) {
+        var t = c.getAttribute('t'), v = c.getElementsByTagName('v')[0];
+        if (t === 's') return v ? ss[+v.textContent] || '' : '';
+        if (t === 'inlineStr') return each.call(c.getElementsByTagName('t'), function (x) { return x.textContent; }).join('');
+        return v ? v.textContent : '';
+      };
+      var res = { balance: null, date: null, from: null, ops: [] }, cols = null;
       var sheets = Object.keys(files).filter(isSheet).sort();
       for (var s = 0; s < sheets.length; s++) {
         var rows = P.parseFromString(files[sheets[s]], 'application/xml').getElementsByTagName('row');
         for (var r = 0; r < rows.length; r++) {
-          var cells = each.call(rows[r].getElementsByTagName('c'), function (c) {
-            var t = c.getAttribute('t'), v = c.getElementsByTagName('v')[0];
-            if (t === 's') return v ? ss[+v.textContent] || '' : '';
-            if (t === 'inlineStr') return each.call(c.getElementsByTagName('t'), function (x) { return x.textContent; }).join('');
-            return v ? v.textContent : '';
+          var cells = {}, seq = [], m;
+          each.call(rows[r].getElementsByTagName('c'), function (c) {
+            var v = cellValue(c);
+            cells[(c.getAttribute('r') || '').replace(/\d+/g, '')] = v;
+            seq.push(String(v).trim());
           });
-          var m = /^Solde au (\d{2})\/(\d{2})\/(\d{4})/.exec(String(cells[0] || '').trim());
-          if (m && cells.length > 1) {
-            var bal = parseAmount(cells[1]), date = m[3] + '-' + m[2] + '-' + m[1];
-            if (isFinite(bal) && validDate(date)) return { balance: bal, date: date };
+          var a = String(cells.A || '').trim(), si = -1;
+          seq.forEach(function (v, k) { if (si < 0 && /^Solde au \d{2}\/\d{2}\/\d{4}/.test(v)) si = k; });
+          if (res.balance == null && si >= 0) {
+            m = /^Solde au (\d{2})\/(\d{2})\/(\d{4})/.exec(seq[si]);
+            var bal = parseAmount(seq[si + 1] || ''), date = m[3] + '-' + m[2] + '-' + m[1];
+            if (isFinite(bal) && validDate(date)) { res.balance = bal; res.date = date; }
+          } else if ((m = /entre le (\d{2})\/(\d{2})\/(\d{4}) et le/.exec(seq.join(' ')))) {
+            res.from = dn(+m[3], +m[2], +m[1]);
+          } else if (a === 'Date') {
+            cols = {};
+            Object.keys(cells).forEach(function (k) {
+              var t = String(cells[k]);
+              if (/^Libell/i.test(t)) cols.l = k; else if (/^D.bit/i.test(t)) cols.d = k; else if (/^Cr.dit/i.test(t)) cols.c = k;
+            });
+          } else if (cols && (m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(a))) {
+            var deb = parseAmount(cells[cols.d] || ''), cre = parseAmount(cells[cols.c] || '');
+            res.ops.push({ n: dn(+m[3], +m[2], +m[1]), label: String(cells[cols.l] || ''), debit: isFinite(deb) ? Math.abs(deb) : 0, credit: isFinite(cre) ? Math.abs(cre) : 0 });
           }
         }
       }
-      throw new Error('ligne « Solde au … » introuvable. Utilise l\'export des opérations du compte (Crédit Agricole, format Excel).');
+      if (res.balance == null) throw new Error('ligne « Solde au … » introuvable. Utilise l\'export des opérations du compte (Crédit Agricole, format Excel).');
+      return res;
     });
   }
 
@@ -1184,12 +1890,17 @@
   function importBank(file) {
     if (!state) { notify('Initialise d\'abord le tableau de bord avec budget-data.json.', true); return; }
     readBankXlsx(file).then(function (res) {
-      if (toN(res.date) < toN(state.asOf) && !confirm('Cet export (' + fDate(toN(res.date)) + ') est plus ancien que le solde actuel (' + fDate(toN(state.asOf)) + '). L\'utiliser quand même ?')) return;
-      state.startBalance = round2(res.balance);
-      state.asOf = res.date;
+      var older = toN(res.date) < toN(state.asOf), rep = ingestOps(res);
+      if (!older) { state.startBalance = round2(res.balance); state.asOf = res.date; }
       renderAll();
       save();
-      notify('Solde actualisé depuis ta banque : ' + eur(res.balance, true) + ' au ' + fDate(toN(res.date)) + '.');
+      var parts = [older
+        ? 'Historique enrichi avec l\'export du ' + fDate(toN(res.date)) + ' (plus ancien que ton solde actuel, qui est conservé)'
+        : 'Solde actualisé : ' + eur(res.balance, true) + ' au ' + fDate(toN(res.date))];
+      if (rep.ops) parts.push(rep.ops + ' opérations analysées');
+      if (rep.trips) parts.push(rep.trips + ' voyage' + (rep.trips > 1 ? 's' : '') + ' à confirmer');
+      if (rep.unk) parts.push(rep.unk + ' commerçant' + (rep.unk > 1 ? 's' : '') + ' à classer');
+      notify(parts.join(' · ') + '.');
     }).catch(function (err) { notify('Export bancaire illisible : ' + err.message, true); });
   }
   function readFile(file) {
@@ -1326,7 +2037,64 @@
       ui.others = this.checked;
       saveUi();
       renderChart();
+      renderHero();
       renderMarks();
+    });
+
+    document.querySelector('.ranges').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-range]');
+      if (!b || !state) return;
+      ui.range = b.dataset.range;
+      saveUi();
+      renderChart();
+      renderHero();
+      renderMarks();
+    });
+
+    $('bdActual').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-month]');
+      if (!b) return;
+      actMonth = b.dataset.month;
+      renderActuals();
+    });
+    $('bdUnk').addEventListener('change', function (e) {
+      var sel = e.target.closest('[data-unk]');
+      if (!sel || !sel.value) return;
+      applyRule(sel.dataset.unk, sel.value);
+      save();
+      renderActuals();
+      notify('Classé. Les prochaines opérations de ce commerçant le seront automatiquement.');
+    });
+
+    $('bdTrips').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-act]');
+      if (!b) return;
+      var t = findById(state.trips, b.closest('.trip').dataset.id);
+      if (!t) return;
+      if (b.dataset.act === 'ok') t.status = 'confirmed';
+      else if (b.dataset.act === 'no') dismissTrip(t);
+      else if (b.dataset.act === 'merge') mergeWithNext(t);
+      save();
+      renderOutputs();
+    });
+    $('bdTrips').addEventListener('change', function (e) {
+      if (!e.target.classList.contains('trip-name')) return;
+      var t = findById(state.trips, e.target.closest('.trip').dataset.id), v = e.target.value.trim();
+      if (!t) return;
+      if (!v) { e.target.value = t.name; return; }
+      t.name = v;
+      t.named = true;
+      save();
+      renderChart();
+      renderHero();
+    });
+    $('bdTrips').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.classList.contains('trip-name')) e.target.blur();
+    });
+    $('bdTripsAll').addEventListener('click', function () {
+      state.trips.forEach(function (t) { if (t.status === 'suggested') t.status = 'confirmed'; });
+      save();
+      renderOutputs();
     });
 
     $('bdLadder').addEventListener('click', function (e) {
