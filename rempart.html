@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Opération Rempart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Black+Ops+One&display=swap">
+<style>
+  /* Poste de commandement : bandeau d'état en haut, carte tactique au centre, arsenal en bas */
+  :root {
+    --bg: #161911;
+    --panel: #21251a;
+    --panel-hi: #2c3120;
+    --line: #394029;
+    --fg: #ece7cf;
+    --muted: #a3a085;
+    --brass: #e2a62e;
+    --danger: #e0533a;
+    --ok: #8fbb52;
+    --scrim: rgba(18, 21, 13, .82);
+    --font-display: "Black Ops One", Impact, "Arial Narrow Bold", sans-serif;
+    --font-ui: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+    color-scheme: dark;
+  }
+  /* Ouvert hors de Claude, aucun gabarit ne fournit ces règles : on les pose nous-mêmes */
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body { font-family: var(--font-ui); font-size: 16px; line-height: 1.35; }
+  /* Tout tient dans la fenêtre : la carte prend la hauteur restante */
+  .wrap { box-sizing: border-box; height: 100%; max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .stage { flex: 1 1 0; min-height: 220px; display: flex; justify-content: center; align-items: flex-start; }
+
+  /* Bandeau du haut : titre et commandes de la partie, puis l'état de la partie */
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  header h1 { flex: 1 1 auto; }
+  .command { display: flex; gap: 8px; margin-left: auto; }
+  #btn-menu, #btn-replay { display: inline-flex; align-items: center; gap: 6px; }
+  #btn-replay .rs { display: none; }
+  h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(24px, 4.2vw, 36px); letter-spacing: .03em; color: var(--brass); text-wrap: balance; }
+  .hud { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  .stat.flag { border-color: var(--brass); }
+  .stat.flag b { font-size: 18px; color: var(--brass); }
+  .stat { display: flex; align-items: baseline; gap: 8px; padding: 4px 12px; background: var(--panel); border: 1px solid var(--line); }
+  .stat span { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .stat b { display: inline-block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat.bump b { animation: bump .35s ease-out; }
+  .stat.hit { animation: shake .4s ease-out; border-color: var(--danger); }
+  .stat.hit b { color: var(--danger); }
+  @keyframes bump { 35% { transform: scale(1.2); color: var(--brass); } }
+  @keyframes shake { 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+  .dispatch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: min(440px, calc(100% - 16px)); padding: 8px 12px; display: flex; align-items: baseline; gap: 10px; background: var(--panel); border: 1px solid var(--brass); }
+  .dispatch span { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); white-space: nowrap; }
+  .dispatch p { margin: 0; min-width: 0; font-size: 14px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat.bump b, .stat.hit { animation: none; }
+  }
+
+  .board { position: relative; border: 2px solid var(--line); background: #5f6440; }
+  .board canvas { display: block; touch-action: manipulation; cursor: crosshair; }
+  .readout { position: absolute; left: 8px; bottom: 6px; padding: 2px 8px; background: var(--scrim); font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; pointer-events: none; }
+  .readout[data-kind="road"] { color: var(--danger); }
+  .readout[data-kind="free"] { color: var(--ok); }
+  .readout[data-kind="enemy"] { color: var(--fg); text-transform: none; letter-spacing: .02em; }
+
+  .tower-panel { position: absolute; top: 8px; right: 8px; width: min(250px, calc(100% - 16px)); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 14px; }
+  .tower-panel.left { right: auto; left: 8px; }
+  .panel-head { display: flex; align-items: center; gap: 8px; }
+  .panel-head b { font-size: 18px; }
+  .grade { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+  .close { margin-left: auto; padding: 0 8px; font-size: 20px; line-height: 1.2; border-color: transparent; background: transparent; }
+  .panel-stats { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
+  .panel-stats dt { color: var(--muted); }
+  .panel-stats dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .panel-stats .next { color: var(--brass); }
+  .targeting { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .target-label { grid-column: 1 / -1; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .targeting button { padding: 4px 2px; font-size: 13px; }
+  .targeting button[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); background: var(--panel-hi); }
+  .panel-actions { display: flex; gap: 6px; }
+  .panel-actions button { flex: 1 1 0; padding: 6px 8px; }
+
+  /* Menu, briefing et rapport couvrent toute la fenêtre : sur téléphone, la carte seule serait trop petite */
+  .overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 12px; background: var(--scrim); }
+  .report { box-sizing: border-box; max-width: 420px; max-height: 100%; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; background: var(--panel); border: 1px solid var(--line); }
+  .report p { margin: 0; }
+  .report .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .report h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(22px, 4vw, 30px); color: var(--brass); text-wrap: balance; }
+  .stars { font-size: 28px; letter-spacing: .15em; color: var(--line); }
+  .stars .on { color: var(--brass); }
+  .final-score { font-family: var(--font-display); font-size: 22px; color: var(--brass); font-variant-numeric: tabular-nums; }
+  .leaderboard { align-self: stretch; display: flex; flex-direction: column; gap: 4px; text-align: left; border-top: 1px solid var(--line); padding-top: 8px; }
+  .lb-title { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .lb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .lb-list li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline; padding: 2px 6px; }
+  .lb-list li.me { background: var(--panel-hi); outline: 1px solid var(--brass); }
+  .lb-rank { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lb-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-stars { color: var(--brass); font-size: 12px; }
+  .lb-score { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .lb-list li.lb-empty { display: block; color: var(--muted); }
+  .lb-note { font-size: 12px; color: var(--muted); }
+  .report .buttons { margin-top: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+  .report.menu { box-sizing: border-box; width: min(540px, 100%); max-width: none; max-height: 100%; overflow-y: auto; align-items: stretch; }
+  .menu-note { font-size: 14px; color: var(--muted); }
+  .wave-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+  .wave-row { width: 100%; display: grid; grid-template-columns: 4.6em minmax(0, 1fr) auto; align-items: baseline; gap: 2px 10px; padding: 6px 10px; text-align: left; }
+  .wave-row .wn { font-weight: 700; }
+  .wave-row .wd { font-size: 14px; color: var(--muted); }
+  .wave-row .wr { font-size: 13px; color: var(--brass); white-space: nowrap; }
+  .wave-row:disabled .wr { color: var(--muted); }
+  /* Menu principal : une seule fenêtre, plusieurs vues */
+  .view { display: flex; flex-direction: column; gap: 8px; text-align: center; }
+  .menu-list { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+  .menu-list button { display: flex; flex-direction: column; gap: 1px; padding: 8px 14px; font-size: 17px; font-weight: 700; }
+  .menu-list button small { font-size: 13px; font-weight: 400; color: var(--muted); }
+  /* Écran titre : rien du jeu derrière, seulement le quadrillage d'une carte d'état-major */
+  #menu.title {
+    background-color: var(--bg);
+    background-image: linear-gradient(rgba(226,166,46,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(226,166,46,.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .title-logo { font-size: clamp(30px, 7vw, 48px) !important; }
+  .mc-lock { font-size: 13px; font-weight: 600; color: var(--danger); }
+  .map-card:disabled img { filter: grayscale(1); }
+  .df-stars { font-size: 13px; color: var(--line); letter-spacing: .05em; }
+  .df-stars .on { color: var(--brass); }
+  .df-lock { font-size: 12px; font-weight: 600; color: var(--danger); }
+  .df-save, .mc-save { font-size: 12px; font-weight: 600; color: var(--brass); }
+  button.danger { border-color: var(--danger); color: var(--danger); }
+  .link-danger { align-self: center; margin-top: 4px; padding: 4px 8px; font-size: 13px; color: var(--danger); background: transparent; border-color: transparent; text-decoration: underline; }
+  .menu-keys { font-size: 12px; color: var(--muted); }
+  @media (hover: none) { .menu-keys { display: none; } }   /* pas de clavier sur un écran tactile */
+  .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .seg button { padding: 6px 4px; font-size: 14px; }
+  .seg button[aria-checked="true"] { border-color: var(--brass); color: var(--brass); background: var(--panel-hi); }
+  .sc-best { color: var(--muted); }
+  /* Records par vague : vies perdues au mieux, en 10 petites cases */
+  .wave-recs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .wave-recs .wr-cell { display: flex; justify-content: space-between; gap: 4px; padding: 3px 8px; border: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .wave-recs .wr-n { color: var(--muted); }
+  .wave-recs .wr-v.none { color: var(--muted); }
+  .wave-recs .wr-v.zero { color: var(--ok); }
+  .sc-best .on { color: var(--brass); }
+  .settings { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 45%); align-items: center; gap: 4px 12px; }
+  .set-row small { display: block; font-size: 12px; color: var(--muted); }
+  .set-row input[type="range"] { width: 100%; accent-color: var(--brass); }
+  .set-row.check { grid-template-columns: auto minmax(0, 1fr); align-items: start; cursor: pointer; }
+  .set-row.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--brass); }
+  .report.briefing { width: min(780px, 100%); }
+  .map-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: left; }
+  .map-card { display: flex; flex-direction: column; gap: 4px; padding: 6px; text-align: left; }
+  .map-card img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+  .map-card[aria-pressed="true"] { border-color: var(--brass); background: var(--panel-hi); box-shadow: inset 0 0 0 1px var(--brass); }
+  .mc-name { font-family: var(--font-display); font-size: 18px; color: var(--brass); }
+  .mc-meta { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .mc-stars span { color: var(--line); letter-spacing: .05em; }
+  .mc-stars .on { color: var(--brass); }
+  .mc-brief { font-size: 13px; line-height: 1.3; }
+  .difficulty { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .difficulty button { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; text-align: left; }
+  .difficulty button[aria-checked="true"] { border-color: var(--brass); background: var(--panel-hi); box-shadow: inset 0 0 0 1px var(--brass); }
+  .df-name { font-weight: 700; font-size: 16px; }
+  .df-desc { font-size: 12px; color: var(--muted); line-height: 1.25; }
+  @media (max-width: 640px) {
+    .map-cards { grid-template-columns: minmax(0, 1fr); }
+    .map-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 10px; }
+    .map-card img { grid-row: 1 / span 3; }
+    .difficulty { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .wave-row { grid-template-columns: 4.6em minmax(0, 1fr); }
+    .wave-row .wr { grid-column: 2; white-space: normal; }
+  }
+
+  .towers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .strike-btn .short { display: none; }
+  .strike-btn.ready .cost { color: var(--ok); }
+
+  button { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); padding: 8px 12px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--brass); }
+  button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .tower-btn { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 10px; text-align: left; }
+  .tower-btn { position: relative; }
+  .tower-btn .key { position: absolute; top: 3px; left: 5px; font: 600 10px/1 var(--font-ui); color: var(--muted); }
+  .tower-btn .icon { grid-row: 1 / span 2; width: 34px; height: 34px; }
+  .stat.next { align-items: center; }
+  .stat.next .icons { display: flex; align-items: center; gap: 8px; }
+  .ne { display: inline-flex; align-items: center; gap: 1px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tower-btn .name { font-size: 17px; font-weight: 700; }
+  .tower-btn .role { grid-column: 2; font-size: 13px; color: var(--muted); }
+  .tower-btn .cost { grid-row: 1 / span 2; grid-column: 3; font-size: 18px; font-weight: 700; color: var(--brass); font-variant-numeric: tabular-nums; }
+  .tower-btn.short .cost, .tower-btn.short .role { color: var(--danger); }
+  .tower-btn[aria-pressed="true"] { border-color: var(--brass); background: var(--panel-hi); box-shadow: inset 0 0 0 1px var(--brass); }
+  .primary { background: var(--brass); border-color: var(--brass); color: var(--bg); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+  .msg { min-height: 1.4em; margin: 0; font-size: 15px; color: var(--muted); }
+
+  @media (max-width: 560px) {
+    .tower-btn { grid-template-columns: minmax(0, 1fr); padding: 6px 8px; }
+    .tower-btn .icon, .tower-btn .role, .tower-btn .key { display: none; }
+    .tower-btn .cost { grid-row: auto; grid-column: auto; font-size: 15px; }
+    .tower-btn .name { font-size: 15px; }
+    #btn-menu span { display: none; }
+    #btn-replay .rl { display: none; }
+    .strike-btn .long { display: none; }
+    .strike-btn .short { display: inline; }
+    #btn-replay .rs { display: inline; }
+    .set-row { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+
+<div class="wrap" id="wrap">
+  <header>
+    <h1>Opération Rempart</h1>
+    <div class="command">
+      <button id="btn-replay" hidden><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="rl">Rejouer la vague</span><span class="rs">Vague</span> <span id="replay-n"></span></button>
+      <button id="btn-wave" class="primary" title="Espace ou Entrée" disabled>Lancer la vague</button>
+      <button id="btn-menu" title="Menu (Échap)" aria-label="Menu"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Menu</span></button>
+    </div>
+    <div class="hud" aria-live="polite">
+      <div class="stat"><span>Vies</span><b id="lives">20</b></div>
+      <div class="stat"><span>Crédits</span><b id="gold">150</b></div>
+      <div class="stat"><span>Score</span><b id="score">0</b></div>
+      <div class="stat"><span>Vague</span><b id="wave">0/10</b></div>
+      <div class="stat next" id="next-wave" hidden><span>Prochaine</span><span class="icons" id="next-icons"></span></div>
+      <div class="stat flag" id="speed-chip" title="Vitesse du jeu, à changer dans les paramètres du menu" hidden><b>×2</b></div>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+  <div class="board" id="board">
+    <canvas id="map" aria-label="Carte tactique : la route ennemie serpente de l'ouest jusqu'à la base à l'est"></canvas>
+    <div class="readout" id="readout" hidden></div>
+    <div class="dispatch" id="dispatch" role="status" hidden>
+      <span>Renseignement</span>
+      <p id="dispatch-text"></p>
+    </div>
+    <div class="tower-panel" id="panel" hidden>
+      <div class="panel-head">
+        <b id="p-name"></b>
+        <span class="grade" id="p-grade"></span>
+        <button class="close" id="p-close" aria-label="Fermer la fiche">×</button>
+      </div>
+      <dl class="panel-stats" id="p-stats"></dl>
+      <div class="targeting" id="p-target" role="group" aria-label="Cible prioritaire"></div>
+      <div class="panel-actions">
+        <button class="primary" id="p-up"></button>
+        <button id="p-sell"></button>
+      </div>
+    </div>
+    <div class="tower-panel" id="strike-panel" hidden>
+      <div class="panel-head">
+        <b>Frappe aérienne</b>
+        <span class="grade" id="sp-state"></span>
+        <button class="close" id="sp-close" aria-label="Fermer la fiche">×</button>
+      </div>
+      <dl class="panel-stats" id="sp-stats"></dl>
+      <div class="panel-actions">
+        <button class="primary" id="sp-radius"></button>
+        <button class="primary" id="sp-damage"></button>
+      </div>
+    </div>
+    <div class="overlay" id="overlay" hidden>
+      <div class="report">
+        <p class="eyebrow">Rapport de mission</p>
+        <h2 id="ov-title">Mission accomplie</h2>
+        <p class="stars" id="ov-stars"></p>
+        <p id="ov-text"></p>
+        <p class="final-score" id="ov-score"></p>
+        <div class="leaderboard" id="ov-board">
+          <p class="lb-title"></p>
+          <ol class="lb-list"></ol>
+          <p class="lb-note"></p>
+        </div>
+        <div class="buttons">
+          <button class="primary" id="btn-retry" hidden>Rejouer la vague</button>
+          <button id="btn-restart">Recommencer</button>
+          <button id="btn-ov-menu">Menu principal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="arsenal">
+    <div class="towers" id="towers"></div>
+  </div>
+  <p class="msg" id="msg">Survolez la carte : la route est interdite à la construction.</p>
+</div>
+
+<!-- Menu : écran titre au démarrage (opaque, rien derrière), menu de pause en jeu -->
+<div class="overlay" id="menu" hidden>
+  <div class="report menu" id="menu-box" role="dialog" aria-labelledby="menu-title">
+    <section class="view" data-view="title">
+      <p class="eyebrow">Poste de commandement</p>
+      <h2 class="title-logo" id="menu-title">Opération Rempart</h2>
+      <p class="menu-note">Tenez la route, protégez la base.</p>
+      <div class="menu-list">
+        <button id="t-continue">Continuer<small id="t-continue-sub"></small></button>
+        <button id="t-new" data-goto="maps">Nouvelle opération<small>Choisir la carte, puis la difficulté</small></button>
+        <button data-goto="scores">Tableau des scores<small>Par carte et par difficulté</small></button>
+        <button data-goto="settings">Paramètres<small>Vitesse, son, tremblements, écran tactile</small></button>
+        <button id="t-site" hidden>Retour à teivano.fr<small>La partie reste sauvegardée</small></button>
+      </div>
+    </section>
+    <section class="view" data-view="pause" hidden>
+      <p class="eyebrow">Partie en pause</p>
+      <h2>Menu</h2>
+      <p class="menu-note" id="menu-status"></p>
+      <div class="menu-list">
+        <button id="menu-resume">Reprendre la partie</button>
+        <button id="menu-restart">Recommencer<small id="menu-restart-sub"></small></button>
+        <button data-goto="waves">Manches<small>Rejouer une vague de la partie en cours</small></button>
+        <button data-goto="settings">Paramètres<small>Vitesse, son, tremblements, écran tactile</small></button>
+        <button id="menu-main">Menu principal<small>La partie reste sauvegardée</small></button>
+      </div>
+      <p class="menu-keys">Clavier : Échap menu · P pause · M son · Espace vague · 1, 2, 3 tours</p>
+    </section>
+    <section class="view" data-view="maps" hidden>
+      <p class="eyebrow">Nouvelle opération · étape 1 sur 2</p>
+      <h2>Choisissez la carte</h2>
+      <div class="map-cards" id="map-cards"></div>
+      <div class="buttons"><button data-goto="back">Retour</button></div>
+    </section>
+    <section class="view" data-view="diffs" hidden>
+      <p class="eyebrow">Nouvelle opération · étape 2 sur 2</p>
+      <h2 id="diffs-title">Choisissez la difficulté</h2>
+      <div class="difficulty" id="difficulty" role="radiogroup" aria-label="Niveau de difficulté"></div>
+      <div class="buttons">
+        <button data-goto="back">Retour</button>
+        <button id="brief-go">Lancer l'opération</button>
+        <button class="primary" id="brief-resume" hidden>Reprendre la partie</button>
+      </div>
+    </section>
+    <section class="view" data-view="replace" hidden>
+      <p class="eyebrow">Confirmation</p>
+      <h2>Effacer la partie en cours ?</h2>
+      <p id="replace-text"></p>
+      <div class="buttons">
+        <button data-goto="back">Annuler</button>
+        <button class="danger" id="replace-go">Effacer et recommencer</button>
+      </div>
+    </section>
+    <section class="view" data-view="waves" hidden>
+      <p class="eyebrow">Journal des opérations</p>
+      <h2>Rejouer une vague</h2>
+      <p class="menu-note">Tours, crédits et vies reviennent à leur état d'avant la vague choisie.</p>
+      <ol class="wave-list" id="wave-list"></ol>
+      <div class="buttons"><button data-goto="back">Retour</button></div>
+    </section>
+    <section class="view" data-view="scores" hidden>
+      <p class="eyebrow">Tableau d'honneur</p>
+      <h2>Meilleurs scores</h2>
+      <div class="seg" id="sc-maps" role="radiogroup" aria-label="Carte"></div>
+      <div class="seg" id="sc-diffs" role="radiogroup" aria-label="Difficulté"></div>
+      <p class="sc-best" id="sc-best"></p>
+      <div class="wave-recs" id="sc-waves" role="list" aria-label="Records par vague : vies perdues au mieux"></div>
+      <div class="leaderboard" id="menu-board">
+        <ol class="lb-list"></ol>
+        <p class="lb-note"></p>
+      </div>
+      <div class="buttons"><button data-goto="back">Retour</button></div>
+    </section>
+    <section class="view" data-view="settings" hidden>
+      <p class="eyebrow">Réglages</p>
+      <h2>Paramètres</h2>
+      <div class="settings">
+        <div class="set-row"><span>Vitesse du jeu</span><div class="seg" id="set-speed" role="radiogroup" aria-label="Vitesse du jeu"></div></div>
+        <label class="set-row check"><input type="checkbox" id="set-sound"><span>Son <small>touche M pour le couper ou le remettre</small></span></label>
+        <label class="set-row"><span>Effets <small>tirs, explosions, interface</small></span><input type="range" id="set-fx" min="0" max="100" step="5"></label>
+        <label class="set-row"><span>Ambiance <small>grondements, radio</small></span><input type="range" id="set-amb" min="0" max="100" step="5"></label>
+        <label class="set-row check"><input type="checkbox" id="set-shake"><span>Tremblements d'écran <small>arrivée et destruction du char lourd, fuites</small></span></label>
+        <label class="set-row check"><input type="checkbox" id="set-touch"><span>Confirmer la pose au doigt <small>un premier toucher montre l'aperçu, un second pose la tour</small></span></label>
+      </div>
+      <div class="buttons"><button data-goto="back">Retour</button></div>
+      <button class="link-danger" data-goto="reset">Réinitialiser la progression</button>
+    </section>
+    <section class="view" data-view="restart" hidden>
+      <p class="eyebrow">Confirmation</p>
+      <h2>Recommencer ?</h2>
+      <p id="restart-text"></p>
+      <div class="buttons">
+        <button data-goto="back">Annuler</button>
+        <button class="primary" id="restart-go">Recommencer</button>
+      </div>
+    </section>
+    <section class="view" data-view="reset" hidden>
+      <p class="eyebrow">Confirmation</p>
+      <h2>Réinitialiser la progression ?</h2>
+      <p>Les étoiles, les cartes débloquées, les records des vagues et les parties en cours seront effacés. Les paramètres et le tableau des scores sont conservés.</p>
+      <div class="buttons">
+        <button data-goto="back">Annuler</button>
+        <button class="danger" id="reset-go">Tout effacer</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ===== Données =====
+const COLS = 16, ROWS = 10;
+const LETTERS = 'ABCDEFGHIJKLMNOP';
+
+// range en cases, rate en tirs/s ; splash = rayon de l'explosion ; slow = part de vitesse retirée pendant slowTime
+const TOWER_TYPES = {
+  mg:     { name: 'Mitrailleuse', fem: true, role: 'Tir rapide', cost: 50,  range: 3,   damage: 10, rate: 4 },
+  // Le mortier tire en cloche : longue portée, mais rien en dessous de minRange (angle mort)
+  mortar: { name: 'Mortier',      role: 'Zone, longue portée', cost: 100, range: 4, minRange: 1.5, damage: 40, rate: .6, splash: 1 },
+  jammer: { name: 'Brouilleur',   role: 'Ralentit',       cost: 75,  range: 2.5, damage: 5,  rate: 1,  slow: .4, slowTime: 2 },
+};
+
+// speed en cases/s ; armor retire des dégâts à chaque impact ; slowResist réduit l'effet du brouilleur
+const ENEMY_TYPES = {
+  infantry: { name: 'Fantassin',  plural: 'fantassins',   hp: 175,  speed: 1.5, reward: 8,   damage: 1,  armor: 0, slowResist: 0,  size: .2 },
+  jeep:     { name: 'Jeep',       plural: 'jeeps',        hp: 65,   speed: 2.5, reward: 5,   damage: 1,  armor: 0, slowResist: 0,  size: .26 },
+  tank:     { name: 'Blindé',     plural: 'blindés',      hp: 550,  speed: .8,  reward: 20,  damage: 3,  armor: 6, slowResist: 0,  size: .34 },
+  boss:     { name: 'Char lourd', plural: 'chars lourds', hp: 2100, speed: .6,  reward: 100, damage: 10, armor: 8, slowResist: .5, size: .44 },
+};
+
+// Chaque vague : groupes [type, nombre, secondes entre deux unités], envoyés l'un après l'autre
+const WAVES = [
+  [['infantry', 5, 2.5]],                                                      // 1 : apprendre à poser
+  [['jeep', 10, .8]],                                                          // 2 : couvrir la route
+  [['infantry', 8, 1.1], ['jeep', 8, .6]],                                     // 3 : premier mélange
+  [['infantry', 6, 1.1], ['tank', 1, 0]],                                      // 4 : découvrir l'armure
+  [['tank', 3, 3], ['infantry', 10, .8]],                                      // 5 : appliquer la leçon
+  [['infantry', 8, 1]],                                                        // 6 : respiration
+  [['jeep', 30, .35]],                                                         // 7 : essaim
+  [['infantry', 12, .8], ['tank', 4, 2.5], ['jeep', 12, .45]],                 // 8
+  [['jeep', 15, .4], ['infantry', 15, .6], ['tank', 6, 1.8]],                  // 9
+  [['infantry', 6, .8], ['boss', 1, 0], ['tank', 3, 2], ['infantry', 6, .8]],  // 10 : examen final
+];
+// Niveaux de difficulté : résistance des ennemis et crédits de départ
+const DIFFICULTIES = {
+  recrue:  { name: 'Recrue',  hp: .8,  gold: 200, desc: 'Ennemis −20 % de PV, 200 crédits au départ' },
+  veteran: { name: 'Vétéran', hp: 1,   gold: 150, desc: "L'équilibre prévu, 150 crédits au départ" },
+  elite:   { name: 'Élite',   hp: 1.05, gold: 120, desc: 'Ennemis +5 % de PV, 120 crédits au départ' },
+};
+const diff = () => DIFFICULTIES[state.difficulty] || DIFFICULTIES.veteran;
+// « a », « a et b », « a, b et c »
+const listFr = items => items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' et ' + items[items.length - 1];
+// Score : 10 points par crédit de prime de chaque ennemi abattu, 150 points par vie restante à la victoire
+const KILL_POINTS = 10, LIFE_POINTS = 150;
+
+// PV : ×0,5 à la vague 1, puis +25 % de la base par vague (×2,75 à la vague 10)
+const hpFactor = n => .5 + .25 * (n - 1);
+const waveBonus = n => n === 6 ? 80 : 20 + 5 * n;         // versé quand la vague est repoussée
+const earlyBonus = n => 10 + 3 * n;                       // versé si on appelle la vague n en avance
+
+function waveCounts(n) {
+  const counts = {};
+  for (const [type, count] of WAVES[n - 1]) counts[type] = (counts[type] || 0) + count;
+  return counts;
+}
+function describeWave(n) {
+  return Object.entries(waveCounts(n)).map(([type, k]) => k + ' ' + (k > 1 ? ENEMY_TYPES[type].plural : ENEMY_TYPES[type].name.toLowerCase())).join(', ');
+}
+
+// ===== Cartes =====
+// paths : routes (points de passage en cases, de l'entrée à la base) ; les ennemis se répartissent entre elles.
+// hills : collines, +1 de portée pour une tour posée dessus ; forests et water : cases où l'on ne construit pas.
+// Une case de route posée sur l'eau devient un pont. hpMult : résistance des ennemis propre à la carte.
+const HILL_BONUS = 1;
+const MAP_DEFS = [
+  {
+    id: 'col', name: 'Col des Ardents', the: 'le Col des Ardents', place: 'Montagne en été', theme: 'summer',
+    brief: "Une route en lacets au flanc du col. Ses boucles offrent de bonnes positions : la carte idéale pour prendre la main.",
+    paths: [[[-1, 1], [4, 1], [4, 7], [8, 7], [8, 2], [12, 2], [12, 8], [15, 8]]],
+    base: { c: 15, r: 8 },
+    hills: [[2, 4], [6, 9], [10, 0], [14, 5]],
+    forests: [[0, 8], [1, 8], [0, 9], [1, 9], [2, 9], [13, 0], [14, 0], [15, 0], [14, 1], [15, 1], [10, 8], [10, 9], [9, 9]],
+    water: [],
+    hpMult: 1.6,
+  },
+  {
+    id: 'pont', name: 'Pont Noir', the: 'le Pont Noir', place: 'Faubourg industriel', theme: 'urban',
+    brief: "Une rivière coupe la carte du nord au sud et un seul pont la franchit. On ne construit pas sur l'eau : tenez le pont.",
+    paths: [[[-1, 1], [5, 1], [5, 4], [2, 4], [2, 7], [11, 7], [11, 2], [14, 2], [14, 6], [15, 6]]],
+    base: { c: 15, r: 6 },
+    hills: [[3, 2], [12, 4], [9, 9]],
+    forests: [[7, 0], [7, 1], [9, 0], [9, 1], [7, 9], [0, 9], [1, 9], [14, 9], [15, 9], [15, 0], [0, 5], [0, 6]],
+    water: [[8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 6], [8, 7], [8, 8], [8, 9]],
+    hpMult: 1.25,
+  },
+  {
+    id: 'tenaille', name: 'La Tenaille', the: 'la Tenaille', place: 'Plaine enneigée', theme: 'winter',
+    brief: "Deux colonnes arrivent par le nord-ouest et le sud-ouest, puis se rejoignent au centre. Routes courtes : couvrez les deux flancs.",
+    paths: [
+      [[-1, 1], [5, 1], [5, 4], [11, 4], [11, 7], [15, 7]],
+      [[-1, 8], [8, 8], [8, 4], [11, 4], [11, 7], [15, 7]],
+    ],
+    base: { c: 15, r: 7 },
+    hills: [[9, 6], [13, 5], [6, 6], [2, 4]],
+    forests: [[13, 9], [14, 9], [15, 9], [0, 4], [0, 5], [1, 5], [14, 2], [15, 2], [15, 3]],
+    water: [[1, 3], [2, 3], [3, 3]],
+    hpMult: 1.15,
+  },
+];
+
+// Ambiance de chaque carte : trois lieux différents, même lecture du terrain.
+// ink : couleur des tracés d'interface (portée, survol), sombre sur la neige, claire ailleurs.
+const THEMES = {
+  summer: {
+    ground: '#656b43', spots: ['rgba(38,46,18,.16)', 'rgba(160,150,90,.10)'], grain: '0,0,0', grainAlpha: .08,
+    water: '#4c6670', ripple: 'rgba(190,215,220,.35)', bank: null,
+    hillFill: 'rgba(190,170,110,.18)', hillLine: 'rgba(120,90,45,.6)',
+    craterFill: 'rgba(30,26,14,.45)', craterRim: 'rgba(170,150,100,.35)',
+    roadEdge: '#7f6c45', road: '#a8915f', ruts: 'rgba(80,64,36,.45)', specks: ['rgba(70,55,30,.25)', 'rgba(210,190,140,.2)'], centerLine: null,
+    bridge: 'wood', trees: ['#33401f', '#3c4a24'], treeLight: 'rgba(150,170,90,.25)', snowCap: false,
+    grid: 'rgba(16,20,8,.2)', ink: '236,231,207',
+  },
+  // Faubourg industriel : herbe gris-vert, asphalte à ligne blanche, eau sombre, pont en béton, dalles
+  urban: {
+    ground: '#5d6553', spots: ['rgba(28,32,26,.18)', 'rgba(150,155,140,.10)'], grain: '0,0,0', grainAlpha: .09,
+    water: '#2f3d44', ripple: 'rgba(160,180,185,.25)', bank: null,
+    hillFill: 'rgba(150,150,130,.16)', hillLine: 'rgba(66,70,58,.65)',
+    craterFill: 'rgba(24,24,20,.5)', craterRim: 'rgba(140,140,125,.35)',
+    roadEdge: '#2a2c2a', road: '#464946', ruts: null, specks: ['rgba(0,0,0,.25)', 'rgba(200,200,195,.12)'], centerLine: 'rgba(235,235,225,.75)',
+    bridge: 'concrete', trees: ['#36412f', '#3f4a38'], treeLight: 'rgba(140,150,130,.2)', snowCap: false, slabs: true,
+    grid: 'rgba(10,12,10,.22)', ink: '236,231,207',
+  },
+  // Plaine enneigée : sol blanc, routes en neige tassée grise, rivière froide bordée de neige, sapins enneigés
+  winter: {
+    ground: '#e3e7ea', spots: ['rgba(140,160,180,.09)', 'rgba(255,255,255,.28)'], grain: '80,95,110', grainAlpha: .06,
+    water: '#3b5563', ripple: 'rgba(220,235,240,.4)', bank: 'rgba(255,255,255,.85)',
+    hillFill: 'rgba(160,180,205,.22)', hillLine: 'rgba(90,110,135,.55)',
+    craterFill: 'rgba(80,70,55,.5)', craterRim: 'rgba(255,255,255,.7)',
+    roadEdge: '#7d858c', road: '#a2aab0', ruts: 'rgba(70,78,86,.45)', specks: ['rgba(60,68,76,.25)', 'rgba(255,255,255,.4)'], centerLine: null,
+    bridge: 'wood', trees: ['#2c4231', '#334a38'], treeLight: 'rgba(255,255,255,.85)', snowCap: true,
+    grid: 'rgba(60,80,100,.16)', ink: '34,42,52',
+  },
+};
+
+// Pré-calcule pour chaque carte : segments et longueur de chaque route, cases de route, terrain
+function prepareMap(def) {
+  const key = (c, r) => c + ',' + r;
+  const road = new Set();
+  const paths = def.paths.map(wps => {
+    const segments = [];
+    let length = 0;
+    for (let i = 0; i < wps.length - 1; i++) {
+      const [x1, y1] = wps[i], [x2, y2] = wps[i + 1];
+      const len = Math.abs(x2 - x1) + Math.abs(y2 - y1);
+      segments.push({ x1, y1, x2, y2, len, start: length });
+      length += len;
+      for (let s = 0; s <= len; s++) {
+        const c = x1 + Math.sign(x2 - x1) * s, r = y1 + Math.sign(y2 - y1) * s;
+        if (c >= 0 && c < COLS) road.add(key(c, r));
+      }
+    }
+    return { waypoints: wps, segments, length };
+  });
+  const set = list => new Set(list.map(([c, r]) => key(c, r)));
+  const water = set(def.water);
+  return {
+    ...def, paths, road, T: THEMES[def.theme] || THEMES.summer,
+    hill: set(def.hills), forest: set(def.forests), water,
+    bridges: [...road].filter(k => water.has(k)),
+  };
+}
+const MAPS = Object.fromEntries(MAP_DEFS.map(d => [d.id, prepareMap(d)]));
+let MAP = MAPS.col;
+
+const cellKey = (c, r) => c + ',' + r;
+const isRoad = (c, r) => MAP.road.has(cellKey(c, r));
+const isHill = (c, r) => MAP.hill.has(cellKey(c, r));
+const isForest = (c, r) => MAP.forest.has(cellKey(c, r));
+const isWater = (c, r) => MAP.water.has(cellKey(c, r)) && !isRoad(c, r);
+const cellName = (c, r) => LETTERS[c] + (r + 1);
+
+// Position (centre de case) à une distance d parcourue sur une route
+function posAt(d, pi = 0, map = MAP) {
+  const path = map.paths[pi];
+  for (const s of path.segments) {
+    if (d <= s.start + s.len) {
+      const t = (d - s.start) / s.len;
+      return { x: s.x1 + (s.x2 - s.x1) * t + .5, y: s.y1 + (s.y2 - s.y1) * t + .5 };
+    }
+  }
+  return { x: map.base.c + .5, y: map.base.r + .5 };
+}
+
+// Générateur pseudo-aléatoire stable : la carte est identique à chaque chargement
+function rng(seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// Charge une carte : données de jeu et décor
+function setMap(id) {
+  MAP = MAPS[id] || MAPS.col;
+  state.mapId = MAP.id;
+  document.getElementById('board').style.background = MAP.T.ground;
+  if (terrain) terrain = renderTerrain(MAP, CELL, DPR);   // le premier rendu se fait au premier redimensionnement
+}
+
+// ===== Canvas =====
+const cv = document.getElementById('map');
+const ctx = cv.getContext('2d');
+let CELL = 40, DPR = 1, terrain = null;
+
+// La case prend la plus grande taille qui fait tenir la carte en largeur ET en hauteur
+const stage = document.getElementById('stage');
+function resize() {
+  const border = 4;
+  const w = stage.clientWidth - border, h = stage.clientHeight - border;
+  DPR = window.devicePixelRatio || 1;
+  CELL = Math.max(10, Math.min(w / COLS, h / ROWS));
+  cv.width = Math.round(CELL * COLS * DPR);
+  cv.height = Math.round(CELL * ROWS * DPR);
+  cv.style.width = CELL * COLS + 'px';
+  cv.style.height = CELL * ROWS + 'px';
+  terrain = renderTerrain(MAP, CELL, DPR);
+  resetDecalCanvas();
+}
+
+// Le décor d'une carte est dessiné une fois dans un canvas hors écran, puis recopié à chaque image.
+// cell = taille d'une case en pixels : sert aussi aux petits aperçus du briefing.
+function renderTerrain(map, cell, dpr) {
+  const out = document.createElement('canvas');
+  out.width = Math.round(cell * COLS * dpr); out.height = Math.round(cell * ROWS * dpr);
+  const g = out.getContext('2d');
+  g.setTransform(dpr * cell, 0, 0, dpr * cell, 0, 0);
+  const rnd = rng(1944);
+  const has = (set, c, r) => set.has(c + ',' + r);
+  const free = (c, r) => !has(map.road, c, r) && !has(map.water, c, r) && !has(map.forest, c, r) && !(c === map.base.c && r === map.base.r);
+  const T = map.T;
+
+  // Sol : herbe ou neige, avec taches et grain
+  g.fillStyle = T.ground;
+  g.fillRect(0, 0, COLS, ROWS);
+  for (let i = 0; i < 160; i++) {
+    g.fillStyle = rnd() < .55 ? T.spots[0] : T.spots[1];
+    g.beginPath(); g.arc(rnd() * COLS, rnd() * ROWS, .2 + rnd() * .9, 0, Math.PI * 2); g.fill();
+  }
+  for (let i = 0; i < 1800; i++) {
+    g.fillStyle = `rgba(${T.grain},${T.grainAlpha * (.5 + rnd())})`;
+    g.fillRect(rnd() * COLS, rnd() * ROWS, .035, .035);
+  }
+  // Faubourg : quelques dalles de béton abandonnées sur les cases libres
+  if (T.slabs) {
+    for (let i = 0; i < 14; i++) {
+      const c = Math.floor(rnd() * COLS), r = Math.floor(rnd() * ROWS);
+      if (!free(c, r) || has(map.hill, c, r)) continue;
+      const w = .3 + rnd() * .35, h = .2 + rnd() * .3, x = c + .1 + rnd() * (.8 - w), y = r + .1 + rnd() * (.8 - h);
+      g.fillStyle = 'rgba(150,152,145,.55)'; g.fillRect(x, y, w, h);
+      g.strokeStyle = 'rgba(40,42,38,.4)'; g.lineWidth = .02; g.strokeRect(x, y, w, h);
+    }
+  }
+
+  // Eau : rivière ou étang, avec rides (et berges enneigées en hiver)
+  for (const k of map.water) {
+    const [c, r] = k.split(',').map(Number);
+    g.fillStyle = T.water; g.fillRect(c - .02, r - .02, 1.04, 1.04);
+  }
+  if (T.bank) {
+    g.fillStyle = T.bank;
+    for (const k of map.water) {
+      const [c, r] = k.split(',').map(Number);
+      const dry = (dc, dr) => !has(map.water, c + dc, r + dr) && c + dc >= 0 && c + dc < COLS && r + dr >= 0 && r + dr < ROWS;
+      if (dry(-1, 0)) g.fillRect(c, r, .08, 1);
+      if (dry(1, 0)) g.fillRect(c + .92, r, .08, 1);
+      if (dry(0, -1)) g.fillRect(c, r, 1, .08);
+      if (dry(0, 1)) g.fillRect(c, r + .92, 1, .08);
+    }
+  }
+  g.strokeStyle = T.ripple; g.lineWidth = .025;
+  for (const k of map.water) {
+    const [c, r] = k.split(',').map(Number);
+    for (let i = 0; i < 2; i++) {
+      const x = c + .15 + rnd() * .4, y = r + .25 + rnd() * .5;
+      g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + .12, y - .06, x + .25, y); g.stroke();
+    }
+  }
+
+  // Collines : courbes de niveau, comme sur une carte d'état-major
+  for (const k of map.hill) {
+    const [c, r] = k.split(',').map(Number);
+    const cx = c + .5, cy = r + .5;
+    g.fillStyle = T.hillFill;
+    g.beginPath(); g.arc(cx, cy, .62, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = T.hillLine; g.lineWidth = .025;
+    const wob = rnd() * 6;
+    for (const rad of [.6, .42, .24]) {
+      g.beginPath();
+      for (let i = 0; i <= 24; i++) {
+        const a = i / 24 * Math.PI * 2, rr = rad * (1 + .08 * Math.sin(a * 3 + wob));
+        i ? g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .85) : g.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .85);
+      }
+      g.stroke();
+    }
+  }
+
+  // Cratères d'obus, sur les cases libres
+  for (let i = 0; i < 9; i++) {
+    const c = Math.floor(rnd() * COLS), r = Math.floor(rnd() * ROWS);
+    if (!free(c, r) || has(map.hill, c, r)) continue;
+    const x = c + .2 + rnd() * .6, y = r + .2 + rnd() * .6, rad = .18 + rnd() * .14;
+    g.fillStyle = T.craterFill; g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = T.craterRim; g.lineWidth = .05; g.beginPath(); g.arc(x, y, rad + .05, 0, Math.PI * 2); g.stroke();
+  }
+
+  // Routes : terre battue, asphalte ou neige tassée
+  for (const path of map.paths) {
+    const trace = (w, color) => {
+      g.strokeStyle = color; g.lineWidth = w; g.lineJoin = 'round'; g.lineCap = 'butt';
+      g.beginPath();
+      path.waypoints.forEach(([x, y], i) => i ? g.lineTo(x + .5, y + .5) : g.moveTo(x + .5, y + .5));
+      g.stroke();
+    };
+    trace(.92, T.roadEdge);
+    trace(.8, T.road);
+  }
+  // Ornières : deux traces parallèles sur chaque segment (pas sur l'asphalte)
+  g.strokeStyle = T.ruts || 'transparent'; g.lineWidth = .05;
+  for (const path of T.ruts ? map.paths : []) {
+    for (const s of path.segments) {
+      const horiz = s.y1 === s.y2;
+      for (const off of [-.18, .18]) {
+        g.beginPath();
+        g.moveTo(s.x1 + .5 + (horiz ? 0 : off), s.y1 + .5 + (horiz ? off : 0));
+        g.lineTo(s.x2 + .5 + (horiz ? 0 : off), s.y2 + .5 + (horiz ? off : 0));
+        g.stroke();
+      }
+    }
+  }
+  for (let i = 0; i < 500; i++) {
+    const pi = Math.floor(rnd() * map.paths.length);
+    const p = posAt(rnd() * map.paths[pi].length, pi, map);
+    g.fillStyle = rnd() < .5 ? T.specks[0] : T.specks[1];
+    g.fillRect(p.x - .4 + rnd() * .8, p.y - .4 + rnd() * .8, .04, .04);
+  }
+  // Asphalte : ligne blanche discontinue au milieu
+  if (T.centerLine) {
+    g.strokeStyle = T.centerLine; g.lineWidth = .045; g.setLineDash([.28, .22]); g.lineJoin = 'miter';
+    for (const path of map.paths) {
+      g.beginPath();
+      path.waypoints.forEach(([x, y], i) => i ? g.lineTo(x + .5, y + .5) : g.moveTo(x + .5, y + .5));
+      g.stroke();
+    }
+    g.setLineDash([]);
+  }
+
+  // Ponts : tablier en planches et garde-corps là où la route passe sur l'eau
+  for (const k of map.bridges) {
+    const [c, r] = k.split(',').map(Number);
+    const horiz = has(map.road, c - 1, r) || has(map.road, c + 1, r);
+    g.save(); g.translate(c + .5, r + .5); if (!horiz) g.rotate(Math.PI / 2);
+    if (T.bridge === 'concrete') {
+      // Pont en béton : tablier gris, joints de dilatation, parapets
+      g.fillStyle = '#6f726d'; g.fillRect(-.55, -.42, 1.1, .84);
+      g.strokeStyle = 'rgba(30,32,30,.5)'; g.lineWidth = .02;
+      for (const x of [-.2, .25]) { g.beginPath(); g.moveTo(x, -.42); g.lineTo(x, .42); g.stroke(); }
+      g.fillStyle = '#a4a6a0'; g.fillRect(-.6, -.5, 1.2, .09); g.fillRect(-.6, .41, 1.2, .09);
+    } else {
+      g.fillStyle = '#6e5636'; g.fillRect(-.55, -.42, 1.1, .84);
+      g.strokeStyle = 'rgba(40,30,15,.55)'; g.lineWidth = .025;
+      for (let x = -.5; x <= .5; x += .12) { g.beginPath(); g.moveTo(x, -.42); g.lineTo(x, .42); g.stroke(); }
+      g.fillStyle = '#3d3122'; g.fillRect(-.6, -.5, 1.2, .08); g.fillRect(-.6, .42, 1.2, .08);
+      if (T.snowCap) { g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(-.6, -.5, 1.2, .035); g.fillRect(-.6, .42, 1.2, .035); }
+    }
+    g.restore();
+  }
+
+  // Bois : quelques houppiers par case
+  for (const k of map.forest) {
+    const [c, r] = k.split(',').map(Number);
+    for (let i = 0; i < 5; i++) {
+      const x = c + .2 + rnd() * .6, y = r + .2 + rnd() * .6, rad = .14 + rnd() * .1;
+      g.fillStyle = T.snowCap ? 'rgba(60,80,100,.25)' : 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(x + .04, y + .05, rad, 0, Math.PI * 2); g.fill();
+      g.fillStyle = rnd() < .5 ? T.trees[0] : T.trees[1]; g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+      // Lumière sur le houppier ; en hiver, une calotte de neige plus large
+      g.fillStyle = T.treeLight; g.beginPath(); g.arc(x - rad * .3, y - rad * .3, rad * (T.snowCap ? .62 : .45), 0, Math.PI * 2); g.fill();
+    }
+  }
+
+  // Quadrillage de la carte d'état-major
+  g.strokeStyle = T.grid; g.lineWidth = .02;
+  for (let c = 1; c < COLS; c++) { g.beginPath(); g.moveTo(c, 0); g.lineTo(c, ROWS); g.stroke(); }
+  for (let r = 1; r < ROWS; r++) { g.beginPath(); g.moveTo(0, r); g.lineTo(COLS, r); g.stroke(); }
+
+  drawBase(g, map);
+  return out;
+}
+
+// Base : bunker en béton entouré de sacs de sable, drapeau
+function drawBase(g, map) {
+  const x = map.base.c + .5, y = map.base.r + .5;
+  g.fillStyle = '#b8a678';
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2;
+    g.beginPath(); g.ellipse(x + Math.cos(a) * .42, y + Math.sin(a) * .42, .1, .07, a + Math.PI / 2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(60,50,30,.6)'; g.lineWidth = .02; g.stroke();
+  }
+  g.fillStyle = '#8b8d80'; g.fillRect(x - .28, y - .28, .56, .56);
+  g.fillStyle = '#6c6e62'; g.fillRect(x - .28, y + .1, .56, .18);
+  g.fillStyle = '#20231a'; g.fillRect(x - .18, y - .06, .36, .07);
+  g.strokeStyle = '#2a2a22'; g.lineWidth = .03;
+  g.beginPath(); g.moveTo(x + .2, y - .2); g.lineTo(x + .2, y - .72); g.stroke();
+  g.fillStyle = '#e2a62e';
+  g.beginPath(); g.moveTo(x + .2, y - .72); g.lineTo(x + .52, y - .62); g.lineTo(x + .2, y - .52); g.fill();
+}
+
+// ===== Paramètres : préférences du joueur, gardées dans ce navigateur d'une partie à l'autre =====
+const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+// fx et amb : volume des effets et de l'ambiance, de 0 à 1 ; touchConfirm : pose en deux touchers au doigt
+const settings = { speed: 1, fx: 1, amb: 1, shake: !reducedMotion, touchConfirm: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('rempart-settings') || '{}')); } catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem('rempart-settings', JSON.stringify(settings)); } catch (e) {}
+}
+
+// ===== Sons : synthétisés avec Web Audio, aucun fichier à charger =====
+const sfx = (() => {
+  let ac = null, master = null, noise = null, muted = false;
+  try { muted = localStorage.getItem('rempart-muted') === '1'; } catch (e) {}
+  const VOLUME = .5;
+  const last = {};
+  // Deux voies de mixage : l'ambiance (grondements, radio) et tout le reste, chacune avec son volume
+  const AMBIENT = new Set(['rumble', 'radio']);
+  let fxBus = null, ambBus = null, bus = null;
+
+  // Le navigateur n'autorise le son qu'après une action du joueur : on crée le contexte au premier clic
+  function init() {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ac = new AC({ latencyHint: 'interactive' });
+    const comp = ac.createDynamicsCompressor();
+    master = ac.createGain();
+    master.gain.value = muted ? 0 : VOLUME;
+    master.connect(comp);
+    comp.connect(ac.destination);
+    fxBus = ac.createGain(); fxBus.gain.value = settings.fx; fxBus.connect(master);
+    ambBus = ac.createGain(); ambBus.gain.value = settings.amb; ambBus.connect(master);
+    noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  // gap : délai minimal entre deux sons du même nom, pour que dix mitrailleuses ne saturent pas
+  function ready(name, gap) {
+    if (!ac || muted || ac.state !== 'running') return false;
+    if (last[name] !== undefined && ac.currentTime - last[name] < gap) return false;
+    last[name] = ac.currentTime;
+    return true;
+  }
+
+  function tone({ type = 'sine', f0, f1 = f0, dur, vol, at = 0 }) {
+    const t = ac.currentTime + at;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + dur + .02);
+  }
+
+  function burst({ dur, vol, filter = 'lowpass', freq, q = 1, at = 0 }) {
+    const t = ac.currentTime + at;
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise;
+    f.type = filter; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    s.connect(f); f.connect(g); g.connect(bus);
+    s.start(t, Math.random() * .5); s.stop(t + dur + .02);
+  }
+
+  // Clairon : sol, do, mi, sol
+  const bugle = (notes, vol) => notes.forEach(([f, at, dur]) => tone({ type: 'triangle', f0: f, dur, vol, at }));
+
+  // Sons de combat : très courts et à attaque immédiate, pour coller à l'image tir par tir
+  const SOUNDS = {
+    mg:      () => burst({ dur: .03, vol: .35, filter: 'bandpass', freq: 2600, q: .7 }),
+    launch:  () => { tone({ f0: 150, f1: 60, dur: .07, vol: .45 }); burst({ dur: .03, vol: .2, freq: 800 }); },
+    blast:   () => { burst({ dur: .16, vol: .45, freq: 420 }); tone({ f0: 80, f1: 40, dur: .12, vol: .35 }); },
+    // Frappe aérienne : souffle de l'avion qui passe, puis tapis de bombes
+    jet:     () => { burst({ dur: 1.3, vol: .2, filter: 'bandpass', freq: 700, q: .5 }); tone({ type: 'sawtooth', f0: 180, f1: 90, dur: 1.2, vol: .05 }); },
+    bomb:    () => { [0, .07, .15, .22].forEach(at => burst({ dur: .35, vol: .5, freq: 320, at })); tone({ f0: 70, f1: 28, dur: .6, vol: .5 }); },
+    pulse:   () => tone({ type: 'triangle', f0: 1400, f1: 700, dur: .06, vol: .12 }),
+    ping:    () => tone({ type: 'triangle', f0: 2800 + Math.random() * 500, dur: .035, vol: .06 }),
+    kill:    () => tone({ type: 'square', f0: 1200, dur: .035, vol: .03 }),
+    // Ambiance : grondement d'artillerie au loin, grésillement radio
+    rumble:  () => { burst({ dur: 1.2, vol: .22, freq: 110 }); burst({ dur: .9, vol: .14, freq: 160, at: .35 }); },
+    radio:   () => { burst({ dur: .18, vol: .08, filter: 'bandpass', freq: 1600, q: 2 }); tone({ type: 'square', f0: 1050, dur: .07, vol: .03, at: .2 }); tone({ type: 'square', f0: 1050, dur: .07, vol: .03, at: .32 }); },
+    baseHit: () => { tone({ type: 'sawtooth', f0: 140, f1: 70, dur: .35, vol: .25 }); burst({ dur: .25, vol: .2, freq: 300 }); },
+    build:   () => { burst({ dur: .12, vol: .3, freq: 400 }); tone({ f0: 220, f1: 110, dur: .1, vol: .25 }); },
+    deny:    () => tone({ type: 'square', f0: 140, dur: .12, vol: .07 }),
+    upgrade: () => [523, 659, 784].forEach((f, i) => tone({ type: 'square', f0: f, dur: .09, vol: .05, at: i * .07 })),
+    sell:    () => [784, 523].forEach((f, i) => tone({ type: 'square', f0: f, dur: .09, vol: .05, at: i * .08 })),
+    wave:    () => bugle([[392, 0, .12], [523, .14, .12], [659, .28, .12], [784, .42, .35]], .22),
+    win:     () => bugle([[523, 0, .15], [659, .17, .15], [784, .34, .15], [1047, .51, .2], [784, .74, .15], [1047, .91, .6]], .22),
+    lose:    () => [392, 330, 262, 196].forEach((f, i) => tone({ type: 'triangle', f0: f, dur: i === 3 ? .7 : .22, vol: .2, at: i * .24 })),
+  };
+  // Seuls les sons partis dans la même image (12 ms) sont fusionnés ; ping et bip restent plus espacés
+  const GAPS = { bomb: .1, rumble: 2, radio: 1, mg: .012, launch: .012, blast: .012, pulse: .012, ping: .05, kill: .03, baseHit: .15 };
+
+  return {
+    init,
+    play(name) {
+      const amb = AMBIENT.has(name);
+      if (!(amb ? settings.amb : settings.fx) || !ready(name, GAPS[name] || 0)) return;
+      bus = amb ? ambBus : fxBus;
+      SOUNDS[name]();
+    },
+    setVolumes() {
+      if (fxBus) fxBus.gain.value = settings.fx;
+      if (ambBus) ambBus.gain.value = settings.amb;
+    },
+    get muted() { return muted; },
+    toggle() {
+      muted = !muted;
+      if (master) master.gain.value = muted ? 0 : VOLUME;
+      try { localStorage.setItem('rempart-muted', muted ? '1' : '0'); } catch (e) {}
+    },
+  };
+})();
+
+// ===== État =====
+const state = {
+  hover: null,      // case survolée
+  pointer: null,    // position du pointeur en cases, avec décimales
+  hoverEnemy: null, // ennemi sous le pointeur
+  armed: null,      // au doigt : case touchée une première fois, en attente de confirmation
+  lives: 20, gold: 150, wave: 0,
+  enemies: [],
+  spawnQueue: [],   // { type, delay } : delay = secondes d'attente avant cette apparition
+  spawnTimer: 0,
+  towers: [],
+  shells: [],       // obus de mortier en vol
+  effects: [],      // traçantes, ondes, explosions
+  placing: null,    // type de tour en cours de placement
+  phase: 'prep',    // prep : entre deux vagues ; wave : combat ; over : partie finie
+  pendingBonus: 0,  // bonus de fin de vague, versé quand le terrain est dégagé
+  selected: null,   // tour dont la fiche est ouverte
+  paused: false,
+  speed: [2, 4].includes(settings.speed) ? settings.speed : 1,   // préférence du joueur, gardée d'une partie à l'autre
+  seen: {},         // types d'ennemis déjà rencontrés
+  baseHitAt: -9,
+  checkpoints: {},  // vague → état sauvegardé juste avant elle
+  run: null,        // manche en cours : { from: vague de départ, lives: vies au départ }
+  lastRun: null,    // vague de départ de la dernière manche terminée
+  result: null,     // 'win' ou 'lose' une fois la partie finie
+  mapId: 'col',     // carte en cours
+  difficulty: 'veteran',
+  score: 0,
+  decals: [],       // traces, cratères, épaves calcinées
+  wrecks: [],       // épaves encore en feu
+  shakeUntil: 0, shakeMag: 0,
+  nextRumble: 0,
+  spawnCount: 0,    // nombre d'ennemis apparus : répartit les ennemis entre les routes
+  started: false,   // partie lancée par le joueur (et non partie vierge derrière l'écran titre)
+  strike: { r: 0, d: 0, readyAt: 0 },   // frappe aérienne : niveaux de rayon et de dégâts, prête à partir de readyAt
+  strikes: [],      // frappes en approche
+  aiming: false,    // le joueur vise une zone pour la frappe
+  strikeAim: null,  // au doigt : zone touchée une première fois, en attente de confirmation
+};
+
+const $lives = document.getElementById('lives');
+const $gold = document.getElementById('gold');
+const $wave = document.getElementById('wave');
+const $msg = document.getElementById('msg');
+function renderHud() {
+  $lives.textContent = state.lives;
+  $gold.textContent = state.gold;
+  document.getElementById('score').textContent = state.score.toLocaleString('fr-FR');
+  $wave.textContent = state.wave + '/10';
+  // Les tours restent sélectionnables sans les crédits : le bouton affiche ce qui manque
+  for (const [id, t] of Object.entries(TOWER_TYPES)) {
+    const b = document.getElementById('tower-' + id);
+    if (!b) continue;
+    const missing = t.cost - state.gold;
+    b.classList.toggle('short', missing > 0);
+    b.querySelector('.role').textContent = missing > 0 ? `Il manque ${missing}` : t.role;
+  }
+  renderPanel();
+  renderStrikePanel();
+}
+
+// ===== Ennemis =====
+// Renseignement affiché à la première apparition de chaque type d'ennemi
+const TIPS = {
+  jeep: 'Jeeps en approche : rapides et fragiles. La mitrailleuse et le brouilleur les arrêtent.',
+  tank: 'Blindé repéré : son armure réduit chaque impact. Les obus du mortier passent mieux que les balles.',
+  boss: 'Char lourd en approche : blindage épais, et le brouilleur ne le ralentit qu\'à moitié.',
+};
+const $dispatch = document.getElementById('dispatch');
+let dispatchTimer = 0;
+function showDispatch(text) {
+  document.getElementById('dispatch-text').textContent = text;
+  $dispatch.hidden = false;
+  clearTimeout(dispatchTimer);
+  dispatchTimer = setTimeout(() => { $dispatch.hidden = true; }, 6000);
+}
+
+// Relance une petite animation CSS sur un compteur du bandeau
+function flashStat(id, cls) {
+  const el = document.getElementById(id).parentElement;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+  clearTimeout(el._flash);
+  el._flash = setTimeout(() => el.classList.remove(cls), 450);
+}
+
+function spawnEnemy(type, wave) {
+  if (TIPS[type] && !state.seen[type]) { state.seen[type] = true; showDispatch(TIPS[type]); }
+  if (type === 'boss') { shake(.12, 1.4); sfx.play('rumble'); }
+  const t = ENEMY_TYPES[type];
+  const hp = Math.round(t.hp * hpFactor(wave) * MAP.hpMult * diff().hp);
+  // Avec plusieurs routes, les ennemis les empruntent à tour de rôle
+  const path = state.spawnCount++ % MAP.paths.length;
+  state.enemies.push({ type, t, hp, maxHp: hp, path, d: -.6, slowUntil: 0, slowFactor: 0, angle: 0, x: -1, y: 0 });
+}
+
+function updateEnemies(dt, now) {
+  if (state.spawnQueue.length) {
+    state.spawnTimer -= dt;
+    while (state.spawnQueue.length && state.spawnTimer <= 0) {
+      const next = state.spawnQueue.shift();
+      spawnEnemy(next.type, next.wave);
+      state.spawnTimer += state.spawnQueue.length ? state.spawnQueue[0].delay : 0;
+    }
+  }
+  for (const e of state.enemies) {
+    if (e.dead) continue;
+    const slow = now < e.slowUntil ? e.slowFactor * (1 - e.t.slowResist) : 0;
+    e.d += e.t.speed * (1 - slow) * dt;
+    const pi = e.path || 0;
+    const p = posAt(e.d, pi), q = posAt(e.d + .05, pi);
+    e.x = p.x; e.y = p.y;
+    if (q.x !== p.x || q.y !== p.y) e.angle = Math.atan2(q.y - p.y, q.x - p.x);
+    // Les véhicules laissent des traces tous les 0,35 case
+    if (e.type !== 'infantry' && e.d > 0 && e.d - (e.lastTrack ?? -1) > .35) {
+      e.lastTrack = e.d;
+      addDecal({ k: 'track', x: r2(e.x), y: r2(e.y), a: r2(e.angle), w: e.t.size });
+    }
+    if (e.d >= MAP.paths[pi].length) {
+      e.dead = true;
+      state.lives = Math.max(0, state.lives - e.t.damage);
+      state.baseHitAt = now;
+      flashStat('lives', 'hit');
+      sfx.play('baseHit');
+      shake(e.type === 'boss' ? .3 : .08, e.type === 'boss' ? .8 : .3);
+      renderHud();
+      if (state.lives === 0 && state.phase !== 'over') endGame(false);
+    }
+  }
+}
+
+// Ralenti : teinte bleue sur l'ennemi
+const isSlowed = (e, now) => now < e.slowUntil;
+
+// ===== Tours =====
+const towerAt = (c, r) => state.towers.find(tw => tw.c === c && tw.r === r);
+const isBase = (c, r) => c === MAP.base.c && r === MAP.base.r;
+const canBuild = (c, r) => !isRoad(c, r) && !isBase(c, r) && !isForest(c, r) && !isWater(c, r) && !towerAt(c, r);
+
+// Chaque niveau : +40 % de dégâts, +10 % de portée
+const MAX_LEVEL = 3;
+function towerStats(tw, level = tw.level) {
+  const t = TOWER_TYPES[tw.type], k = level - 1;
+  const hill = isHill(tw.c, tw.r) ? HILL_BONUS : 0;   // une colline ajoute de la portée, pas d'angle mort
+  return { ...t, damage: t.damage * 1.4 ** k, range: t.range * 1.1 ** k + hill, hill };
+}
+// Niveau 2 : 60 % du prix de la tour ; niveau 3 : 100 %
+const upgradeCost = tw => Math.round(TOWER_TYPES[tw.type].cost * (tw.level === 1 ? .6 : 1));
+const sellValue = tw => Math.floor(tw.invested * .7);
+
+// L'armure retire des dégâts à chaque impact, avec un minimum de 1
+function hurt(e, raw) {
+  if (e.dead) return;
+  e.hp -= Math.max(1, raw - e.t.armor);
+  // Étincelle grise quand l'armure absorbe une bonne part du tir
+  if (e.t.armor && raw < 3 * e.t.armor) {
+    sfx.play('ping');
+    state.effects.push({ kind: 'spark', x: e.x + (Math.random() - .5) * .3, y: e.y + (Math.random() - .5) * .3, t: clock, dur: .18 });
+  }
+  if (e.hp <= 0) {
+    e.dead = true;
+    state.gold += e.t.reward;
+    state.score += e.t.reward * KILL_POINTS;
+    sfx.play('kill');
+    state.effects.push({ kind: 'puff', x: e.x, y: e.y, r: e.t.size + .15, t: clock, dur: .4 });
+    if (e.type !== 'infantry') state.wrecks.push({ x: e.x, y: e.y, a: e.angle, s: e.t.size, t: clock });
+    if (e.type === 'boss') { shake(.25, .8); sfx.play('blast'); }
+    state.effects.push({ kind: 'float', x: e.x, y: e.y - .2, text: '+' + e.t.reward, t: clock, dur: .9 });
+    flashStat('gold', 'bump');
+    renderHud();
+  }
+}
+
+// À portée : le corps de l'ennemi touche le cercle, et dépasse de l'angle mort s'il y en a un.
+// On compte le corps et non le centre, pour coller à ce que le joueur voit.
+function inReach(s, tw, e) {
+  const d = Math.hypot(e.x - tw.x, e.y - tw.y);
+  return d <= s.range + e.t.size && d >= (s.minRange || 0) - e.t.size;
+}
+
+// Modes de ciblage : la plus haute note l'emporte ; e.d (distance parcourue) départage les ex æquo
+const TARGET_MODES = {
+  first:  { label: 'Premier',   title: "Le plus avancé sur la route, le plus près de la base", score: e => e.d },
+  strong: { label: 'Résistant', title: 'Celui qui a le plus de PV restants',                   score: e => e.hp + e.d * .001 },
+  close:  { label: 'Proche',    title: 'Le plus proche de la tour',                            score: (e, tw) => -Math.hypot(e.x - tw.x, e.y - tw.y) },
+  last:   { label: 'Dernier',   title: 'Le moins avancé, le plus loin de la base',             score: e => -e.d },
+};
+
+function updateTowers(dt, now) {
+  for (const tw of state.towers) {
+    const s = towerStats(tw);
+    tw.cooldown -= dt;
+    // Cible : parmi les ennemis à portée, celui que privilégie le mode choisi dans la fiche
+    const score = TARGET_MODES[tw.target || 'first'].score;
+    let target = null, best = -Infinity;
+    for (const e of state.enemies) {
+      if (e.dead || !inReach(s, tw, e)) continue;
+      const v = score(e, tw);
+      if (v > best) { best = v; target = e; }
+    }
+    if (!target) continue;
+    if (tw.type !== 'jammer') tw.angle = Math.atan2(target.y - tw.y, target.x - tw.x);
+    if (tw.cooldown > 0) continue;
+    tw.cooldown = 1 / s.rate;
+
+    if (tw.type === 'mg') {
+      sfx.play('mg');
+      state.effects.push({ kind: 'flash', x: tw.x + Math.cos(tw.angle) * .46, y: tw.y + Math.sin(tw.angle) * .46, r: .09, t: now, dur: .05 });
+      hurt(target, s.damage);
+      state.effects.push({ kind: 'tracer', x1: tw.x + Math.cos(tw.angle) * .4, y1: tw.y + Math.sin(tw.angle) * .4, x2: target.x, y2: target.y, t: now, dur: .07 });
+    } else if (tw.type === 'mortar') {
+      // Tir en cloche vers la position actuelle : un ennemi rapide peut sortir de la zone avant l'impact
+      const dist = Math.hypot(target.x - tw.x, target.y - tw.y);
+      sfx.play('launch');
+      state.effects.push({ kind: 'flash', x: tw.x, y: tw.y, r: .2, t: now, dur: .12 });
+      state.effects.push({ kind: 'smoke', x: tw.x, y: tw.y, vx: 0, t: now, dur: 1, r: .1 });
+      state.shells.push({ x0: tw.x, y0: tw.y, tx: target.x, ty: target.y, start: now, dur: .45 + dist * .12, damage: s.damage, splash: s.splash });
+    } else {
+      for (const e of state.enemies) {
+        if (e.dead || !inReach(s, tw, e)) continue;
+        hurt(e, s.damage);
+        e.slowUntil = now + s.slowTime;
+        e.slowFactor = s.slow;
+      }
+      sfx.play('pulse');
+      state.effects.push({ kind: 'pulse', x: tw.x, y: tw.y, r: s.range, t: now, dur: .5 });
+    }
+  }
+}
+
+function updateShells(now) {
+  for (const sh of state.shells) {
+    if (now < sh.start + sh.dur) continue;
+    sh.done = true;
+    for (const e of state.enemies) {
+      if (!e.dead && Math.hypot(e.x - sh.tx, e.y - sh.ty) <= sh.splash + e.t.size) hurt(e, sh.damage);
+    }
+    sfx.play('blast');
+    state.effects.push({ kind: 'blast', x: sh.tx, y: sh.ty, r: sh.splash, t: now, dur: .45 });
+    addDecal({ k: 'crater', x: r2(sh.tx + (Math.random() - .5) * .2), y: r2(sh.ty + (Math.random() - .5) * .2), r: r2(.1 + Math.random() * .08) });
+  }
+  state.shells = state.shells.filter(sh => !sh.done);
+  state.effects = state.effects.filter(fx => now < fx.t + fx.dur);
+}
+
+// Galons de grade sous la tour : un chevron par amélioration
+function drawChevrons(g, x, y, level) {
+  g.strokeStyle = '#e2a62e'; g.lineWidth = .05; g.lineJoin = 'miter';
+  for (let i = 0; i < level - 1; i++) {
+    const cy = y + .3 + i * .1;
+    g.beginPath(); g.moveTo(x - .14, cy - .06); g.lineTo(x, cy + .02); g.lineTo(x + .14, cy - .06); g.stroke();
+  }
+}
+
+// Tour vue du dessus, dans un emplacement en sacs de sable ; g peut être la carte ou une icône
+function drawTower(g, type, x, y, angle, t, level = 1) {
+  drawTowerBody(g, type, x, y, angle, t);
+  if (level > 1) drawChevrons(g, x, y, level);
+}
+
+function drawTowerBody(g, type, x, y, angle, t) {
+  g.fillStyle = '#b8a678';
+  g.strokeStyle = 'rgba(60,50,30,.55)'; g.lineWidth = .02;
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2;
+    g.beginPath(); g.ellipse(x + Math.cos(a) * .36, y + Math.sin(a) * .36, .09, .065, a + Math.PI / 2, 0, Math.PI * 2); g.fill(); g.stroke();
+  }
+  g.fillStyle = '#4b5133'; g.beginPath(); g.arc(x, y, .29, 0, Math.PI * 2); g.fill();
+  g.save();
+  g.translate(x, y);
+  g.rotate(angle);
+  if (type === 'mg') {
+    g.fillStyle = '#23261a'; g.fillRect(0, -.035, .44, .07);
+    g.fillStyle = '#cfc8a2'; g.fillRect(-.1, -.1, .2, .2);
+    g.fillStyle = '#6b7046'; g.beginPath(); g.arc(-.15, 0, .09, 0, Math.PI * 2); g.fill();
+  } else if (type === 'mortar') {
+    g.fillStyle = '#7a5530'; g.beginPath(); g.arc(0, 0, .21, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1e2016'; g.beginPath(); g.arc(.07, 0, .11, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#d99a55'; g.lineWidth = .035; g.stroke();
+  } else {
+    g.rotate(t * 1.6 - angle);
+    g.fillStyle = '#3a4950'; g.fillRect(-.15, -.15, .3, .3);
+    g.strokeStyle = '#7cc0e0'; g.lineWidth = .045;
+    g.beginPath(); g.arc(0, 0, .2, -.9, .9); g.stroke();
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(.2, 0); g.stroke();
+    g.fillStyle = `rgba(124,192,224,${.55 + .45 * Math.sin(t * 6)})`;
+    g.beginPath(); g.arc(0, 0, .06, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+}
+
+function drawShells(now) {
+  for (const sh of state.shells) {
+    const p = (now - sh.start) / sh.dur;
+    const x = sh.x0 + (sh.tx - sh.x0) * p, y = sh.y0 + (sh.ty - sh.y0) * p;
+    const h = Math.sin(Math.PI * p) * .9;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x, y, .07, .04, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1e2016'; ctx.beginPath(); ctx.arc(x, y - h, .065 + h * .03, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// Avion d'appui vu du dessus, nez vers la droite
+function drawPlane(g, x, y, angle = 0, scale = 1) {
+  g.save(); g.translate(x, y); g.rotate(angle); g.scale(scale, scale);
+  g.fillStyle = '#3d4238';
+  g.beginPath(); g.ellipse(0, 0, .46, .07, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.moveTo(.12, -.04); g.lineTo(-.06, -.46); g.lineTo(-.17, -.46); g.lineTo(-.08, -.04);
+  g.lineTo(-.08, .04); g.lineTo(-.17, .46); g.lineTo(-.06, .46); g.lineTo(.12, .04); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(-.34, -.03); g.lineTo(-.44, -.18); g.lineTo(-.5, -.18); g.lineTo(-.45, -.03);
+  g.lineTo(-.45, .03); g.lineTo(-.5, .18); g.lineTo(-.44, .18); g.lineTo(-.34, .03); g.closePath(); g.fill();
+  g.fillStyle = '#e2a62e'; g.beginPath(); g.arc(-.12, 0, .035, 0, Math.PI * 2); g.fill();   // cocarde
+  g.restore();
+}
+
+// Visée de la frappe : cercle rouge sous le pointeur (ou au point touché), gris pendant la recharge
+function drawStrikeAim(t) {
+  if (!state.aiming) return;
+  const p = pointerType === 'touch' && settings.touchConfirm ? state.strikeAim : state.pointer;
+  if (!p) return;
+  const ready = !strikeLeft(), r = strikeRadius();
+  ctx.fillStyle = ready ? 'rgba(224,83,58,.16)' : 'rgba(120,120,120,.14)';
+  ctx.strokeStyle = ready ? 'rgba(224,83,58,.9)' : 'rgba(150,150,150,.7)';
+  ctx.lineWidth = .04; ctx.setLineDash([.14, .09]);
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(p.x - .25, p.y); ctx.lineTo(p.x + .25, p.y); ctx.moveTo(p.x, p.y - .25); ctx.lineTo(p.x, p.y + .25); ctx.stroke();
+}
+
+// Frappes en approche : la zone visée clignote jusqu'à l'impact
+function drawStrikeTargets(t) {
+  for (const sk of state.strikes) {
+    ctx.strokeStyle = `rgba(224,83,58,${.65 + .3 * Math.sin(t * 14)})`; ctx.lineWidth = .05;
+    ctx.setLineDash([.14, .09]);
+    ctx.beginPath(); ctx.arc(sk.x, sk.y, sk.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function drawEffects(now) {
+  for (const fx of state.effects) {
+    const p = (now - fx.t) / fx.dur;
+    if (fx.kind === 'tracer') {
+      ctx.strokeStyle = `rgba(255,214,110,${1 - p})`; ctx.lineWidth = .04;
+      ctx.beginPath(); ctx.moveTo(fx.x1, fx.y1); ctx.lineTo(fx.x2, fx.y2); ctx.stroke();
+    } else if (fx.kind === 'pulse') {
+      ctx.strokeStyle = `rgba(124,192,224,${.7 * (1 - p)})`; ctx.lineWidth = .06;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * p, 0, Math.PI * 2); ctx.stroke();
+    } else if (fx.kind === 'plane') {
+      // Vol rectiligne d'ouest en est, au-dessus de la cible à l'instant de l'impact ; ombre décalée au sol
+      const px = fx.x + (now - fx.at) * 9;
+      ctx.globalAlpha = .3; drawPlane(ctx, px + .35, fx.y + .45, 0, 1.3); ctx.globalAlpha = 1;
+      drawPlane(ctx, px, fx.y, 0, 1.3);
+    } else if (fx.kind === 'blast') {
+      ctx.fillStyle = `rgba(255,160,60,${.65 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (.4 + .6 * p), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(60,55,45,${.5 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * .5 * (.5 + p), 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'spark') {
+      ctx.strokeStyle = `rgba(225,225,215,${1 - p})`; ctx.lineWidth = .025;
+      for (let i = 0; i < 4; i++) {
+        const a = i * Math.PI / 2 + .6, r1 = .03 + p * .06, r2 = .08 + p * .12;
+        ctx.beginPath(); ctx.moveTo(fx.x + Math.cos(a) * r1, fx.y + Math.sin(a) * r1); ctx.lineTo(fx.x + Math.cos(a) * r2, fx.y + Math.sin(a) * r2); ctx.stroke();
+      }
+    } else if (fx.kind === 'flash') {
+      ctx.fillStyle = `rgba(255,225,130,${1 - p})`;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (1 - p * .5), 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'smoke') {
+      ctx.fillStyle = `rgba(95,92,84,${.38 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(fx.x + fx.vx * p, fx.y - .55 * p, fx.r + .22 * p, 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'puff') {
+      ctx.fillStyle = `rgba(70,66,56,${.55 * (1 - p)})`;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (.6 + .6 * p), 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'float') {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.globalAlpha = 1 - p * p;
+      ctx.font = `700 ${Math.max(12, Math.round(CELL * .38))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(18,21,13,.8)';
+      ctx.strokeText(fx.text, fx.x * CELL, (fx.y - p * .6) * CELL);
+      ctx.fillStyle = '#e2a62e';
+      ctx.fillText(fx.text, fx.x * CELL, (fx.y - p * .6) * CELL);
+      ctx.restore();
+    }
+  }
+}
+
+// Base touchée : la case clignote en rouge pendant une demi-seconde
+function drawBaseHit(t) {
+  const p = (t - state.baseHitAt) / .5;
+  if (p < 0 || p >= 1) return;
+  ctx.fillStyle = `rgba(224,83,58,${.55 * (1 - p)})`;
+  ctx.fillRect(MAP.base.c, MAP.base.r, 1, 1);
+}
+
+// Zone de tir ; avec un angle mort, seule la couronne est éclairée et le centre est hachuré en rouge
+function drawRange(x, y, range, ok, minRange = 0) {
+  ctx.fillStyle = ok ? `rgba(${MAP.T.ink},.10)` : 'rgba(224,83,58,.10)';
+  ctx.strokeStyle = ok ? `rgba(${MAP.T.ink},.7)` : 'rgba(224,83,58,.7)';
+  ctx.lineWidth = .03;
+  ctx.setLineDash([.12, .08]);
+  ctx.beginPath();
+  ctx.arc(x, y, range, 0, Math.PI * 2);
+  if (minRange) ctx.arc(x, y, minRange, 0, Math.PI * 2, true);
+  ctx.fill('evenodd');
+  ctx.beginPath(); ctx.arc(x, y, range, 0, Math.PI * 2); ctx.stroke();
+  if (minRange) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, minRange, 0, Math.PI * 2); ctx.clip();
+    ctx.strokeStyle = 'rgba(224,83,58,.35)'; ctx.lineWidth = .025; ctx.setLineDash([]);
+    for (let i = -minRange * 2; i < minRange * 2; i += .18) {
+      ctx.beginPath(); ctx.moveTo(x + i - minRange, y + minRange); ctx.lineTo(x + i + minRange, y - minRange); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(224,83,58,.75)'; ctx.setLineDash([.12, .08]);
+    ctx.beginPath(); ctx.arc(x, y, minRange, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+// Silhouettes vues du dessus, orientées dans le sens de la marche
+const ENEMY_BODY = '#454b52', ENEMY_DARK = '#2b2f34', ENEMY_MARK = '#c2412b';
+// Silhouette d'un ennemi centrée sur l'origine, tournée vers la droite ; g peut être la carte ou une icône
+function drawEnemySprite(g, type, s, t, seed) {
+  if (type === 'infantry') {
+    const step = Math.sin(t * 12 + seed) * .05;
+    g.fillStyle = ENEMY_DARK; g.fillRect(-.05 + step, -.14, .1, .06); g.fillRect(-.05 - step, .08, .1, .06);
+    g.fillStyle = ENEMY_BODY; g.beginPath(); g.ellipse(0, 0, .1, .16, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = ENEMY_DARK; g.lineWidth = .035; g.beginPath(); g.moveTo(.02, .08); g.lineTo(.22, .08); g.stroke();
+    g.fillStyle = ENEMY_MARK; g.beginPath(); g.arc(0, 0, .075, 0, Math.PI * 2); g.fill();
+  } else if (type === 'jeep') {
+    g.fillStyle = ENEMY_DARK;
+    for (const [wx, wy] of [[-.14, -.15], [.12, -.15], [-.14, .15], [.12, .15]]) g.fillRect(wx - .05, wy - .03, .1, .06);
+    g.fillStyle = ENEMY_BODY; g.fillRect(-s, -.13, s * 2, .26);
+    g.fillStyle = '#7d8790'; g.fillRect(.04, -.11, .06, .22);
+    g.fillStyle = ENEMY_MARK; g.fillRect(-s, -.03, .12, .06);
+  } else {
+    const big = type === 'boss';
+    g.fillStyle = ENEMY_DARK; g.fillRect(-s, -s * .78, s * 2, s * 1.56);
+    g.fillStyle = big ? '#3a3f45' : ENEMY_BODY; g.fillRect(-s * .85, -s * .55, s * 1.7, s * 1.1);
+    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = .02;
+    for (let i = -s + .06; i < s; i += .08) {
+      g.beginPath(); g.moveTo(i, -s * .78); g.lineTo(i, -s * .58); g.moveTo(i, s * .58); g.lineTo(i, s * .78); g.stroke();
+    }
+    g.fillStyle = ENEMY_DARK;
+    if (big) { g.fillRect(0, -.08, s * 1.35, .05); g.fillRect(0, .03, s * 1.35, .05); }
+    else g.fillRect(0, -.03, s * 1.4, .06);
+    g.fillStyle = big ? '#50565d' : '#5a6068'; g.beginPath(); g.arc(-.02, 0, s * .45, 0, Math.PI * 2); g.fill();
+    g.fillStyle = ENEMY_MARK; g.fillRect(-s * .8, -s * .5, .06, s);
+  }
+}
+
+function drawEnemy(e, t) {
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.rotate(e.angle);
+  const s = e.t.size;
+  drawEnemySprite(ctx, e.type, s, t, e.maxHp);
+  ctx.restore();
+  if (isSlowed(e, t)) {
+    ctx.fillStyle = 'rgba(124,192,224,.35)';
+    ctx.beginPath(); ctx.arc(e.x, e.y, s + .06, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Barre de vie, masquée tant que l'ennemi est intact
+  if (e.hp < e.maxHp) {
+    const w = Math.max(.5, s * 2.2), ratio = e.hp / e.maxHp;
+    const y = e.y - s - .16;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(e.x - w / 2 - .02, y - .02, w + .04, .1);
+    ctx.fillStyle = ratio > .5 ? '#8fbb52' : ratio > .25 ? '#e2a62e' : '#e0533a';
+    ctx.fillRect(e.x - w / 2, y, w * ratio, .06);
+  }
+}
+
+// ===== Champ de bataille vivant =====
+// Traces, cratères et épaves s'accumulent sur un calque posé sur le terrain. La liste (bornée) sert à
+// redessiner ce calque après un redimensionnement ou un chargement ; elle est sauvegardée avec la partie.
+const MAX_DECALS = 900, WRECK_BURN = 6;
+let decalCanvas = null;
+
+function paintDecal(g, d) {
+  if (d.k === 'track') {
+    // Deux empreintes de roues ou de chenilles, de part et d'autre de l'axe de marche
+    g.save(); g.translate(d.x, d.y); g.rotate(d.a);
+    g.strokeStyle = 'rgba(55,42,24,.16)'; g.lineWidth = .05;
+    for (const off of [-d.w * .7, d.w * .7]) { g.beginPath(); g.moveTo(-.06, off); g.lineTo(.06, off); g.stroke(); }
+    g.restore();
+  } else if (d.k === 'crater') {
+    g.fillStyle = 'rgba(32,27,16,.38)';
+    g.beginPath(); g.arc(d.x, d.y, d.r, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(160,140,95,.22)'; g.lineWidth = .03;
+    g.beginPath(); g.arc(d.x, d.y, d.r + .03, 0, Math.PI * 2); g.stroke();
+  } else if (d.k === 'wreck') {
+    // Épave calcinée : la silhouette du véhicule, noircie
+    g.save(); g.translate(d.x, d.y); g.rotate(d.a);
+    g.fillStyle = 'rgba(22,20,17,.6)'; g.fillRect(-d.s, -d.s * .7, d.s * 2, d.s * 1.4);
+    g.fillStyle = 'rgba(60,45,30,.35)'; g.beginPath(); g.arc(0, 0, d.s * .45, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+}
+
+function decalContext() {
+  const g = decalCanvas.getContext('2d');
+  g.setTransform(DPR * CELL, 0, 0, DPR * CELL, 0, 0);
+  return g;
+}
+function resetDecalCanvas() {
+  decalCanvas = document.createElement('canvas');
+  decalCanvas.width = cv.width; decalCanvas.height = cv.height;
+  const g = decalContext();
+  for (const d of state.decals) paintDecal(g, d);
+}
+function addDecal(d) {
+  state.decals.push(d);
+  if (state.decals.length > MAX_DECALS) state.decals.splice(0, state.decals.length - MAX_DECALS);
+  if (decalCanvas) paintDecal(decalContext(), d);
+}
+const r2 = v => Math.round(v * 100) / 100;   // coordonnées arrondies : sauvegarde plus légère
+
+// Secousse de l'écran, désactivable dans les paramètres (désactivée d'office si le système demande moins d'animations)
+function shake(mag, dur) {
+  if (!settings.shake) return;
+  state.shakeUntil = Math.max(state.shakeUntil, clock + dur);
+  state.shakeMag = clock < state.shakeUntil ? Math.max(state.shakeMag, mag) : mag;
+}
+
+// Épaves en feu : fument quelques secondes puis deviennent une trace calcinée
+function updateBattlefield(dt, now) {
+  for (const w of state.wrecks) {
+    const age = now - w.t;
+    if (age < WRECK_BURN && Math.random() < dt * 7) {
+      state.effects.push({ kind: 'smoke', x: w.x + (Math.random() - .5) * w.s, y: w.y, vx: (Math.random() - .5) * .3, t: now, dur: 1.6 + Math.random() * .6, r: .07 + w.s * .2 });
+    }
+    if (age >= WRECK_BURN) { w.done = true; addDecal({ k: 'wreck', x: r2(w.x), y: r2(w.y), a: r2(w.a), s: w.s }); }
+  }
+  state.wrecks = state.wrecks.filter(w => !w.done);
+  // Grondement d'artillerie lointain pendant les combats
+  if (state.phase === 'wave' && now > state.nextRumble) {
+    sfx.play('rumble');
+    state.nextRumble = now + 6 + Math.random() * 8;
+  }
+}
+
+function drawWrecks(t) {
+  for (const w of state.wrecks) {
+    const age = t - w.t;
+    ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.a);
+    ctx.fillStyle = '#26231d'; ctx.fillRect(-w.s, -w.s * .7, w.s * 2, w.s * 1.4);
+    // Flammes vacillantes, qui faiblissent avec le temps
+    const heat = Math.max(0, 1 - age / WRECK_BURN);
+    ctx.fillStyle = `rgba(255,${120 + Math.random() * 60},40,${.55 * heat})`;
+    ctx.beginPath(); ctx.arc((Math.random() - .5) * w.s * .6, (Math.random() - .5) * w.s * .4, w.s * (.35 + Math.random() * .2), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ===== Boucle de jeu =====
+let last = performance.now();
+let clock = 0; // temps de jeu en secondes (s'arrête en pause, accélère en ×2)
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000);
+  last = now;
+  if (!state.paused) {
+    // En ×2, deux pas de simulation par image plutôt qu'un pas deux fois plus long
+    for (let i = 0; i < state.speed; i++) { clock += dt; update(dt, clock); }
+  }
+  draw(clock);
+  updateReadout();
+  renderStrike();
+  if (now - lastSave > 3000) { lastSave = now; saveGame(); }
+  requestAnimationFrame(frame);
+}
+let lastSave = 0;
+
+// ===== Frappe aérienne =====
+// Capacité du commandant, débloquée une fois la vague 5 repoussée : on vise une zone, un avion passe et
+// le bombardement frappe après un court délai. Recharge en temps de jeu. Deux améliorations payantes,
+// rayon et dégâts, de 2 niveaux chacune.
+const STRIKE = { unlockWave: 5, cooldown: 60, delay: 1.2, radius: [1.2, 1.6, 2], damage: [250, 375, 560], cost: [70, 120] };
+const strikeRadius = (lvl = state.strike.r) => STRIKE.radius[lvl];
+const strikeDamage = (lvl = state.strike.d) => STRIKE.damage[lvl];
+const strikeUnlocked = () => state.wave > STRIKE.unlockWave || (state.wave === STRIKE.unlockWave && state.phase !== 'wave');
+const strikeLeft = () => Math.max(0, state.strike.readyAt - clock);
+
+function launchStrike(x, y) {
+  state.strike.readyAt = clock + STRIKE.cooldown;
+  state.strikes.push({ x: r2(x), y: r2(y), at: clock + STRIKE.delay, radius: strikeRadius(), damage: strikeDamage() });
+  // L'avion arrive de l'ouest et passe au-dessus de la cible au moment de l'impact
+  state.effects.push({ kind: 'plane', x: x, y: y, t: clock, dur: STRIKE.delay + 1.4, at: clock + STRIKE.delay });
+  sfx.play('jet');
+}
+
+function updateStrikes(now) {
+  for (const sk of state.strikes) {
+    if (now < sk.at) continue;
+    sk.done = true;
+    for (const e of state.enemies) {
+      if (!e.dead && Math.hypot(e.x - sk.x, e.y - sk.y) <= sk.radius + e.t.size) hurt(e, sk.damage);
+    }
+    // Un chapelet d'explosions couvre la zone, et laisse ses cratères
+    for (let i = 0; i < 5; i++) {
+      const a = Math.random() * Math.PI * 2, d = i ? sk.radius * (.35 + Math.random() * .5) : 0;
+      const x = sk.x + Math.cos(a) * d, y = sk.y + Math.sin(a) * d;
+      state.effects.push({ kind: 'blast', x, y, r: sk.radius * .55, t: now, dur: .5 + i * .08 });
+      addDecal({ k: 'crater', x: r2(x), y: r2(y), r: r2(.14 + Math.random() * .1) });
+    }
+    sfx.play('bomb');
+    shake(.18, .5);
+  }
+  state.strikes = state.strikes.filter(sk => !sk.done);
+}
+
+function update(dt, now) {
+  updateEnemies(dt, now);
+  updateTowers(dt, now);
+  updateShells(now);
+  updateStrikes(now);
+  updateBattlefield(dt, now);
+  state.enemies = state.enemies.filter(e => !e.dead);
+  checkWaveEnd();
+}
+
+function draw(t) {
+  // Secousse : tout le tableau est décalé de quelques pixels au hasard
+  const mag = t < state.shakeUntil ? state.shakeMag * DPR * CELL : 0;
+  const ox = (Math.random() - .5) * mag, oy = (Math.random() - .5) * mag;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#5f6440'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(1, 0, 0, 1, ox, oy);
+  ctx.drawImage(terrain, 0, 0);
+  if (decalCanvas) ctx.drawImage(decalCanvas, 0, 0);
+  ctx.setTransform(DPR * CELL, 0, 0, DPR * CELL, ox, oy);
+  drawWrecks(t);
+  drawEntry(t);
+  drawBaseHit(t);
+  drawHover();
+  const sel = state.selected;
+  if (sel) drawRange(sel.x, sel.y, towerStats(sel).range, true, towerStats(sel).minRange);
+  for (const tw of state.towers) drawTower(ctx, tw.type, tw.x, tw.y, tw.angle, t, tw.level);
+  for (const e of state.enemies) drawEnemy(e, t);
+  if (state.hoverEnemy && !state.hoverEnemy.dead) {
+    const e = state.hoverEnemy;
+    ctx.strokeStyle = `rgba(${MAP.T.ink},.85)`; ctx.lineWidth = .03;
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.t.size + .1, 0, Math.PI * 2); ctx.stroke();
+  }
+  drawShells(t);
+  drawStrikeTargets(t);
+  drawEffects(t);
+  drawPlacement(t);
+  drawStrikeAim(t);
+  if (state.paused && state.phase !== 'over') drawPauseBanner();
+}
+
+function drawPauseBanner() {
+  ctx.fillStyle = 'rgba(18,21,13,.55)';
+  ctx.fillRect(0, 0, COLS, ROWS);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#ece7cf';
+  ctx.font = `${Math.round(CELL * .9)}px "Black Ops One", Impact, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('PAUSE', CELL * COLS / 2, CELL * ROWS / 2);
+}
+
+// Chevrons rouges clignotants à l'entrée de la route
+function drawEntry(t) {
+  ctx.strokeStyle = `rgba(224,83,58,${.45 + .35 * Math.sin(t * 4)})`;
+  ctx.lineWidth = .08; ctx.lineJoin = 'miter';
+  for (const path of MAP.paths) {
+    const y = path.waypoints[0][1] + .5;
+    for (let i = 0; i < 2; i++) {
+      const x = .15 + i * .22;
+      ctx.beginPath(); ctx.moveTo(x, y - .2); ctx.lineTo(x + .15, y); ctx.lineTo(x, y + .2); ctx.stroke();
+    }
+  }
+}
+
+// Hors placement : contour de la case survolée, et portée si c'est une tour
+function drawHover() {
+  const h = state.hover;
+  if (!h || state.placing) return;
+  const tw = towerAt(h.c, h.r);
+  if (tw && tw !== state.selected) {
+    ctx.globalAlpha = .5;
+    drawRange(tw.x, tw.y, towerStats(tw).range, true, towerStats(tw).minRange);
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = `rgba(${MAP.T.ink},.45)`;
+  ctx.lineWidth = .03;
+  ctx.strokeRect(h.c + .02, h.r + .02, .96, .96);
+}
+
+// En placement : case verte ou rouge, portée et tour fantôme
+function drawPlacement(t) {
+  const h = state.hover;
+  if (!h || !state.placing) return;
+  const ok = canBuild(h.c, h.r);
+  const short = state.gold < TOWER_TYPES[state.placing].cost;
+  // Vert : posable ; laiton : bon emplacement mais crédits insuffisants ; rouge : interdit
+  ctx.fillStyle = !ok ? 'rgba(224,83,58,.25)' : short ? 'rgba(226,166,46,.22)' : 'rgba(143,187,82,.25)';
+  ctx.fillRect(h.c, h.r, 1, 1);
+  ctx.strokeStyle = !ok ? '#e0533a' : short ? '#e2a62e' : '#8fbb52';
+  ctx.lineWidth = .04;
+  ctx.setLineDash(ok && short ? [.1, .07] : []);
+  ctx.strokeRect(h.c + .02, h.r + .02, .96, .96);
+  ctx.setLineDash([]);
+  const pt = TOWER_TYPES[state.placing];
+  drawRange(h.c + .5, h.r + .5, pt.range + (isHill(h.c, h.r) ? HILL_BONUS : 0), ok, pt.minRange);
+  if (ok) {
+    ctx.globalAlpha = short ? .35 : .6;
+    drawTower(ctx, state.placing, h.c + .5, h.r + .5, -Math.PI / 2, t);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ===== Interactions =====
+const readout = document.getElementById('readout');
+
+// Position du pointeur en cases (avec décimales) ; null hors de la carte
+function pointFromEvent(e) {
+  const rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * COLS, y = (e.clientY - rect.top) / rect.height * ROWS;
+  return x >= 0 && x < COLS && y >= 0 && y < ROWS ? { x, y } : null;
+}
+function cellFromEvent(e) {
+  const p = pointFromEvent(e);
+  return p ? { c: Math.floor(p.x), r: Math.floor(p.y) } : null;
+}
+
+// Ennemi sous le pointeur, avec un peu de marge autour de son corps pour le viser facilement
+function enemyAt(p) {
+  let found = null, best = Infinity;
+  for (const e of state.enemies) {
+    const d = Math.hypot(e.x - p.x, e.y - p.y);
+    if (d <= e.t.size + .2 && d < best) { best = d; found = e; }
+  }
+  return found;
+}
+
+// Bandeau en bas à gauche de la carte : fiche de l'ennemi survolé, sinon le secteur. Mis à jour à chaque image.
+let readoutText = '';
+function updateReadout() {
+  const p = state.pointer;
+  const e = p ? enemyAt(p) : null;
+  state.hoverEnemy = e;
+  let text = '', kind = '';
+  if (e) {
+    kind = 'enemy';
+    text = `${e.t.name} · ${Math.max(0, Math.ceil(e.hp))}/${e.maxHp} PV · armure ${e.t.armor} · ${fmt(e.t.speed, 1)} case/s${isSlowed(e, clock) ? ' · ralenti' : ''}`;
+  } else if (p && state.hover) {
+    const h = state.hover, road = isRoad(h.c, h.r), base = isBase(h.c, h.r), tw = towerAt(h.c, h.r);
+    kind = road || base || tw ? 'road' : 'free';
+    const what = base ? 'base' : road ? (isWater(h.c, h.r) || MAP.water.has(cellKey(h.c, h.r)) ? 'pont' : 'route')
+      : tw ? TOWER_TYPES[tw.type].name.toLowerCase() + (isHill(h.c, h.r) ? ' sur colline' : '')
+      : isForest(h.c, h.r) ? 'bois, non constructible' : isWater(h.c, h.r) ? 'eau, non constructible'
+      : isHill(h.c, h.r) ? `colline, +${HILL_BONUS} de portée` : 'constructible';
+    if (isForest(h.c, h.r) || isWater(h.c, h.r)) kind = 'road';
+    text = `Secteur ${cellName(h.c, h.r)} · ${what}`;
+  }
+  if (text === readoutText) return;
+  readoutText = text;
+  readout.hidden = !text;
+  readout.textContent = text;
+  readout.dataset.kind = kind;
+}
+
+// Au doigt, il n'y a pas de survol : l'aperçu suit les touchers, pas les glissés
+let pointerType = 'mouse';
+cv.addEventListener('pointerdown', e => { pointerType = e.pointerType; });
+cv.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  state.pointer = pointFromEvent(e);
+  state.hover = cellFromEvent(e);
+});
+cv.addEventListener('pointerleave', e => {
+  if (e.pointerType === 'touch') return;
+  state.pointer = null;
+  state.hover = null;
+});
+
+cv.addEventListener('click', e => {
+  const h = cellFromEvent(e);
+  if (!h) return;
+  state.hover = h;
+  state.pointer = pointFromEvent(e);
+  if (state.aiming) { aimStrike(state.pointer); return; }
+  if (!state.placing) { select(towerAt(h.c, h.r) || null); return; }
+  const t = TOWER_TYPES[state.placing];
+  // Au doigt : un premier toucher montre l'aperçu, un second sur la même case confirme
+  const armed = state.armed && state.armed.c === h.c && state.armed.r === h.r;
+  if (pointerType === 'touch' && settings.touchConfirm && canBuild(h.c, h.r) && !armed) {
+    state.armed = h;
+    $msg.textContent = `${t.name} en ${cellName(h.c, h.r)} : touchez à nouveau la case pour confirmer.`;
+    return;
+  }
+  state.armed = null;
+  if (!canBuild(h.c, h.r)) {
+    sfx.play('deny');
+    const why = isForest(h.c, h.r) ? 'les bois' : isWater(h.c, h.r) ? "l'eau" : towerAt(h.c, h.r) ? 'une tour déjà en place' : 'la route';
+    $msg.textContent = `Secteur ${cellName(h.c, h.r)} indisponible : on ne construit pas sur ${why}.`;
+    return;
+  }
+  // Sans les crédits, rien n'est posé mais la sélection reste : le clic suivant posera dès que le compte y est
+  if (state.gold < t.cost) {
+    sfx.play('deny');
+    $msg.textContent = `${t.name} : il manque ${t.cost - state.gold} crédits. La sélection reste active en attendant.`;
+    return;
+  }
+  state.gold -= t.cost;
+  state.towers.push({ type: state.placing, c: h.c, r: h.r, x: h.c + .5, y: h.r + .5, level: 1, cooldown: 0, angle: -Math.PI / 2, invested: t.cost });
+  sfx.play('build');
+  // La sélection reste active pour enchaîner les poses
+  $msg.textContent = state.gold >= t.cost
+    ? `${t.name} installé${t.fem ? 'e' : ''} en ${cellName(h.c, h.r)}. Cliquez sur une autre case pour en poser un${t.fem ? 'e' : ''} autre, Échap pour arrêter.`
+    : `${t.name} installé${t.fem ? 'e' : ''} en ${cellName(h.c, h.r)}. Il manque ${t.cost - state.gold} crédits pour l'unité suivante.`;
+  renderHud();
+});
+cv.addEventListener('contextmenu', e => { if (state.placing || state.aiming) { e.preventDefault(); setPlacing(null); } });
+
+// Raccourcis : 1-3 tours, 4 frappe aérienne, Espace ou Entrée vague, U améliorer, V vendre, C cible, P pause, M son,
+// Échap : annuler la sélection, sinon ouvrir le menu ; dans le menu, revenir en arrière
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  sfx.init();
+  const k = e.key.toLowerCase();
+  // Espace et Entrée sur un bouton qui a le focus gardent leur effet normal (cliquer ce bouton)
+  if ((k === ' ' || k === 'enter') && e.target.closest && e.target.closest('button')) return;
+  if (k === 'escape') {
+    if (!$menu.hidden) goBack();
+    else if (state.placing || state.selected || state.aiming) { setPlacing(null); select(null); }
+    else openMenu();
+  }
+  else if (k === 'p') togglePause();
+  else if (k === '4') setAiming(!state.aiming);
+  else if (k === 'm') toggleSound();
+  else if (k === '1' || k === '2' || k === '3') {
+    const id = Object.keys(TOWER_TYPES)[Number(k) - 1];
+    setPlacing(state.placing === id ? null : id);
+  } else if (k === ' ' || k === 'enter') {
+    if (!$btnWave.disabled && !modalOpen() && $overlay.hidden) { e.preventDefault(); launchWave(); }
+  } else if (k === 'u') $pUp.click();
+  else if (k === 'v') $pSell.click();
+  else if (k === 'c' && state.selected && state.selected.type !== 'jammer') {
+    const modes = Object.keys(TARGET_MODES), tw = state.selected;
+    tw.target = modes[(modes.indexOf(tw.target || 'first') + 1) % modes.length];
+    renderPanel();
+    $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} : cible « ${TARGET_MODES[tw.target].label} ».`;
+  }
+});
+
+// ===== Fiche de tour : amélioration et revente =====
+const $panel = document.getElementById('panel');
+const $pUp = document.getElementById('p-up');
+const $pSell = document.getElementById('p-sell');
+const fmt = (v, d = 0) => v.toFixed(d).replace('.', ',');
+
+function select(tw) {
+  state.selected = tw;
+  if (tw) {
+    setPlacing(null);   // annule aussi la visée de la frappe
+    $panel.classList.toggle('left', tw.c >= COLS / 2);   // la fiche se place du côté opposé à la tour
+  }
+  renderPanel();
+}
+
+function renderPanel() {
+  const tw = state.selected;
+  $panel.hidden = !tw;
+  if (!tw) return;
+  const t = TOWER_TYPES[tw.type], s = towerStats(tw);
+  const maxed = tw.level >= MAX_LEVEL, n = maxed ? null : towerStats(tw, tw.level + 1);
+  const next = (a, b, d = 0) => n ? ` <span class="next">→ ${fmt(b, d)}</span>` : '';
+  document.getElementById('p-name').textContent = t.name;
+  document.getElementById('p-grade').textContent = `Niveau ${tw.level}/${MAX_LEVEL} · ${cellName(tw.c, tw.r)}`;
+  const rows = [
+    ['Dégâts', fmt(s.damage) + next(s.damage, n && n.damage)],
+    ['Portée', fmt(s.range, 1) + ' cases' + next(s.range, n && n.range, 1)],
+    ['Cadence', fmt(s.rate, s.rate % 1 ? 1 : 0) + (s.rate >= 2 ? ' tirs/s' : ' tir/s')],
+  ];
+  if (s.hill) rows.push(['Colline', `+${s.hill} de portée`]);
+  if (t.minRange) rows.push(['Angle mort', `moins de ${fmt(t.minRange, 1)} case`]);
+  if (t.splash) rows.push(['Zone', `rayon ${fmt(t.splash)} case`]);
+  if (t.slow) rows.push(['Effet', `ralentit de ${t.slow * 100} % pendant ${t.slowTime} s`]);
+  document.getElementById('p-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  if (maxed) {
+    $pUp.textContent = 'Niveau max';
+    $pUp.disabled = true;
+  } else {
+    $pUp.textContent = `Améliorer (${upgradeCost(tw)})`;
+    $pUp.disabled = state.gold < upgradeCost(tw) || state.phase === 'over';
+  }
+  $pSell.textContent = `Vendre (+${sellValue(tw)})`;
+  $pSell.disabled = state.phase === 'over';
+  // Le brouilleur touche tout ce qui est à portée : pas de cible à choisir
+  $target.hidden = tw.type === 'jammer';
+  const mode = tw.target || 'first';
+  $target.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+}
+
+// Boutons créés une fois : la fiche est redessinée à chaque ennemi abattu, un clic ne doit pas tomber dans le vide
+const $target = document.getElementById('p-target');
+$target.innerHTML = '<span class="target-label">Cible</span>' + Object.entries(TARGET_MODES).map(([id, m]) =>
+  `<button data-mode="${id}" title="${m.title}" aria-pressed="false">${m.label}</button>`).join('');
+$target.addEventListener('click', e => {
+  const b = e.target.closest('button[data-mode]');
+  if (!b || !state.selected) return;
+  state.selected.target = b.dataset.mode;
+  renderPanel();
+});
+
+$pUp.addEventListener('click', () => {
+  const tw = state.selected;
+  if (!tw || tw.level >= MAX_LEVEL || state.gold < upgradeCost(tw)) return;
+  const cost = upgradeCost(tw);
+  state.gold -= cost;
+  tw.invested += cost;
+  tw.level++;
+  sfx.play('upgrade');
+  $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} promu${TOWER_TYPES[tw.type].fem ? 'e' : ''} au niveau ${tw.level}.`;
+  renderHud();
+});
+$pSell.addEventListener('click', () => {
+  const tw = state.selected;
+  if (!tw) return;
+  const value = sellValue(tw);
+  state.gold += value;
+  state.towers = state.towers.filter(x => x !== tw);
+  sfx.play('sell');
+  $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} démonté${TOWER_TYPES[tw.type].fem ? 'e' : ''} : +${value} crédits.`;
+  select(null);
+  renderHud();
+});
+document.getElementById('p-close').addEventListener('click', () => select(null));
+
+// ===== Pause, vitesse et son =====
+// Réglés dans les paramètres du menu (et les touches P et M) : la barre du bas ne garde que les tours
+const SPEEDS = [1, 2, 4];
+const $speedChip = document.getElementById('speed-chip');
+const $setSpeed = document.getElementById('set-speed'), $setSound = document.getElementById('set-sound');
+function togglePause() {
+  if (state.phase === 'over' || modalOpen()) return;
+  state.paused = !state.paused;
+}
+function setSpeed(v) {
+  state.speed = settings.speed = SPEEDS.includes(v) ? v : 1;
+  saveSettings();
+  renderSpeed();
+}
+function renderSpeed() {
+  $speedChip.hidden = state.speed === 1;
+  $speedChip.querySelector('b').textContent = '×' + state.speed;
+  $setSpeed.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(Number(b.dataset.speed) === state.speed)));
+}
+function toggleSound() {
+  sfx.init();
+  sfx.toggle();
+  $setSound.checked = !sfx.muted;
+}
+$setSpeed.innerHTML = SPEEDS.map(v => `<button role="radio" data-speed="${v}" aria-checked="false">×${v}</button>`).join('');
+$setSpeed.addEventListener('click', e => {
+  const b = e.target.closest('button[data-speed]');
+  if (b) setSpeed(Number(b.dataset.speed));
+});
+$setSound.addEventListener('change', () => { if ($setSound.checked === sfx.muted) toggleSound(); });
+document.addEventListener('pointerdown', () => sfx.init());
+renderSpeed();
+
+// ===== Arsenal =====
+function setPlacing(type) {
+  if (state.aiming) setAiming(false);
+  if (type && state.selected) { state.selected = null; renderPanel(); }
+  state.placing = type;
+  state.armed = null;
+  document.querySelectorAll('.tower-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
+  if (!type) return;
+  const missing = TOWER_TYPES[type].cost - state.gold;
+  const hint = type === 'mortar'
+    ? 'Mortier : il ne peut pas tirer à moins de 1,5 case, placez-le en retrait de la route.'
+    : `${TOWER_TYPES[type].name} : choisissez une case libre.`;
+  $msg.textContent = `${hint}${missing > 0 ? ` Il manque ${missing} crédits.` : ''} Échap ou clic droit pour annuler.`;
+}
+
+const towersEl = document.getElementById('towers');
+for (const [id, t] of Object.entries(TOWER_TYPES)) {
+  const b = document.createElement('button');
+  b.className = 'tower-btn';
+  b.id = 'tower-' + id;
+  b.dataset.type = id;
+  b.setAttribute('aria-pressed', 'false');
+  const key = Object.keys(TOWER_TYPES).indexOf(id) + 1;
+  b.title = `${t.name} (touche ${key})`;
+  b.innerHTML = `<kbd class="key">${key}</kbd><canvas class="icon" width="68" height="68"></canvas><span class="name">${t.name}</span><span class="role">${t.role}</span><span class="cost">${t.cost}</span>`;
+  const ic = b.querySelector('.icon').getContext('2d');
+  ic.setTransform(68, 0, 0, 68, 0, 0);
+  drawTower(ic, id, .5, .5, -Math.PI / 4, .6);
+  b.addEventListener('click', () => setPlacing(state.placing === id ? null : id));
+  towersEl.appendChild(b);
+}
+
+// Frappe aérienne : 4e bouton de la barre du bas
+const $strikeBtn = document.createElement('button');
+$strikeBtn.className = 'tower-btn strike-btn';
+$strikeBtn.id = 'strike-btn';
+$strikeBtn.setAttribute('aria-pressed', 'false');
+$strikeBtn.title = 'Frappe aérienne (touche 4)';
+$strikeBtn.innerHTML = `<kbd class="key">4</kbd><canvas class="icon" width="68" height="68"></canvas><span class="name"><span class="long">Frappe aérienne</span><span class="short">Frappe</span></span><span class="role"></span><span class="cost"></span>`;
+{
+  const ic = $strikeBtn.querySelector('.icon').getContext('2d');
+  ic.setTransform(68, 0, 0, 68, 0, 0);
+  drawPlane(ic, .5, .5, -Math.PI / 4, .9);
+}
+$strikeBtn.addEventListener('click', () => setAiming(!state.aiming));
+towersEl.appendChild($strikeBtn);
+
+const $strikePanel = document.getElementById('strike-panel');
+const $spRadius = document.getElementById('sp-radius'), $spDamage = document.getElementById('sp-damage');
+function setAiming(on) {
+  if (on && (!strikeUnlocked() || state.phase === 'over')) return;
+  if (on) { setPlacing(null); select(null); }
+  state.aiming = on;
+  state.strikeAim = null;
+  $strikeBtn.setAttribute('aria-pressed', String(on));
+  renderStrikePanel();
+  if (on) {
+    $msg.textContent = strikeLeft() > 0
+      ? `Frappe aérienne en recharge : encore ${Math.ceil(strikeLeft())} s. Vous pouvez l'améliorer en attendant.`
+      : 'Frappe aérienne : cliquez sur la zone à bombarder. Échap ou clic droit pour annuler.';
+  }
+}
+
+// État du bouton (verrouillé, prêt, en recharge), mis à jour chaque image mais réécrit seulement s'il change
+let strikeBtnSig = '';
+function renderStrike() {
+  const locked = !strikeUnlocked(), left = Math.ceil(strikeLeft());
+  const sig = `${locked}|${left}|${state.phase}`;
+  if (state.aiming) $strikePanel.classList.toggle('left', !!state.pointer && state.pointer.x >= COLS / 2);
+  if (sig === strikeBtnSig) return;
+  strikeBtnSig = sig;
+  $strikeBtn.disabled = locked || state.phase === 'over';
+  $strikeBtn.classList.toggle('ready', !locked && !left);
+  $strikeBtn.querySelector('.role').textContent = locked ? `Après la vague ${STRIKE.unlockWave}` : left ? 'En recharge' : 'Prête';
+  $strikeBtn.querySelector('.cost').textContent = locked ? `V${STRIKE.unlockWave}` : left ? `${left} s` : '✓';
+  document.getElementById('sp-state').textContent = left ? `Recharge ${left} s` : 'Prête';
+  if (locked && state.aiming) setAiming(false);
+}
+
+function renderStrikePanel() {
+  $strikePanel.hidden = !state.aiming;
+  if (!state.aiming) return;
+  const { r, d } = state.strike, max = STRIKE.cost.length;
+  const next = (cur, lvl, f) => lvl < max ? ` <span class="next">→ ${f(lvl + 1)}</span>` : '';
+  const rows = [
+    ['Dégâts', strikeDamage() + next(strikeDamage(), d, l => strikeDamage(l))],
+    ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next(strikeRadius(), r, l => fmt(strikeRadius(l), 1))],
+    ['Recharge', `${STRIKE.cooldown} s`],
+    ['Délai', `${fmt(STRIKE.delay, 1)} s après le clic`],
+  ];
+  document.getElementById('sp-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  for (const [$b, track, label] of [[$spRadius, 'r', 'Rayon'], [$spDamage, 'd', 'Dégâts']]) {
+    const lvl = state.strike[track];
+    $b.textContent = lvl >= max ? `${label} max` : `${label} + (${STRIKE.cost[lvl]})`;
+    $b.disabled = lvl >= max || state.gold < STRIKE.cost[lvl];
+  }
+}
+
+function upgradeStrike(track) {
+  const lvl = state.strike[track];
+  if (lvl >= STRIKE.cost.length || state.gold < STRIKE.cost[lvl]) return;
+  state.gold -= STRIKE.cost[lvl];
+  state.strike[track]++;
+  sfx.play('upgrade');
+  $msg.textContent = track === 'r'
+    ? `Frappe aérienne : rayon porté à ${fmt(strikeRadius(), 1)} case${strikeRadius() >= 2 ? 's' : ''}.`
+    : `Frappe aérienne : dégâts portés à ${strikeDamage()}.`;
+  renderHud();
+}
+$spRadius.addEventListener('click', () => upgradeStrike('r'));
+$spDamage.addEventListener('click', () => upgradeStrike('d'));
+document.getElementById('sp-close').addEventListener('click', () => setAiming(false));
+
+// Clic sur la carte en visée : au doigt, un premier toucher montre la zone, un second dans le cercle confirme
+function aimStrike(p) {
+  if (strikeLeft() > 0) {
+    sfx.play('deny');
+    $msg.textContent = `Frappe aérienne en recharge : encore ${Math.ceil(strikeLeft())} s.`;
+    return;
+  }
+  if (pointerType === 'touch' && settings.touchConfirm) {
+    const a = state.strikeAim;
+    if (!a || Math.hypot(a.x - p.x, a.y - p.y) > strikeRadius()) {
+      state.strikeAim = p;
+      $msg.textContent = 'Frappe aérienne : touchez à nouveau dans le cercle pour confirmer.';
+      return;
+    }
+    p = a;
+  }
+  launchStrike(p.x, p.y);
+  setAiming(false);
+  $msg.textContent = `Frappe aérienne en approche sur ${cellName(Math.min(COLS - 1, Math.floor(p.x)), Math.min(ROWS - 1, Math.floor(p.y)))}.`;
+}
+
+// ===== Vagues =====
+const $btnWave = document.getElementById('btn-wave');
+const $btnReplay = document.getElementById('btn-replay');
+
+function launchWave() {
+  if (state.phase === 'over' || state.wave >= WAVES.length) return;
+  const early = state.phase === 'wave';
+  // Une « manche » part d'une pause et court jusqu'au terrain dégagé (appels anticipés compris)
+  if (!early) state.run = { from: state.wave + 1, lives: state.lives };
+  state.wave++;
+  const n = state.wave;
+  let first = true;
+  for (const [type, count, gap] of WAVES[n - 1]) {
+    for (let i = 0; i < count; i++) {
+      state.spawnQueue.push({ type, wave: n, delay: first ? (state.spawnQueue.length ? 1.5 : 0) : i === 0 ? 1.5 : gap });
+      first = false;
+    }
+  }
+  state.pendingBonus += waveBonus(n);
+  sfx.play('radio');
+  sfx.play('wave');
+  if (early) {
+    state.gold += earlyBonus(n);
+    $msg.textContent = `Vague ${n} appelée en avance : +${earlyBonus(n)} crédits.`;
+  } else {
+    $msg.textContent = '';   // composition déjà affichée en haut
+  }
+  state.phase = 'wave';
+  renderHud();
+  updateWaveButton();
+}
+
+// Icônes des ennemis, dessinées une fois à partir des mêmes silhouettes que sur la carte
+const ENEMY_ICONS = {};
+for (const type in ENEMY_TYPES) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 44;
+  const g = c.getContext('2d');
+  g.setTransform(36, 0, 0, 36, 22, 22);
+  drawEnemySprite(g, type, ENEMY_TYPES[type].size, 0, 1);
+  ENEMY_ICONS[type] = typeof c.toDataURL === 'function' ? c.toDataURL() : '';
+}
+
+const $nextWave = document.getElementById('next-wave');
+function renderNextWave() {
+  const n = state.wave + 1;
+  $nextWave.hidden = n > WAVES.length || state.phase === 'over';
+  if ($nextWave.hidden) return;
+  $nextWave.title = `Vague ${n} : ${describeWave(n)}`;
+  document.getElementById('next-icons').innerHTML = Object.entries(waveCounts(n)).map(([type, k]) =>
+    `<span class="ne"><img src="${ENEMY_ICONS[type]}" alt="${ENEMY_TYPES[type].name}" width="22" height="22">×${k}</span>`).join('');
+}
+
+function updateWaveButton() {
+  const next = state.wave + 1;
+  if (state.phase === 'over') {
+    $btnWave.disabled = true; $btnWave.textContent = 'Partie terminée';
+  } else if (state.phase === 'prep') {
+    $btnWave.disabled = false; $btnWave.textContent = `Lancer la vague ${next}`;
+  } else if (state.spawnQueue.length || next > WAVES.length) {
+    $btnWave.disabled = true; $btnWave.textContent = `Vague ${state.wave} en cours`;
+  } else {
+    $btnWave.disabled = false; $btnWave.textContent = `Vague ${next} en avance (+${earlyBonus(next)})`;
+  }
+  renderNextWave();
+  // Entre deux vagues : rejouer la manche qui vient de se terminer
+  const replay = state.phase === 'prep' && state.lastRun && state.checkpoints[state.lastRun] ? state.lastRun : 0;
+  $btnReplay.hidden = !replay;
+  $btnReplay.title = `Rejouer la vague ${replay} : tours, crédits et vies reviennent à leur état d'avant`;
+  document.getElementById('replay-n').textContent = replay;
+}
+
+let queueWasEmpty = true;
+function checkWaveEnd() {
+  if (state.phase !== 'wave') return;
+  // Le bouton d'appel anticipé s'active dès que toute la vague est sur la route
+  const empty = !state.spawnQueue.length;
+  if (empty !== queueWasEmpty) { queueWasEmpty = empty; updateWaveButton(); }
+  if (!empty || state.enemies.length) return;
+  const bonus = state.pendingBonus;
+  state.gold += bonus;
+  state.pendingBonus = 0;
+  recordRun();
+  if (state.wave >= WAVES.length) { renderHud(); endGame(true); return; }
+  state.phase = 'prep';
+  saveCheckpoint();
+  if (state.wave === STRIKE.unlockWave) {
+    sfx.play('radio');
+    showDispatch(`Appui aérien disponible : bouton Frappe aérienne ou touche 4. Une frappe toutes les ${STRIKE.cooldown} s de jeu.`);
+  }
+  // Pas de bilan : le bandeau du haut montre déjà crédits, vies et prochaine vague
+  $msg.textContent = '';
+  renderHud();
+  updateWaveButton();
+}
+
+$btnWave.addEventListener('click', launchWave);
+$btnReplay.addEventListener('click', () => restoreCheckpoint(state.lastRun));
+
+// ===== Points de reprise et records =====
+// Un point de reprise par vague, pris au début de la pause qui la précède, avant tout achat.
+// Une vague appelée en avance n'a pas de pause, donc pas de point de reprise.
+// Records par carte : « carte:vague » → moins de vies perdues dans une manche partie de cette vague
+let records = {};
+try { records = JSON.parse(localStorage.getItem('rempart-records-v2') || '{}'); } catch (e) {}
+const recordKey = n => `${state.mapId}:${state.difficulty}:${n}`;
+
+function saveCheckpoint() {
+  state.checkpoints[state.wave + 1] = {
+    lives: state.lives, gold: state.gold, score: state.score,
+    towers: state.towers.map(tw => ({ ...tw })),
+    // Les améliorations de la frappe ont coûté des crédits : elles reviennent avec eux, recharge comprise
+    strike: { r: state.strike.r, d: state.strike.d, left: strikeLeft() },
+    seen: { ...state.seen },
+  };
+}
+
+function restoreCheckpoint(n) {
+  const cp = state.checkpoints[n];
+  if (!cp) return;
+  Object.assign(state, {
+    lives: cp.lives, gold: cp.gold, score: cp.score || 0, wave: n - 1,
+    towers: cp.towers.map(tw => ({ ...tw, cooldown: 0 })),
+    seen: { ...cp.seen },
+    enemies: [], spawnQueue: [], spawnTimer: 0, shells: [], effects: [],
+    placing: null, selected: null, phase: 'prep', pendingBonus: 0,
+    run: null, lastRun: null, paused: false, baseHitAt: -9,
+    strike: { r: (cp.strike || {}).r || 0, d: (cp.strike || {}).d || 0, readyAt: clock + ((cp.strike || {}).left || 0) },
+    strikes: [],
+  });
+  queueWasEmpty = true;
+  $overlay.hidden = true;
+  hideMenu();
+  $dispatch.hidden = true;
+  setPlacing(null);
+  renderHud();
+  updateWaveButton();
+  $msg.textContent = `Retour avant la vague ${n} : tours, crédits et vies sont revenus à leur état d'alors.`;
+}
+
+// Enregistre le résultat de la manche qui vient de se terminer
+function recordRun() {
+  const run = state.run;
+  if (!run) return;
+  const lost = run.lives - state.lives;
+  const prev = records[recordKey(run.from)];
+  const better = prev === undefined || lost < prev;
+  if (better) {
+    records[recordKey(run.from)] = lost;
+    try { localStorage.setItem('rempart-records-v2', JSON.stringify(records)); } catch (e) {}
+  }
+  state.lastRun = run.from;
+  state.run = null;
+}
+
+const recordText = rec => rec === undefined ? 'Pas encore de record'
+  : rec === 0 ? 'Record : aucune perte'
+  : `Record : ${rec} vie${rec > 1 ? 's' : ''} perdue${rec > 1 ? 's' : ''}`;
+
+
+// ===== Menu =====
+// Une seule fenêtre à deux modes : l'écran titre au démarrage (opaque, rien du jeu derrière) et le menu
+// de pause en jeu. Chaque mode a son accueil ; les autres vues (sélection, scores, paramètres…) sont partagées.
+const $menu = document.getElementById('menu');
+const $menuBox = document.getElementById('menu-box');
+const $wrap = document.getElementById('wrap');
+const $waveList = document.getElementById('wave-list');
+let menuMode = 'title', menuView = 'title';
+// Vue parente de chaque vue, pour « Retour » et Échap ; 'home' = l'accueil du mode en cours
+const PARENT = { maps: 'home', diffs: 'maps', replace: 'diffs', scores: 'home', settings: 'home', reset: 'settings', waves: 'home', restart: 'home' };
+
+// Le jeu se met en pause tant que le menu est ouvert, et la page derrière ne reçoit plus le focus
+let pausedBeforeModal = false;
+const modalOpen = () => !$menu.hidden;
+function openModal() {
+  if (!modalOpen()) pausedBeforeModal = state.paused;
+  state.paused = true;
+  $menu.hidden = false;
+  $wrap.inert = true;
+}
+function closeMenu() {
+  if ($menu.hidden) return;
+  hideMenu();
+  state.paused = pausedBeforeModal;
+}
+// Fermeture sans rétablir l'état de pause d'avant : sert quand une partie démarre ou reprend
+function hideMenu() {
+  $menu.hidden = true;
+  $wrap.inert = false;
+}
+
+const inProgress = () => state.started && state.phase !== 'over';
+// Partie encore vierge : rien à perdre en la recommençant ou en la remplaçant
+const pristine = () => state.phase !== 'over' && state.wave === 0 && !state.towers.length;
+
+function showView(view) {
+  if (view === 'home') view = menuMode;
+  // La sélection et le tableau des scores s'ouvrent sur la difficulté et la carte de la dernière partie
+  if (view === 'maps' && menuView !== 'diffs') briefDiff = state.difficulty;
+  if (view === 'scores' && menuView !== 'scores') { scMap = state.mapId; scDiff = state.difficulty; }
+  menuView = view;
+  $menuBox.classList.toggle('briefing', view === 'maps');
+  $menu.querySelectorAll('.view').forEach(v => { v.hidden = v.dataset.view !== view; });
+  const render = { title: renderTitle, pause: renderPause, maps: renderMaps, diffs: renderDiffs, replace: renderReplace,
+    waves: renderWaveList, scores: renderScores, settings: renderSettings, restart: renderRestart }[view];
+  if (render) render();
+  // Au clavier, le focus suit la vue affichée
+  const first = $menu.querySelector(`.view[data-view="${view}"] button:not([hidden]):not(:disabled)`);
+  if (first && first.focus) first.focus({ preventScroll: true });
+}
+function goBack() {
+  const parent = PARENT[menuView];
+  if (parent) showView(parent);
+  else if (menuMode === 'pause') closeMenu();
+}
+
+function openTitle() {
+  setPlacing(null);
+  select(null);
+  menuMode = 'title';
+  $menu.classList.add('title');
+  openModal();
+  showView('title');
+}
+function openMenu() {
+  setPlacing(null);
+  select(null);
+  menuMode = 'pause';
+  $menu.classList.remove('title');
+  openModal();
+  showView('pause');
+}
+
+$menu.addEventListener('click', e => {
+  const b = e.target.closest('[data-goto]');
+  if (!b) return;
+  if (b.dataset.goto === 'back') goBack();
+  else showView(b.dataset.goto);
+});
+document.getElementById('btn-menu').addEventListener('click', openMenu);
+document.getElementById('btn-ov-menu').addEventListener('click', openTitle);
+
+// Écran titre
+function renderTitle() {
+  const $continue = document.getElementById('t-continue');
+  $continue.hidden = !inProgress();
+  document.getElementById('t-continue-sub').textContent = `${MAP.name} · ${diff().name} · vague ${state.wave}/${WAVES.length}`;
+}
+document.getElementById('t-continue').addEventListener('click', () => { hideMenu(); state.paused = false; });
+
+// Menu de pause
+function renderPause() {
+  const over = state.phase === 'over';
+  document.getElementById('menu-status').textContent = over
+    ? `${MAP.name} · ${diff().name} · ${state.result === 'win' ? 'mission accomplie' : 'base perdue'}`
+    : `${MAP.name} · ${diff().name} · vague ${state.wave}/${WAVES.length}`;
+  document.getElementById('menu-resume').textContent = over ? 'Voir le rapport' : pristine() ? 'Commencer la partie' : 'Reprendre la partie';
+  document.getElementById('menu-restart-sub').textContent = `${MAP.name}, ${diff().name}, depuis la vague 1`;
+}
+// « Reprendre » relance le jeu même s'il était en pause avant l'ouverture du menu
+document.getElementById('menu-resume').addEventListener('click', () => {
+  closeMenu();
+  if (state.phase !== 'over') state.paused = false;
+});
+document.getElementById('menu-restart').addEventListener('click', () => {
+  if (state.phase === 'over' || pristine()) newGame(state.mapId, state.difficulty);
+  else showView('restart');
+});
+function renderRestart() {
+  document.getElementById('restart-text').textContent =
+    `${MAP.name}, niveau ${diff().name}, depuis la vague 1. Les tours, les crédits et le score de la partie en cours seront perdus.`;
+}
+document.getElementById('restart-go').addEventListener('click', () => newGame(state.mapId, state.difficulty));
+// Retour à l'écran titre : la partie reste sauvegardée, « Continuer » la reprend
+document.getElementById('menu-main').addEventListener('click', () => { saveGame(); openTitle(); });
+// Lien vers le site : affiché seulement quand le jeu est servi par teivano.fr (ou en local), jamais dans Claude
+const $site = document.getElementById('t-site');
+$site.hidden = !/(^|\.)teivano\.fr$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+$site.addEventListener('click', () => { saveGame(); location.href = '/'; });
+
+// ===== Nouvelle opération : la carte, puis la difficulté =====
+const $mapCards = document.getElementById('map-cards');
+const $difficulty = document.getElementById('difficulty');
+let briefMap = 'col', briefDiff = 'veteran';
+// Meilleures étoiles par carte et difficulté, gardées dans le navigateur ; elles débloquent les cartes
+let stars = {};
+try { stars = JSON.parse(localStorage.getItem('rempart-stars') || '{}'); } catch (e) {}
+const starKey = (mapId, difficulty = state.difficulty) => `${mapId}:${difficulty}`;
+const prevMap = id => MAP_DEFS[MAP_DEFS.findIndex(m => m.id === id) - 1];
+// Une carte s'ouvre à un niveau quand la précédente a été gagnée à ce niveau ou à un niveau plus difficile
+const DIFF_ORDER = Object.keys(DIFFICULTIES);   // du plus facile au plus difficile
+function unlocked(mapId, difficulty) {
+  const prev = prevMap(mapId);
+  return !prev || DIFF_ORDER.slice(DIFF_ORDER.indexOf(difficulty)).some(d => (stars[starKey(prev.id, d)] || 0) > 0);
+}
+const mapUnlocked = id => Object.keys(DIFFICULTIES).some(d => unlocked(id, d));
+
+// Aperçus des cartes : le même rendu que le terrain de jeu, en petit, calculé une fois
+const MAP_PREVIEWS = {};
+function mapPreview(id) {
+  if (!(id in MAP_PREVIEWS)) {
+    const c = renderTerrain(MAPS[id], 12, 2);
+    MAP_PREVIEWS[id] = typeof c.toDataURL === 'function' ? c.toDataURL() : '';
+  }
+  return MAP_PREVIEWS[id];
+}
+const starsHtml = n => [1, 2, 3].map(i => `<span class="${i <= n ? 'on' : ''}">★</span>`).join('');
+
+function renderMaps() {
+  $mapCards.innerHTML = MAP_DEFS.map(({ id }) => {
+    const m = MAPS[id], open = mapUnlocked(id);
+    const saves = DIFF_ORDER.filter(d => slotGame(id, d)).map(d => DIFFICULTIES[d].name);
+    return `<button class="map-card" data-map="${id}"${open ? '' : ' disabled'}>
+      <img src="${mapPreview(id)}" alt="" width="192" height="120">
+      <span class="mc-name">${m.name}</span>
+      <span class="mc-meta">${m.place} · ${m.paths.length > 1 ? 'deux routes' : 'une route'}${m.water.size ? ' · rivière' : ''}</span>
+      <span class="${open ? 'mc-brief' : 'mc-lock'}">${open ? m.brief : `Verrouillée : terminez d'abord ${prevMap(id).the}.`}</span>${saves.length ? `<span class="mc-save">Partie en cours : ${listFr(saves)}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+$mapCards.addEventListener('click', e => {
+  const b = e.target.closest('.map-card');
+  if (!b || b.disabled) return;
+  briefMap = b.dataset.map;
+  showView('diffs');
+});
+
+function renderDiffs() {
+  if (!unlocked(briefMap, briefDiff)) briefDiff = Object.keys(DIFFICULTIES).find(d => unlocked(briefMap, d));
+  document.getElementById('diffs-title').textContent = `${MAPS[briefMap].name} : choisissez la difficulté`;
+  $difficulty.innerHTML = Object.entries(DIFFICULTIES).map(([id, d]) => {
+    const open = unlocked(briefMap, id), best = stars[starKey(briefMap, id)] || 0;
+    const slot = open && slotGame(briefMap, id);
+    const foot = open
+      ? `<span class="df-stars" aria-label="Meilleur résultat : ${best} étoile${best > 1 ? 's' : ''} sur 3">${starsHtml(best)}</span>${slot ? `<span class="df-save">Partie en cours : vague ${slot.wave}/${WAVES.length}</span>` : ''}`
+      : `<span class="df-lock">Terminez ${prevMap(briefMap).the} en ${DIFF_ORDER.slice(DIFF_ORDER.indexOf(id)).map(x => DIFFICULTIES[x].name).join(' ou en ')}</span>`;
+    return `<button role="radio" data-diff="${id}" aria-checked="${id === briefDiff}"${open ? '' : ' disabled'}><span class="df-name">${d.name}</span><span class="df-desc">${d.desc}</span>${foot}</button>`;
+  }).join('');
+  renderDiffActions();
+}
+// Une partie existe à ce niveau : on propose de la reprendre, ou d'en commencer une nouvelle
+function renderDiffActions() {
+  const slot = slotGame(briefMap, briefDiff);
+  const $resume = document.getElementById('brief-resume'), $go = document.getElementById('brief-go');
+  $resume.hidden = !slot;
+  $go.textContent = slot ? 'Nouvelle partie' : "Lancer l'opération";
+  $go.classList.toggle('primary', !slot);
+}
+$difficulty.addEventListener('click', e => {
+  const b = e.target.closest('button[data-diff]');
+  if (!b || b.disabled) return;
+  briefDiff = b.dataset.diff;
+  $difficulty.querySelectorAll('button[data-diff]').forEach(x => x.setAttribute('aria-checked', String(x === b)));
+  renderDiffActions();
+});
+document.getElementById('brief-resume').addEventListener('click', () => resumeOperation(briefMap, briefDiff));
+// Une nouvelle partie efface celle de la même carte et difficulté : on demande confirmation
+document.getElementById('brief-go').addEventListener('click', () => {
+  if (slotGame(briefMap, briefDiff)) showView('replace');
+  else startOperation(briefMap, briefDiff);
+});
+function renderReplace() {
+  const slot = slotGame(briefMap, briefDiff);
+  document.getElementById('replace-text').textContent =
+    `${MAPS[briefMap].name}, ${DIFFICULTIES[briefDiff].name} : la partie en cours (vague ${slot ? slot.wave : 0}/${WAVES.length}) sera effacée, avec ses points de reprise.`;
+}
+document.getElementById('replace-go').addEventListener('click', () => startOperation(briefMap, briefDiff));
+
+// ===== Manches : les points de reprise de la partie en cours =====
+function renderWaveList() {
+  $waveList.innerHTML = WAVES.map((_, i) => {
+    const n = i + 1, cp = state.checkpoints[n];
+    const status = cp ? recordText(records[recordKey(n)]) : n <= state.wave ? 'Appelée en avance : pas de point de reprise' : 'Pas encore atteinte';
+    return `<li><button class="wave-row" data-wave="${n}"${cp ? '' : ' disabled'}>
+      <span class="wn">Vague ${n}</span><span class="wd">${describeWave(n)}</span><span class="wr">${status}</span>
+    </button></li>`;
+  }).join('');
+}
+$waveList.addEventListener('click', e => {
+  const row = e.target.closest('.wave-row');
+  if (row && !row.disabled) restoreCheckpoint(Number(row.dataset.wave));
+});
+
+// ===== Tableau des scores : n'importe quelle carte et difficulté, à tout moment =====
+let scMap = 'col', scDiff = 'veteran';
+const $scMaps = document.getElementById('sc-maps'), $scDiffs = document.getElementById('sc-diffs');
+function renderScores() {
+  $scMaps.innerHTML = MAP_DEFS.map(({ id }) =>
+    `<button role="radio" data-map="${id}" aria-checked="${id === scMap}">${MAPS[id].name}</button>`).join('');
+  $scDiffs.innerHTML = Object.entries(DIFFICULTIES).map(([id, d]) =>
+    `<button role="radio" data-diff="${id}" aria-checked="${id === scDiff}">${d.name}</button>`).join('');
+  const best = stars[starKey(scMap, scDiff)] || 0;
+  document.getElementById('sc-best').innerHTML = `Votre meilleur résultat : <span aria-label="${best} étoile${best > 1 ? 's' : ''} sur 3">${starsHtml(best)}</span> · records par vague, en vies perdues :`;
+  document.getElementById('sc-waves').innerHTML = WAVES.map((_, i) => {
+    const rec = records[`${scMap}:${scDiff}:${i + 1}`];
+    const cls = rec === undefined ? 'none' : rec === 0 ? 'zero' : '';
+    return `<span class="wr-cell" role="listitem" title="Vague ${i + 1} : ${recordText(rec)}"><span class="wr-n">V${i + 1}</span><span class="wr-v ${cls}">${rec === undefined ? '–' : rec}</span></span>`;
+  }).join('');
+  renderLeaderboard($menuBoard, scMap, scDiff);
+}
+$scMaps.addEventListener('click', e => {
+  const b = e.target.closest('button[data-map]');
+  if (b) { scMap = b.dataset.map; renderScores(); }
+});
+$scDiffs.addEventListener('click', e => {
+  const b = e.target.closest('button[data-diff]');
+  if (b) { scDiff = b.dataset.diff; renderScores(); }
+});
+
+// ===== Paramètres =====
+const $setFx = document.getElementById('set-fx'), $setAmb = document.getElementById('set-amb');
+const $setShake = document.getElementById('set-shake'), $setTouch = document.getElementById('set-touch');
+function renderSettings() {
+  renderSpeed();
+  $setSound.checked = !sfx.muted;
+  $setFx.value = Math.round(settings.fx * 100);
+  $setAmb.value = Math.round(settings.amb * 100);
+  $setShake.checked = settings.shake;
+  $setTouch.checked = settings.touchConfirm;
+}
+$setFx.addEventListener('input', () => { settings.fx = $setFx.value / 100; sfx.setVolumes(); saveSettings(); });
+$setAmb.addEventListener('input', () => { settings.amb = $setAmb.value / 100; sfx.setVolumes(); saveSettings(); });
+// Un son d'essai au relâchement du curseur
+$setFx.addEventListener('change', () => { sfx.init(); sfx.play('blast'); });
+$setAmb.addEventListener('change', () => { sfx.init(); sfx.play('rumble'); });
+$setShake.addEventListener('change', () => { settings.shake = $setShake.checked; saveSettings(); });
+$setTouch.addEventListener('change', () => { settings.touchConfirm = $setTouch.checked; state.armed = null; saveSettings(); });
+
+// Réinitialiser la progression : étoiles (donc cartes débloquées), records des vagues et partie en cours.
+// Les paramètres et les scores sont gardés.
+document.getElementById('reset-go').addEventListener('click', () => {
+  stars = {};
+  records = {};
+  shelf = {};
+  for (const k of ['rempart-stars', 'rempart-records-v2', SAVE_KEY, SHELF_KEY]) {
+    try { localStorage.removeItem(k); } catch (e) {}
+  }
+  newGame('col', state.difficulty, false);
+  openTitle();
+});
+
+// ===== Fin de partie =====
+const $overlay = document.getElementById('overlay');
+// restored : écran de fin rouvert depuis une sauvegarde, sans recompter le score
+function endGame(win, restored = false) {
+  state.phase = 'over';
+  state.result = win ? 'win' : 'lose';
+  state.spawnQueue = [];
+  sfx.play(win ? 'win' : 'lose');
+  setPlacing(null);
+  select(null);
+  updateWaveButton();
+  // ★★★ sans perdre de vie, ★★ avec 10 vies ou plus, ★ sinon
+  const starCount = !win ? 0 : state.lives === 20 ? 3 : state.lives >= 10 ? 2 : 1;
+  if (!restored) {
+    if (win) state.score += state.lives * LIFE_POINTS;
+    renderHud();
+    recordScore(state.score, starCount);
+  }
+  document.getElementById('ov-score').textContent = `Score : ${state.score.toLocaleString('fr-FR')}`;
+  renderLeaderboard($ovBoard, state.mapId, state.difficulty);
+  // Une victoire peut ouvrir la carte suivante à ce niveau de difficulté
+  const next = MAP_DEFS[MAP_DEFS.findIndex(m => m.id === state.mapId) + 1];
+  const opens = win && next ? DIFF_ORDER.filter(d => !unlocked(next.id, d) && DIFF_ORDER.indexOf(d) <= DIFF_ORDER.indexOf(state.difficulty)) : [];
+  if (starCount > (stars[starKey(state.mapId)] || 0)) {
+    stars[starKey(state.mapId)] = starCount;
+    try { localStorage.setItem('rempart-stars', JSON.stringify(stars)); } catch (e) {}
+  }
+  document.getElementById('ov-title').textContent = win ? 'Mission accomplie' : 'Base perdue';
+  document.getElementById('ov-stars').innerHTML = starsHtml(starCount);
+  document.getElementById('ov-stars').setAttribute('aria-label', `${starCount} étoile${starCount > 1 ? 's' : ''} sur 3`);
+  document.getElementById('ov-text').textContent = win
+    ? `${MAP.name} : les 10 vagues sont repoussées. Vies restantes : ${state.lives}/20.${opens.length ? ` Nouvelle carte débloquée : ${next.name}, en ${listFr(opens.map(d => DIFFICULTIES[d].name))}.` : ''}`
+    : `La ligne a cédé à la vague ${state.wave}. Repérez où l'ennemi passe et renforcez ce secteur.`;
+  // Défaite : on propose de reprendre au début de la manche perdue
+  const retry = !win && state.run && state.checkpoints[state.run.from] ? state.run.from : 0;
+  $btnRetry.hidden = !retry;
+  $btnRetry.dataset.wave = retry;
+  $btnRetry.textContent = `Rejouer la vague ${retry}`;
+  // Bouton mis en avant : Menu principal après une victoire, sinon Rejouer la vague (ou Recommencer à défaut)
+  document.getElementById('btn-ov-menu').classList.toggle('primary', win);
+  document.getElementById('btn-restart').classList.toggle('primary', !win && !retry);
+  $overlay.hidden = false;
+}
+
+const $btnRetry = document.getElementById('btn-retry');
+$btnRetry.addEventListener('click', () => restoreCheckpoint(Number($btnRetry.dataset.wave)));
+
+// started : faux pour la partie vierge posée derrière l'écran titre, que « Continuer » ne propose pas
+function newGame(mapId = state.mapId, difficulty = state.difficulty, started = true) {
+  setMap(mapId);
+  state.difficulty = DIFFICULTIES[difficulty] ? difficulty : 'veteran';
+  Object.assign(state, {
+    lives: 20, gold: diff().gold, wave: 0, score: 0,
+    enemies: [], spawnQueue: [], spawnTimer: 0,
+    towers: [], shells: [], effects: [],
+    placing: null, phase: 'prep', pendingBonus: 0,
+    selected: null, paused: false,
+    seen: {}, baseHitAt: -9,
+    checkpoints: {}, run: null, lastRun: null, result: null, spawnCount: 0,
+    decals: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, started,
+    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [],
+  });
+  resetDecalCanvas();
+  $dispatch.hidden = true;
+  queueWasEmpty = true;
+  $overlay.hidden = true;
+  hideMenu();
+  setPlacing(null);
+  saveCheckpoint();
+  renderHud();
+  updateWaveButton();
+  $msg.textContent = `${MAP.name}, niveau ${diff().name} : installez vos défenses, puis lancez la vague 1.`;
+  saveGame();
+}
+// Partie terminée : rien à perdre, on recommence sans confirmation
+document.getElementById('btn-restart').addEventListener('click', () => newGame(state.mapId, state.difficulty));
+
+// ===== Tableau des scores =====
+// Dans Claude, il est partagé entre les joueurs de la page (capacités db et user) : chacun n'écrit que
+// sa ligne, scores/<son identifiant>, qui garde son meilleur score par carte et difficulté. Seul
+// l'identifiant est stocké ; le nom est retrouvé à l'affichage. Ailleurs (fichier ouvert en local),
+// on garde les 5 meilleurs scores de ce navigateur.
+const board = { db: null, user: null, uid: null, docs: [], local: {}, lastAt: null, writeRefused: false };
+const $ovBoard = document.getElementById('ov-board'), $menuBoard = document.getElementById('menu-board');
+function refreshBoards() {
+  if (!$overlay.hidden) renderLeaderboard($ovBoard, state.mapId, state.difficulty);
+  if (!$menu.hidden && menuView === 'scores') renderLeaderboard($menuBoard, scMap, scDiff);
+}
+try { board.local = JSON.parse(localStorage.getItem('rempart-scores') || '{}'); } catch (e) {}
+const scoreKey = () => `${state.mapId}:${state.difficulty}`;
+
+(async () => {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+  if (!db || !user) return;
+  const uid = await user.id();
+  if (!uid) return;
+  Object.assign(board, { db, user, uid });
+  db.collection('scores').onSnapshot(snap => {
+    board.docs = snap.docs.filter(d => d.exists).map(d => ({ id: d.id, best: (d.data() || {}).best || {} }));
+    refreshBoards();
+  }, () => { board.db = null; });
+})();
+
+async function recordScore(score, starCount) {
+  const key = scoreKey(), entry = { score, stars: starCount, at: Date.now() };
+  board.lastAt = entry.at;
+  board.local[key] = (board.local[key] || []).concat(entry).sort((a, b) => b.score - a.score).slice(0, 5);
+  try { localStorage.setItem('rempart-scores', JSON.stringify(board.local)); } catch (e) {}
+  if (board.db) {
+    const mine = board.docs.find(d => d.id === board.uid);
+    const prev = mine && mine.best[key];
+    if (!prev || score > prev.score) {
+      try { await board.db.doc('scores/' + board.uid).set({ best: { ...(mine ? mine.best : {}), [key]: entry } }); }
+      catch (e) { board.writeRefused = true; }
+    }
+  }
+  refreshBoards();
+}
+
+// $box : l'emplacement du tableau ; un rendu plus récent dans le même emplacement annule le précédent
+async function renderLeaderboard($box, mapId, difficulty) {
+  const key = `${mapId}:${difficulty}`, token = ($box.token || 0) + 1;
+  $box.token = token;
+  const $title = $box.querySelector('.lb-title');
+  if ($title) $title.textContent = `Meilleurs scores · ${MAPS[mapId].name}, ${DIFFICULTIES[difficulty].name}`;
+  const $list = $box.querySelector('.lb-list'), $note = $box.querySelector('.lb-note');
+  let rows;
+  if (board.db) {
+    const entries = board.docs.filter(d => d.best[key])
+      .map(d => ({ id: d.id, score: d.best[key].score, stars: d.best[key].stars }))
+      .sort((a, b) => b.score - a.score).slice(0, 5);
+    const ps = entries.length ? await board.user.profiles(entries.map(r => r.id)) : {};
+    if ($box.token !== token) return;
+    rows = entries.map(r => ({ who: r.id === board.uid ? 'Vous' : (ps[r.id] && ps[r.id].name) || 'Un joueur', score: r.score, stars: r.stars, me: r.id === board.uid }));
+    $note.textContent = board.writeRefused
+      ? "Votre score n'a pas pu être inscrit : il faut le rôle Contributeur sur cette page."
+      : 'Tableau partagé entre les joueurs de cette page.';
+  } else {
+    rows = (board.local[key] || []).map(r => ({ who: new Date(r.at).toLocaleDateString('fr-FR'), score: r.score, stars: r.stars, me: r.at === board.lastAt }));
+    $note.textContent = 'Vos meilleurs scores, gardés dans ce navigateur.';
+  }
+  $list.replaceChildren();
+  if (!rows.length) {
+    const li = document.createElement('li');
+    li.className = 'lb-empty';
+    li.textContent = "Aucun score pour l'instant.";
+    $list.appendChild(li);
+    return;
+  }
+  rows.forEach((r, i) => {
+    const li = document.createElement('li');
+    if (r.me) li.className = 'me';
+    li.innerHTML = `<span class="lb-rank">${i + 1}</span><span class="lb-who"></span><span class="lb-stars">${'★'.repeat(r.stars || 0)}</span><span class="lb-score">${r.score.toLocaleString('fr-FR')}</span>`;
+    li.querySelector('.lb-who').textContent = r.who;   // un nom vient d'un autre joueur : jamais en HTML
+    $list.appendChild(li);
+  });
+}
+
+// ===== Sauvegarde automatique : la partie survit au rechargement de la page =====
+// Gardée dans le navigateur du joueur (localStorage) : une fenêtre privée ou des données effacées la perdent.
+// L'horloge de jeu est sauvegardée aussi, pour que les ralentissements et les obus en vol restent cohérents.
+const SAVE_KEY = 'rempart-save-v1';
+const SAVED_FIELDS = ['lives', 'gold', 'wave', 'enemies', 'spawnQueue', 'spawnTimer', 'towers', 'shells', 'phase',
+  'pendingBonus', 'seen', 'checkpoints', 'run', 'lastRun', 'result', 'mapId', 'spawnCount', 'difficulty', 'score', 'decals', 'started', 'strike', 'strikes'];
+
+function snapshot() {
+  const data = { clock };
+  for (const k of SAVED_FIELDS) data[k] = state[k];
+  data.enemies = state.enemies.map(({ t, ...e }) => e);   // le type est retrouvé au chargement
+  return data;
+}
+function saveGame() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) {}
+}
+
+function loadGame() {
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) {}
+  return applySave(data);
+}
+
+// Remet une partie sauvegardée en jeu : au démarrage, ou en reprenant une partie mise de côté
+function applySave(data) {
+  if (!data || !Array.isArray(data.towers) || !data.checkpoints) return false;
+  Object.assign(state, {
+    effects: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, baseHitAt: -9,
+    placing: null, selected: null, armed: null, hoverEnemy: null,
+    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [],
+  });
+  for (const k of SAVED_FIELDS) if (k in data) state[k] = data[k];
+  setMap(data.mapId || 'col');
+  state.started = data.started !== false;   // les sauvegardes d'avant l'écran titre sont des parties lancées
+  state.decals = Array.isArray(data.decals) ? data.decals : [];
+  resetDecalCanvas();
+  state.enemies = state.enemies.filter(e => ENEMY_TYPES[e.type]).map(e => ({ ...e, t: ENEMY_TYPES[e.type] }));
+  clock = data.clock || 0;
+  queueWasEmpty = !state.spawnQueue.length;
+  $overlay.hidden = true;
+  $dispatch.hidden = true;
+  setPlacing(null);
+  // Le menu s'ouvre au lancement : la partie y attend en pause, même en pleine vague
+  state.paused = false;
+  renderHud();
+  updateWaveButton();
+  // Pas de message de reprise : le bandeau du haut dit déjà où en est la partie
+  $msg.textContent = '';
+  if (state.phase === 'over') endGame(state.result === 'win', true);
+  return true;
+}
+
+// Parties mises de côté : une par carte et difficulté, avec leurs points de reprise. Lancer une autre
+// opération range ici la partie en cours au lieu de l'effacer ; on la retrouve en choisissant la même carte
+// et la même difficulté.
+const SHELF_KEY = 'rempart-shelf-v1';
+let shelf = {};
+try { shelf = JSON.parse(localStorage.getItem(SHELF_KEY) || '{}') || {}; } catch (e) {}
+function saveShelf() {
+  try { localStorage.setItem(SHELF_KEY, JSON.stringify(shelf)); } catch (e) {}
+}
+// Seule une partie lancée, entamée et pas terminée mérite d'être gardée
+function shelveCurrent() {
+  if (!inProgress() || pristine()) return;
+  shelf[starKey(state.mapId, state.difficulty)] = snapshot();
+}
+// Partie à reprendre pour une carte et une difficulté : la partie en cours ou une partie mise de côté
+function slotGame(mapId, difficulty) {
+  const key = starKey(mapId, difficulty);
+  if (starKey(state.mapId, state.difficulty) === key && inProgress()) return pristine() ? null : { wave: state.wave, current: true };
+  return shelf[key] ? { wave: shelf[key].wave, current: false } : null;
+}
+// Nouvelle partie : efface celle de la même carte et difficulté, met l'autre de côté
+function startOperation(mapId, difficulty) {
+  const key = starKey(mapId, difficulty);
+  if (starKey(state.mapId, state.difficulty) !== key) shelveCurrent();
+  delete shelf[key];
+  saveShelf();
+  newGame(mapId, difficulty);
+}
+function resumeOperation(mapId, difficulty) {
+  const key = starKey(mapId, difficulty), slot = slotGame(mapId, difficulty);
+  if (!slot) return;
+  if (!slot.current) {
+    const data = shelf[key];
+    shelveCurrent();
+    delete shelf[key];
+    saveShelf();
+    applySave(data);
+    saveGame();
+  }
+  hideMenu();
+  state.paused = false;
+}
+
+window.addEventListener('pagehide', saveGame);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
+
+// ===== Démarrage =====
+new ResizeObserver(resize).observe(stage);
+resize();
+if (!loadGame()) newGame('col', 'veteran', false);
+openTitle();
+requestAnimationFrame(frame);
+</script>

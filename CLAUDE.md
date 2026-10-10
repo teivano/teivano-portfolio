@@ -73,6 +73,15 @@
    - Page protégée par code PIN : mettre `href:'#'`, `pin:'/<nom>.html'` (+ `url` pour marquer « page courante ») et `pinHash` = SHA-256 du code (cf. `pin-guard.js`, comme GR20 `prepa-gr20.html` et Koala `koala.html`).
 3. Commit + `git push` sur `main` → live sur teivano.fr.
 
+## Opération Rempart (`rempart.html`)
+- **Source unique** : `~/Documents/Claude/Tower Defense/operation-rempart.html` (projet du jeu, développé dans sa propre conversation). `rempart.html` n'est qu'une copie : ne jamais l'éditer à la main.
+- **Différence avec la source** : seulement les 2 premières lignes (`<!DOCTYPE html>` et `<html lang="fr">`), ajoutées à la copie.
+- **Pas de `nav.js` ni de hamburger** sur cette page : le retour au site est le bouton « Retour à teivano.fr » du menu principal du jeu (visible seulement sur teivano.fr et en local, caché dans Claude). L'entrée du menu du site est dans `LINKS` de `nav.js`.
+- **Mettre à jour** (depuis la racine du repo, après GO) :
+  1. `git pull --rebase`
+  2. `{ printf '<!DOCTYPE html>\n<html lang="fr">\n'; cat "../Tower Defense/operation-rempart.html"; } > rempart.html`
+  3. `git add rempart.html && git commit -m "feat(rempart): …" && git push` — ne committer que `rempart.html`.
+
 ## Ce qu'il ne faut pas casser
 - `gcOf(id)` cherche `.gc` comme ancêtre direct — ne pas imbriquer les `.gc`
 - `window._crystalize`, `window._animateCounters`, `window._createMapRipple` — fonctions globales attendues par les loaders
