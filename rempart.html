@@ -136,6 +136,7 @@
   @media (hover: none) { .menu-keys { display: none; } }   /* pas de clavier sur un écran tactile */
   .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
   .seg button { padding: 6px 4px; font-size: 14px; }
+  .seg.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seg button[aria-checked="true"] { border-color: var(--brass); color: var(--brass); background: var(--panel-hi); }
   .sc-best { color: var(--muted); }
   /* Records par vague : vies perdues au mieux, en 10 petites cases */
@@ -228,7 +229,7 @@
       <div class="stat"><span>Vies</span><b id="lives">20</b></div>
       <div class="stat"><span>Crédits</span><b id="gold">150</b></div>
       <div class="stat"><span>Score</span><b id="score">0</b></div>
-      <div class="stat"><span>Vague</span><b id="wave">0/10</b></div>
+      <div class="stat"><span id="wave-label">Vague</span><b id="wave">0/10</b></div>
       <div class="stat next" id="next-wave" hidden><span>Prochaine</span><span class="icons" id="next-icons"></span></div>
       <div class="stat flag" id="speed-chip" title="Vitesse du jeu, à changer dans les paramètres du menu" hidden><b>×2</b></div>
     </div>
@@ -281,6 +282,7 @@
         </div>
         <div class="buttons">
           <button class="primary" id="btn-retry" hidden>Rejouer la vague</button>
+          <button id="btn-survive" hidden>Continuer en survie</button>
           <button id="btn-restart">Recommencer</button>
           <button id="btn-ov-menu">Menu principal</button>
         </div>
@@ -360,6 +362,7 @@
       <h2>Meilleurs scores</h2>
       <div class="seg" id="sc-maps" role="radiogroup" aria-label="Carte"></div>
       <div class="seg" id="sc-diffs" role="radiogroup" aria-label="Difficulté"></div>
+      <div class="seg two" id="sc-modes" role="radiogroup" aria-label="Mode"></div>
       <p class="sc-best" id="sc-best"></p>
       <div class="wave-recs" id="sc-waves" role="list" aria-label="Records par vague : vies perdues au mieux"></div>
       <div class="leaderboard" id="menu-board">
@@ -451,16 +454,81 @@ const KILL_POINTS = 10, LIFE_POINTS = 150;
 
 // PV : ×0,5 à la vague 1, puis +25 % de la base par vague (×2,75 à la vague 10)
 const hpFactor = n => .5 + .25 * (n - 1);
-const waveBonus = n => n === 6 ? 80 : 20 + 5 * n;         // versé quand la vague est repoussée
+// Versé quand la vague est repoussée ; en survie, doublé après une vague de respiration
+const waveBonus = n => n === 6 ? 80 : (20 + 5 * n) * (n > WAVES.length && state.survival ? survivalWave(n).bonus : 1);
 const earlyBonus = n => 10 + 3 * n;                       // versé si on appelle la vague n en avance
 
+// Groupes d'une vague : la liste écrite à la main jusqu'à 10, le générateur de la survie ensuite
+const waveDef = n => n <= WAVES.length ? WAVES[n - 1] : survivalWave(n).groups;
+const lastWave = () => state.survival ? Infinity : WAVES.length;
+const waveLabel = (wave = state.wave, survival = state.survival) => survival ? `survie, vague ${wave}` : `vague ${wave}/${WAVES.length}`;
 function waveCounts(n) {
   const counts = {};
-  for (const [type, count] of WAVES[n - 1]) counts[type] = (counts[type] || 0) + count;
+  for (const [type, count] of waveDef(n)) counts[type] = (counts[type] || 0) + count;
   return counts;
 }
 function describeWave(n) {
-  return Object.entries(waveCounts(n)).map(([type, k]) => k + ' ' + (k > 1 ? ENEMY_TYPES[type].plural : ENEMY_TYPES[type].name.toLowerCase())).join(', ');
+  const list = Object.entries(waveCounts(n)).map(([type, k]) => k + ' ' + (k > 1 ? ENEMY_TYPES[type].plural : ENEMY_TYPES[type].name.toLowerCase())).join(', ');
+  return n > WAVES.length ? `${SURVIVAL_KINDS[survivalWave(n).kind]} : ${list}` : list;
+}
+
+// ===== Survie : vagues sans fin après la vague 10 =====
+// Pas de hasard pur : chaque vague reçoit un budget de « menace » qui grandit, et le dépense selon un modèle
+// tiré au sort (jamais deux fois le même d'affilée), avec un char lourd toutes les 5 vagues et, de temps en
+// temps, une vague de respiration. Le tirage part d'une graine gardée avec la partie : rejouer la vague 17
+// redonne exactement la même vague 17.
+const SURVIVAL = {
+  threat: { infantry: 1, jeep: .8, tank: 4, boss: 25 },
+  budget: 50, growth: 1.1,   // menace de la vague 11 (la vague 10 en vaut 49), puis ×1,1 par vague
+  maxUnits: 60,              // au-delà, le surplus de budget rend les ennemis plus résistants au lieu de les multiplier
+};
+// Modèles : [type, part du budget, secondes entre deux unités]
+const SURVIVAL_MIXES = {
+  swarm:   [['jeep', .85, .3], ['infantry', .15, .6]],
+  armor:   [['tank', .7, 1.8], ['infantry', .3, .7]],
+  assault: [['infantry', 1, .45]],
+  mixed:   [['infantry', .35, .7], ['tank', .4, 2], ['jeep', .25, .4]],
+};
+const SURVIVAL_KINDS = { swarm: 'Essaim', armor: 'Colonne blindée', assault: 'Assaut', mixed: 'Mixte', boss: 'Char lourd', breather: 'Respiration' };
+const survivalCache = new Map();
+
+function survivalWave(n) {
+  const key = state.survival.seed + ':' + n;
+  if (survivalCache.has(key)) return survivalCache.get(key);
+  const prev = n > WAVES.length + 1 ? survivalWave(n - 1).kind : null;
+  const rnd = rng(state.survival.seed + n * 7919);
+  const k = n - WAVES.length;                      // 1 pour la vague 11
+  const budget = SURVIVAL.budget * SURVIVAL.growth ** (k - 1);
+  // Toutes les 10 vagues, un cran de plus pour tous : +1 d'armure, +10 % de vitesse (à partir de la vague 21)
+  const tier = Math.max(0, Math.floor((n - 1) / 10) - 1);
+  const gapMul = Math.max(.5, 1 - k * .02);
+  let kind;
+  if (n % 5 === 0) kind = 'boss';
+  else if (prev !== 'breather' && rnd() < .15) kind = 'breather';
+  else {
+    const kinds = Object.keys(SURVIVAL_MIXES).filter(x => x !== prev);
+    kind = kinds[Math.floor(rnd() * kinds.length)];
+  }
+  // Dépense du budget : un groupe par type ; char lourd au milieu de son escorte
+  const spend = (mix, amount) => mix.map(([type, share, gap]) => [type, Math.max(1, Math.round(amount * share / SURVIVAL.threat[type])), gap]);
+  let groups;
+  if (kind === 'boss') {
+    const bosses = 1 + Math.floor(Math.max(0, n - 15) / 10);
+    const escort = spend(SURVIVAL_MIXES.armor, Math.max(budget - bosses * SURVIVAL.threat.boss, budget * .3));
+    groups = [escort[1], ['boss', bosses, 6], escort[0]];
+  } else if (kind === 'breather') {
+    groups = spend(SURVIVAL_MIXES.assault, budget * .5);
+  } else {
+    groups = spend(SURVIVAL_MIXES[kind], budget);
+  }
+  // Trop d'unités : on en retire et on renforce les autres d'autant
+  const units = groups.reduce((sum, g) => sum + g[1], 0);
+  const hp = units > SURVIVAL.maxUnits ? units / SURVIVAL.maxUnits : 1;
+  const opts = { hp, arm: tier, spd: 1 + tier * .1 };
+  groups = groups.map(([type, count, gap]) => [type, Math.max(1, Math.round(count / hp)), +(gap * gapMul).toFixed(2), opts]);
+  const wave = { kind, groups, bonus: kind === 'breather' ? 2 : 1 };
+  survivalCache.set(key, wave);
+  return wave;
 }
 
 // ===== Cartes =====
@@ -966,6 +1034,7 @@ const state = {
   started: false,   // partie lancée par le joueur (et non partie vierge derrière l'écran titre)
   strike: { r: 0, d: 0, readyAt: 0 },   // frappe aérienne : niveaux de rayon et de dégâts, prête à partir de readyAt
   strikes: [],      // frappes en approche
+  survival: null,   // mode survie, après la victoire : { seed } du générateur de vagues
   aiming: false,    // le joueur vise une zone pour la frappe
   strikeAim: null,  // au doigt : zone touchée une première fois, en attente de confirmation
 };
@@ -978,7 +1047,9 @@ function renderHud() {
   $lives.textContent = state.lives;
   $gold.textContent = state.gold;
   document.getElementById('score').textContent = state.score.toLocaleString('fr-FR');
-  $wave.textContent = state.wave + '/10';
+  // En survie, plus de fin : le compteur devient « Survie 14 »
+  $wave.textContent = state.survival ? state.wave : state.wave + '/' + WAVES.length;
+  document.getElementById('wave-label').textContent = state.survival ? 'Survie' : 'Vague';
   // Les tours restent sélectionnables sans les crédits : le bouton affiche ce qui manque
   for (const [id, t] of Object.entries(TOWER_TYPES)) {
     const b = document.getElementById('tower-' + id);
@@ -1017,14 +1088,14 @@ function flashStat(id, cls) {
   el._flash = setTimeout(() => el.classList.remove(cls), 450);
 }
 
-function spawnEnemy(type, wave) {
+function spawnEnemy(type, wave, opts = {}) {
   if (TIPS[type] && !state.seen[type]) { state.seen[type] = true; showDispatch(TIPS[type]); }
   if (type === 'boss') { shake(.12, 1.4); sfx.play('rumble'); }
   const t = ENEMY_TYPES[type];
-  const hp = Math.round(t.hp * hpFactor(wave) * MAP.hpMult * diff().hp);
+  const hp = Math.round(t.hp * hpFactor(wave) * MAP.hpMult * diff().hp * (opts.hp || 1));
   // Avec plusieurs routes, les ennemis les empruntent à tour de rôle
   const path = state.spawnCount++ % MAP.paths.length;
-  state.enemies.push({ type, t, hp, maxHp: hp, path, d: -.6, slowUntil: 0, slowFactor: 0, angle: 0, x: -1, y: 0 });
+  state.enemies.push({ type, t, hp, maxHp: hp, path, d: -.6, slowUntil: 0, slowFactor: 0, angle: 0, x: -1, y: 0, arm: opts.arm || 0, spd: opts.spd || 1 });
 }
 
 function updateEnemies(dt, now) {
@@ -1032,14 +1103,14 @@ function updateEnemies(dt, now) {
     state.spawnTimer -= dt;
     while (state.spawnQueue.length && state.spawnTimer <= 0) {
       const next = state.spawnQueue.shift();
-      spawnEnemy(next.type, next.wave);
+      spawnEnemy(next.type, next.wave, next.opts);
       state.spawnTimer += state.spawnQueue.length ? state.spawnQueue[0].delay : 0;
     }
   }
   for (const e of state.enemies) {
     if (e.dead) continue;
     const slow = now < e.slowUntil ? e.slowFactor * (1 - e.t.slowResist) : 0;
-    e.d += e.t.speed * (1 - slow) * dt;
+    e.d += e.t.speed * (e.spd || 1) * (1 - slow) * dt;
     const pi = e.path || 0;
     const p = posAt(e.d, pi), q = posAt(e.d + .05, pi);
     e.x = p.x; e.y = p.y;
@@ -1084,9 +1155,10 @@ const sellValue = tw => Math.floor(tw.invested * .7);
 // L'armure retire des dégâts à chaque impact, avec un minimum de 1
 function hurt(e, raw) {
   if (e.dead) return;
-  e.hp -= Math.max(1, raw - e.t.armor);
+  const armor = e.t.armor + (e.arm || 0);   // armure de base, plus le bonus de la survie
+  e.hp -= Math.max(1, raw - armor);
   // Étincelle grise quand l'armure absorbe une bonne part du tir
-  if (e.t.armor && raw < 3 * e.t.armor) {
+  if (armor && raw < 3 * armor) {
     sfx.play('ping');
     state.effects.push({ kind: 'spark', x: e.x + (Math.random() - .5) * .3, y: e.y + (Math.random() - .5) * .3, t: clock, dur: .18 });
   }
@@ -1678,7 +1750,7 @@ function updateReadout() {
   let text = '', kind = '';
   if (e) {
     kind = 'enemy';
-    text = `${e.t.name} · ${Math.max(0, Math.ceil(e.hp))}/${e.maxHp} PV · armure ${e.t.armor} · ${fmt(e.t.speed, 1)} case/s${isSlowed(e, clock) ? ' · ralenti' : ''}`;
+    text = `${e.t.name} · ${Math.max(0, Math.ceil(e.hp))}/${e.maxHp} PV · armure ${e.t.armor + (e.arm || 0)} · ${fmt(e.t.speed * (e.spd || 1), 1)} case/s${isSlowed(e, clock) ? ' · ralenti' : ''}`;
   } else if (p && state.hover) {
     const h = state.hover, road = isRoad(h.c, h.r), base = isBase(h.c, h.r), tw = towerAt(h.c, h.r);
     kind = road || base || tw ? 'road' : 'free';
@@ -2037,16 +2109,16 @@ const $btnWave = document.getElementById('btn-wave');
 const $btnReplay = document.getElementById('btn-replay');
 
 function launchWave() {
-  if (state.phase === 'over' || state.wave >= WAVES.length) return;
+  if (state.phase === 'over' || state.wave >= lastWave()) return;
   const early = state.phase === 'wave';
   // Une « manche » part d'une pause et court jusqu'au terrain dégagé (appels anticipés compris)
   if (!early) state.run = { from: state.wave + 1, lives: state.lives };
   state.wave++;
   const n = state.wave;
   let first = true;
-  for (const [type, count, gap] of WAVES[n - 1]) {
+  for (const [type, count, gap, opts] of waveDef(n)) {
     for (let i = 0; i < count; i++) {
-      state.spawnQueue.push({ type, wave: n, delay: first ? (state.spawnQueue.length ? 1.5 : 0) : i === 0 ? 1.5 : gap });
+      state.spawnQueue.push({ type, wave: n, opts, delay: first ? (state.spawnQueue.length ? 1.5 : 0) : i === 0 ? 1.5 : gap });
       first = false;
     }
   }
@@ -2078,7 +2150,7 @@ for (const type in ENEMY_TYPES) {
 const $nextWave = document.getElementById('next-wave');
 function renderNextWave() {
   const n = state.wave + 1;
-  $nextWave.hidden = n > WAVES.length || state.phase === 'over';
+  $nextWave.hidden = n > lastWave() || state.phase === 'over';
   if ($nextWave.hidden) return;
   $nextWave.title = `Vague ${n} : ${describeWave(n)}`;
   document.getElementById('next-icons').innerHTML = Object.entries(waveCounts(n)).map(([type, k]) =>
@@ -2091,7 +2163,7 @@ function updateWaveButton() {
     $btnWave.disabled = true; $btnWave.textContent = 'Partie terminée';
   } else if (state.phase === 'prep') {
     $btnWave.disabled = false; $btnWave.textContent = `Lancer la vague ${next}`;
-  } else if (state.spawnQueue.length || next > WAVES.length) {
+  } else if (state.spawnQueue.length || next > lastWave()) {
     $btnWave.disabled = true; $btnWave.textContent = `Vague ${state.wave} en cours`;
   } else {
     $btnWave.disabled = false; $btnWave.textContent = `Vague ${next} en avance (+${earlyBonus(next)})`;
@@ -2115,7 +2187,7 @@ function checkWaveEnd() {
   state.gold += bonus;
   state.pendingBonus = 0;
   recordRun();
-  if (state.wave >= WAVES.length) { renderHud(); endGame(true); return; }
+  if (state.wave >= lastWave()) { renderHud(); endGame(true); return; }
   state.phase = 'prep';
   saveCheckpoint();
   if (state.wave === STRIKE.unlockWave) {
@@ -2145,6 +2217,7 @@ function saveCheckpoint() {
     towers: state.towers.map(tw => ({ ...tw })),
     // Les améliorations de la frappe ont coûté des crédits : elles reviennent avec eux, recharge comprise
     strike: { r: state.strike.r, d: state.strike.d, left: strikeLeft() },
+    survival: state.survival && { ...state.survival },   // revenir avant la vague 11 ramène en campagne
     seen: { ...state.seen },
   };
 }
@@ -2160,7 +2233,7 @@ function restoreCheckpoint(n) {
     placing: null, selected: null, phase: 'prep', pendingBonus: 0,
     run: null, lastRun: null, paused: false, baseHitAt: -9,
     strike: { r: (cp.strike || {}).r || 0, d: (cp.strike || {}).d || 0, readyAt: clock + ((cp.strike || {}).left || 0) },
-    strikes: [],
+    strikes: [], survival: cp.survival || null,
   });
   queueWasEmpty = true;
   $overlay.hidden = true;
@@ -2176,6 +2249,7 @@ function restoreCheckpoint(n) {
 function recordRun() {
   const run = state.run;
   if (!run) return;
+  if (run.from > WAVES.length) { state.lastRun = run.from; state.run = null; return; }
   const lost = run.lives - state.lives;
   const prev = records[recordKey(run.from)];
   const better = prev === undefined || lost < prev;
@@ -2231,7 +2305,7 @@ function showView(view) {
   if (view === 'home') view = menuMode;
   // La sélection et le tableau des scores s'ouvrent sur la difficulté et la carte de la dernière partie
   if (view === 'maps' && menuView !== 'diffs') briefDiff = state.difficulty;
-  if (view === 'scores' && menuView !== 'scores') { scMap = state.mapId; scDiff = state.difficulty; }
+  if (view === 'scores' && menuView !== 'scores') { scMap = state.mapId; scDiff = state.difficulty; scMode = state.survival ? 'survival' : 'campaign'; }
   menuView = view;
   $menuBox.classList.toggle('briefing', view === 'maps');
   $menu.querySelectorAll('.view').forEach(v => { v.hidden = v.dataset.view !== view; });
@@ -2278,7 +2352,7 @@ document.getElementById('btn-ov-menu').addEventListener('click', openTitle);
 function renderTitle() {
   const $continue = document.getElementById('t-continue');
   $continue.hidden = !inProgress();
-  document.getElementById('t-continue-sub').textContent = `${MAP.name} · ${diff().name} · vague ${state.wave}/${WAVES.length}`;
+  document.getElementById('t-continue-sub').textContent = `${MAP.name} · ${diff().name} · ${waveLabel()}`;
 }
 document.getElementById('t-continue').addEventListener('click', () => { hideMenu(); state.paused = false; });
 
@@ -2287,7 +2361,7 @@ function renderPause() {
   const over = state.phase === 'over';
   document.getElementById('menu-status').textContent = over
     ? `${MAP.name} · ${diff().name} · ${state.result === 'win' ? 'mission accomplie' : 'base perdue'}`
-    : `${MAP.name} · ${diff().name} · vague ${state.wave}/${WAVES.length}`;
+    : `${MAP.name} · ${diff().name} · ${waveLabel()}`;
   document.getElementById('menu-resume').textContent = over ? 'Voir le rapport' : pristine() ? 'Commencer la partie' : 'Reprendre la partie';
   document.getElementById('menu-restart-sub').textContent = `${MAP.name}, ${diff().name}, depuis la vague 1`;
 }
@@ -2366,7 +2440,7 @@ function renderDiffs() {
     const open = unlocked(briefMap, id), best = stars[starKey(briefMap, id)] || 0;
     const slot = open && slotGame(briefMap, id);
     const foot = open
-      ? `<span class="df-stars" aria-label="Meilleur résultat : ${best} étoile${best > 1 ? 's' : ''} sur 3">${starsHtml(best)}</span>${slot ? `<span class="df-save">Partie en cours : vague ${slot.wave}/${WAVES.length}</span>` : ''}`
+      ? `<span class="df-stars" aria-label="Meilleur résultat : ${best} étoile${best > 1 ? 's' : ''} sur 3">${starsHtml(best)}</span>${slot ? `<span class="df-save">Partie en cours : ${waveLabel(slot.wave, slot.survival)}</span>` : ''}`
       : `<span class="df-lock">Terminez ${prevMap(briefMap).the} en ${DIFF_ORDER.slice(DIFF_ORDER.indexOf(id)).map(x => DIFFICULTIES[x].name).join(' ou en ')}</span>`;
     return `<button role="radio" data-diff="${id}" aria-checked="${id === briefDiff}"${open ? '' : ' disabled'}><span class="df-name">${d.name}</span><span class="df-desc">${d.desc}</span>${foot}</button>`;
   }).join('');
@@ -2396,15 +2470,16 @@ document.getElementById('brief-go').addEventListener('click', () => {
 function renderReplace() {
   const slot = slotGame(briefMap, briefDiff);
   document.getElementById('replace-text').textContent =
-    `${MAPS[briefMap].name}, ${DIFFICULTIES[briefDiff].name} : la partie en cours (vague ${slot ? slot.wave : 0}/${WAVES.length}) sera effacée, avec ses points de reprise.`;
+    `${MAPS[briefMap].name}, ${DIFFICULTIES[briefDiff].name} : la partie en cours (${slot ? waveLabel(slot.wave, slot.survival) : ''}) sera effacée, avec ses points de reprise.`;
 }
 document.getElementById('replace-go').addEventListener('click', () => startOperation(briefMap, briefDiff));
 
 // ===== Manches : les points de reprise de la partie en cours =====
 function renderWaveList() {
-  $waveList.innerHTML = WAVES.map((_, i) => {
+  const total = state.survival ? Math.max(WAVES.length, ...Object.keys(state.checkpoints).map(Number)) : WAVES.length;
+  $waveList.innerHTML = Array.from({ length: total }, (_, i) => {
     const n = i + 1, cp = state.checkpoints[n];
-    const status = cp ? recordText(records[recordKey(n)]) : n <= state.wave ? 'Appelée en avance : pas de point de reprise' : 'Pas encore atteinte';
+    const status = cp ? (n > WAVES.length ? 'Survie' : recordText(records[recordKey(n)])) : n <= state.wave ? 'Appelée en avance : pas de point de reprise' : 'Pas encore atteinte';
     return `<li><button class="wave-row" data-wave="${n}"${cp ? '' : ' disabled'}>
       <span class="wn">Vague ${n}</span><span class="wd">${describeWave(n)}</span><span class="wr">${status}</span>
     </button></li>`;
@@ -2416,13 +2491,24 @@ $waveList.addEventListener('click', e => {
 });
 
 // ===== Tableau des scores : n'importe quelle carte et difficulté, à tout moment =====
-let scMap = 'col', scDiff = 'veteran';
-const $scMaps = document.getElementById('sc-maps'), $scDiffs = document.getElementById('sc-diffs');
+let scMap = 'col', scDiff = 'veteran', scMode = 'campaign';
+const $scMaps = document.getElementById('sc-maps'), $scDiffs = document.getElementById('sc-diffs'), $scModes = document.getElementById('sc-modes');
 function renderScores() {
   $scMaps.innerHTML = MAP_DEFS.map(({ id }) =>
     `<button role="radio" data-map="${id}" aria-checked="${id === scMap}">${MAPS[id].name}</button>`).join('');
   $scDiffs.innerHTML = Object.entries(DIFFICULTIES).map(([id, d]) =>
     `<button role="radio" data-diff="${id}" aria-checked="${id === scDiff}">${d.name}</button>`).join('');
+  $scModes.innerHTML = [['campaign', 'Campagne'], ['survival', 'Survie']].map(([id, label]) =>
+    `<button role="radio" data-mode="${id}" aria-checked="${id === scMode}">${label}</button>`).join('');
+  const survival = scMode === 'survival';
+  document.getElementById('sc-waves').hidden = survival;
+  if (survival) {
+    // Meilleure survie de ce navigateur (le tableau garde ses 5 meilleures, la première est la plus lointaine)
+    const top = (board.local[`${scMap}:${scDiff}:survie`] || [])[0];
+    document.getElementById('sc-best').textContent = top ? `Votre meilleure survie : vague ${top.wave}, ${top.score.toLocaleString('fr-FR')} points` : 'Pas encore de survie sur cette carte à ce niveau.';
+    renderLeaderboard($menuBoard, scMap, scDiff, scMode);
+    return;
+  }
   const best = stars[starKey(scMap, scDiff)] || 0;
   document.getElementById('sc-best').innerHTML = `Votre meilleur résultat : <span aria-label="${best} étoile${best > 1 ? 's' : ''} sur 3">${starsHtml(best)}</span> · records par vague, en vies perdues :`;
   document.getElementById('sc-waves').innerHTML = WAVES.map((_, i) => {
@@ -2430,7 +2516,7 @@ function renderScores() {
     const cls = rec === undefined ? 'none' : rec === 0 ? 'zero' : '';
     return `<span class="wr-cell" role="listitem" title="Vague ${i + 1} : ${recordText(rec)}"><span class="wr-n">V${i + 1}</span><span class="wr-v ${cls}">${rec === undefined ? '–' : rec}</span></span>`;
   }).join('');
-  renderLeaderboard($menuBoard, scMap, scDiff);
+  renderLeaderboard($menuBoard, scMap, scDiff, scMode);
 }
 $scMaps.addEventListener('click', e => {
   const b = e.target.closest('button[data-map]');
@@ -2439,6 +2525,10 @@ $scMaps.addEventListener('click', e => {
 $scDiffs.addEventListener('click', e => {
   const b = e.target.closest('button[data-diff]');
   if (b) { scDiff = b.dataset.diff; renderScores(); }
+});
+$scModes.addEventListener('click', e => {
+  const b = e.target.closest('button[data-mode]');
+  if (b) { scMode = b.dataset.mode; renderScores(); }
 });
 
 // ===== Paramètres =====
@@ -2484,15 +2574,16 @@ function endGame(win, restored = false) {
   setPlacing(null);
   select(null);
   updateWaveButton();
-  // ★★★ sans perdre de vie, ★★ avec 10 vies ou plus, ★ sinon
-  const starCount = !win ? 0 : state.lives === 20 ? 3 : state.lives >= 10 ? 2 : 1;
+  const survival = !!state.survival;
+  // ★★★ sans perdre de vie, ★★ avec 10 vies ou plus, ★ sinon ; pas d'étoiles en survie
+  const starCount = !win || survival ? 0 : state.lives === 20 ? 3 : state.lives >= 10 ? 2 : 1;
   if (!restored) {
     if (win) state.score += state.lives * LIFE_POINTS;
     renderHud();
     recordScore(state.score, starCount);
   }
   document.getElementById('ov-score').textContent = `Score : ${state.score.toLocaleString('fr-FR')}`;
-  renderLeaderboard($ovBoard, state.mapId, state.difficulty);
+  renderLeaderboard($ovBoard, state.mapId, state.difficulty, survival ? 'survival' : 'campaign');
   // Une victoire peut ouvrir la carte suivante à ce niveau de difficulté
   const next = MAP_DEFS[MAP_DEFS.findIndex(m => m.id === state.mapId) + 1];
   const opens = win && next ? DIFF_ORDER.filter(d => !unlocked(next.id, d) && DIFF_ORDER.indexOf(d) <= DIFF_ORDER.indexOf(state.difficulty)) : [];
@@ -2500,12 +2591,16 @@ function endGame(win, restored = false) {
     stars[starKey(state.mapId)] = starCount;
     try { localStorage.setItem('rempart-stars', JSON.stringify(stars)); } catch (e) {}
   }
-  document.getElementById('ov-title').textContent = win ? 'Mission accomplie' : 'Base perdue';
+  document.getElementById('ov-title').textContent = survival ? 'Fin de la survie' : win ? 'Mission accomplie' : 'Base perdue';
+  document.getElementById('ov-stars').hidden = survival;
   document.getElementById('ov-stars').innerHTML = starsHtml(starCount);
   document.getElementById('ov-stars').setAttribute('aria-label', `${starCount} étoile${starCount > 1 ? 's' : ''} sur 3`);
   document.getElementById('ov-text').textContent = win
     ? `${MAP.name} : les 10 vagues sont repoussées. Vies restantes : ${state.lives}/20.${opens.length ? ` Nouvelle carte débloquée : ${next.name}, en ${listFr(opens.map(d => DIFFICULTIES[d].name))}.` : ''}`
-    : `La ligne a cédé à la vague ${state.wave}. Repérez où l'ennemi passe et renforcez ce secteur.`;
+    : survival
+      ? `${MAP.name} : la ligne a cédé à la vague ${state.wave}, après ${Math.max(0, state.wave - 1 - WAVES.length)} vague${state.wave - 1 - WAVES.length > 1 ? 's' : ''} de survie repoussée${state.wave - 1 - WAVES.length > 1 ? 's' : ''}.`
+      : `La ligne a cédé à la vague ${state.wave}. Repérez où l'ennemi passe et renforcez ce secteur.`;
+  document.getElementById('btn-survive').hidden = !win || survival;
   // Défaite : on propose de reprendre au début de la manche perdue
   const retry = !win && state.run && state.checkpoints[state.run.from] ? state.run.from : 0;
   $btnRetry.hidden = !retry;
@@ -2520,6 +2615,23 @@ function endGame(win, restored = false) {
 const $btnRetry = document.getElementById('btn-retry');
 $btnRetry.addEventListener('click', () => restoreCheckpoint(Number($btnRetry.dataset.wave)));
 
+// Survie : après la victoire, la même partie continue avec des vagues générées, jusqu'à la défaite
+function startSurvival() {
+  if (state.phase !== 'over' || state.result !== 'win' || state.survival) return;
+  state.survival = { seed: Math.floor(Math.random() * 1e9) };
+  state.phase = 'prep';
+  state.result = null;
+  $overlay.hidden = true;
+  queueWasEmpty = true;
+  saveCheckpoint();   // point de reprise de la vague 11
+  renderHud();
+  updateWaveButton();
+  sfx.play('radio');
+  showDispatch("Survie : les vagues ne s'arrêtent plus et se renforcent. Tenez le plus longtemps possible.");
+  saveGame();
+}
+document.getElementById('btn-survive').addEventListener('click', startSurvival);
+
 // started : faux pour la partie vierge posée derrière l'écran titre, que « Continuer » ne propose pas
 function newGame(mapId = state.mapId, difficulty = state.difficulty, started = true) {
   setMap(mapId);
@@ -2533,7 +2645,7 @@ function newGame(mapId = state.mapId, difficulty = state.difficulty, started = t
     seen: {}, baseHitAt: -9,
     checkpoints: {}, run: null, lastRun: null, result: null, spawnCount: 0,
     decals: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, started,
-    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [],
+    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [], survival: null,
   });
   resetDecalCanvas();
   $dispatch.hidden = true;
@@ -2558,11 +2670,13 @@ document.getElementById('btn-restart').addEventListener('click', () => newGame(s
 const board = { db: null, user: null, uid: null, docs: [], local: {}, lastAt: null, writeRefused: false };
 const $ovBoard = document.getElementById('ov-board'), $menuBoard = document.getElementById('menu-board');
 function refreshBoards() {
-  if (!$overlay.hidden) renderLeaderboard($ovBoard, state.mapId, state.difficulty);
-  if (!$menu.hidden && menuView === 'scores') renderLeaderboard($menuBoard, scMap, scDiff);
+  if (!$overlay.hidden) renderLeaderboard($ovBoard, state.mapId, state.difficulty, state.survival ? 'survival' : 'campaign');
+  if (!$menu.hidden && menuView === 'scores') renderLeaderboard($menuBoard, scMap, scDiff, scMode);
 }
 try { board.local = JSON.parse(localStorage.getItem('rempart-scores') || '{}'); } catch (e) {}
-const scoreKey = () => `${state.mapId}:${state.difficulty}`;
+const scoreKey = () => `${state.mapId}:${state.difficulty}${state.survival ? ':survie' : ''}`;
+// Campagne : le meilleur score ; survie : la vague la plus lointaine, puis le score
+const better = (a, b, survival) => survival ? (a.wave || 0) - (b.wave || 0) || a.score - b.score : a.score - b.score;
 
 (async () => {
   if (!window.claude || typeof window.claude.use !== 'function') return;
@@ -2578,14 +2692,15 @@ const scoreKey = () => `${state.mapId}:${state.difficulty}`;
 })();
 
 async function recordScore(score, starCount) {
-  const key = scoreKey(), entry = { score, stars: starCount, at: Date.now() };
+  const key = scoreKey(), survival = !!state.survival;
+  const entry = { score, stars: starCount, at: Date.now(), ...(survival ? { wave: state.wave } : {}) };
   board.lastAt = entry.at;
-  board.local[key] = (board.local[key] || []).concat(entry).sort((a, b) => b.score - a.score).slice(0, 5);
+  board.local[key] = (board.local[key] || []).concat(entry).sort((a, b) => better(b, a, survival)).slice(0, 5);
   try { localStorage.setItem('rempart-scores', JSON.stringify(board.local)); } catch (e) {}
   if (board.db) {
     const mine = board.docs.find(d => d.id === board.uid);
     const prev = mine && mine.best[key];
-    if (!prev || score > prev.score) {
+    if (!prev || better(entry, prev, survival) > 0) {
       try { await board.db.doc('scores/' + board.uid).set({ best: { ...(mine ? mine.best : {}), [key]: entry } }); }
       catch (e) { board.writeRefused = true; }
     }
@@ -2594,25 +2709,26 @@ async function recordScore(score, starCount) {
 }
 
 // $box : l'emplacement du tableau ; un rendu plus récent dans le même emplacement annule le précédent
-async function renderLeaderboard($box, mapId, difficulty) {
-  const key = `${mapId}:${difficulty}`, token = ($box.token || 0) + 1;
+async function renderLeaderboard($box, mapId, difficulty, mode = 'campaign') {
+  const survival = mode === 'survival';
+  const key = `${mapId}:${difficulty}${survival ? ':survie' : ''}`, token = ($box.token || 0) + 1;
   $box.token = token;
   const $title = $box.querySelector('.lb-title');
-  if ($title) $title.textContent = `Meilleurs scores · ${MAPS[mapId].name}, ${DIFFICULTIES[difficulty].name}`;
+  if ($title) $title.textContent = `${survival ? 'Meilleures survies' : 'Meilleurs scores'} · ${MAPS[mapId].name}, ${DIFFICULTIES[difficulty].name}`;
   const $list = $box.querySelector('.lb-list'), $note = $box.querySelector('.lb-note');
   let rows;
   if (board.db) {
     const entries = board.docs.filter(d => d.best[key])
-      .map(d => ({ id: d.id, score: d.best[key].score, stars: d.best[key].stars }))
-      .sort((a, b) => b.score - a.score).slice(0, 5);
+      .map(d => ({ id: d.id, score: d.best[key].score, stars: d.best[key].stars, wave: d.best[key].wave }))
+      .sort((a, b) => better(b, a, survival)).slice(0, 5);
     const ps = entries.length ? await board.user.profiles(entries.map(r => r.id)) : {};
     if ($box.token !== token) return;
-    rows = entries.map(r => ({ who: r.id === board.uid ? 'Vous' : (ps[r.id] && ps[r.id].name) || 'Un joueur', score: r.score, stars: r.stars, me: r.id === board.uid }));
+    rows = entries.map(r => ({ who: r.id === board.uid ? 'Vous' : (ps[r.id] && ps[r.id].name) || 'Un joueur', score: r.score, stars: r.stars, wave: r.wave, me: r.id === board.uid }));
     $note.textContent = board.writeRefused
       ? "Votre score n'a pas pu être inscrit : il faut le rôle Contributeur sur cette page."
       : 'Tableau partagé entre les joueurs de cette page.';
   } else {
-    rows = (board.local[key] || []).map(r => ({ who: new Date(r.at).toLocaleDateString('fr-FR'), score: r.score, stars: r.stars, me: r.at === board.lastAt }));
+    rows = (board.local[key] || []).map(r => ({ who: new Date(r.at).toLocaleDateString('fr-FR'), score: r.score, stars: r.stars, wave: r.wave, me: r.at === board.lastAt }));
     $note.textContent = 'Vos meilleurs scores, gardés dans ce navigateur.';
   }
   $list.replaceChildren();
@@ -2626,7 +2742,9 @@ async function renderLeaderboard($box, mapId, difficulty) {
   rows.forEach((r, i) => {
     const li = document.createElement('li');
     if (r.me) li.className = 'me';
-    li.innerHTML = `<span class="lb-rank">${i + 1}</span><span class="lb-who"></span><span class="lb-stars">${'★'.repeat(r.stars || 0)}</span><span class="lb-score">${r.score.toLocaleString('fr-FR')}</span>`;
+    // Survie : la vague atteinte à la place des étoiles
+    const badge = survival ? `V${r.wave || '?'}` : '★'.repeat(r.stars || 0);
+    li.innerHTML = `<span class="lb-rank">${i + 1}</span><span class="lb-who"></span><span class="lb-stars">${badge}</span><span class="lb-score">${r.score.toLocaleString('fr-FR')}</span>`;
     li.querySelector('.lb-who').textContent = r.who;   // un nom vient d'un autre joueur : jamais en HTML
     $list.appendChild(li);
   });
@@ -2637,7 +2755,7 @@ async function renderLeaderboard($box, mapId, difficulty) {
 // L'horloge de jeu est sauvegardée aussi, pour que les ralentissements et les obus en vol restent cohérents.
 const SAVE_KEY = 'rempart-save-v1';
 const SAVED_FIELDS = ['lives', 'gold', 'wave', 'enemies', 'spawnQueue', 'spawnTimer', 'towers', 'shells', 'phase',
-  'pendingBonus', 'seen', 'checkpoints', 'run', 'lastRun', 'result', 'mapId', 'spawnCount', 'difficulty', 'score', 'decals', 'started', 'strike', 'strikes'];
+  'pendingBonus', 'seen', 'checkpoints', 'run', 'lastRun', 'result', 'mapId', 'spawnCount', 'difficulty', 'score', 'decals', 'started', 'strike', 'strikes', 'survival'];
 
 function snapshot() {
   const data = { clock };
@@ -2661,7 +2779,7 @@ function applySave(data) {
   Object.assign(state, {
     effects: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, baseHitAt: -9,
     placing: null, selected: null, armed: null, hoverEnemy: null,
-    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [],
+    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [], survival: null,
   });
   for (const k of SAVED_FIELDS) if (k in data) state[k] = data[k];
   setMap(data.mapId || 'col');
@@ -2701,8 +2819,8 @@ function shelveCurrent() {
 // Partie à reprendre pour une carte et une difficulté : la partie en cours ou une partie mise de côté
 function slotGame(mapId, difficulty) {
   const key = starKey(mapId, difficulty);
-  if (starKey(state.mapId, state.difficulty) === key && inProgress()) return pristine() ? null : { wave: state.wave, current: true };
-  return shelf[key] ? { wave: shelf[key].wave, current: false } : null;
+  if (starKey(state.mapId, state.difficulty) === key && inProgress()) return pristine() ? null : { wave: state.wave, survival: state.survival, current: true };
+  return shelf[key] ? { wave: shelf[key].wave, survival: shelf[key].survival, current: false } : null;
 }
 // Nouvelle partie : efface celle de la même carte et difficulté, met l'autre de côté
 function startOperation(mapId, difficulty) {
