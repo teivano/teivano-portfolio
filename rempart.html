@@ -409,8 +409,9 @@
 
 <script>
 // ===== Données =====
-const COLS = 16, ROWS = 10;
-const LETTERS = 'ABCDEFGHIJKLMNOP';
+// Taille de la grille : 16 × 10 par défaut, propre à chaque carte (cols, rows), mise à jour par setMap
+let COLS = 16, ROWS = 10;
+const LETTERS = 'ABCDEFGHIJKLMNOPQRST';
 
 // range en cases, rate en tirs/s ; splash = rayon de l'explosion ; slow = part de vitesse retirée pendant slowTime
 const TOWER_TYPES = {
@@ -426,6 +427,8 @@ const ENEMY_TYPES = {
   jeep:     { name: 'Jeep',       plural: 'jeeps',        hp: 65,   speed: 2.5, reward: 5,   damage: 1,  armor: 0, slowResist: 0,  size: .26 },
   tank:     { name: 'Blindé',     plural: 'blindés',      hp: 550,  speed: .8,  reward: 20,  damage: 3,  armor: 6, slowResist: 0,  size: .34 },
   boss:     { name: 'Char lourd', plural: 'chars lourds', hp: 2100, speed: .6,  reward: 100, damage: 10, armor: 8, slowResist: .5, size: .44 },
+  // Cartes 4 et 5, et survie : détruit, il libère ses fantassins (troops) là où il tombe
+  truck:    { name: 'Camion de troupes', plural: 'camions de troupes', hp: 350, speed: 1.1, reward: 6, damage: 4, armor: 2, slowResist: 0, size: .3, troops: 4 },
 };
 
 // Chaque vague : groupes [type, nombre, secondes entre deux unités], envoyés l'un après l'autre
@@ -460,7 +463,8 @@ const waveBonus = n => n === 6 ? 80 : (20 + 5 * n) * (n > WAVES.length && state.
 const earlyBonus = n => 10 + 3 * n;                       // versé si on appelle la vague n en avance
 
 // Groupes d'une vague : la liste écrite à la main jusqu'à 10, le générateur de la survie ensuite
-const waveDef = n => n <= WAVES.length ? WAVES[n - 1] : survivalWave(n).groups;
+// Les cartes 4 et 5 ont leurs propres vagues (MAP.waves), toujours 10
+const waveDef = n => n <= WAVES.length ? (MAP.waves || WAVES)[n - 1] : survivalWave(n).groups;
 const lastWave = () => state.survival ? Infinity : WAVES.length;
 const waveLabel = (wave = state.wave, survival = state.survival) => survival ? `survie, vague ${wave}` : `vague ${wave}/${WAVES.length}`;
 function waveCounts(n) {
@@ -479,7 +483,7 @@ function describeWave(n) {
 // temps, une vague de respiration. Le tirage part d'une graine gardée avec la partie : rejouer la vague 17
 // redonne exactement la même vague 17.
 const SURVIVAL = {
-  threat: { infantry: 1, jeep: .8, tank: 4, boss: 25 },
+  threat: { infantry: 1, jeep: .8, tank: 4, boss: 25, truck: 5 },   // camion : lui et ses 4 fantassins
   budget: 50, growth: 1.1,   // menace de la vague 11 (la vague 10 en vaut 49), puis ×1,1 par vague
   maxUnits: 60,              // au-delà, le surplus de budget rend les ennemis plus résistants au lieu de les multiplier
 };
@@ -489,8 +493,9 @@ const SURVIVAL_MIXES = {
   armor:   [['tank', .7, 1.8], ['infantry', .3, .7]],
   assault: [['infantry', 1, .45]],
   mixed:   [['infantry', .35, .7], ['tank', .4, 2], ['jeep', .25, .4]],
+  convoy:  [['truck', .65, 2.2], ['jeep', .35, .4]],
 };
-const SURVIVAL_KINDS = { swarm: 'Essaim', armor: 'Colonne blindée', assault: 'Assaut', mixed: 'Mixte', boss: 'Char lourd', breather: 'Respiration' };
+const SURVIVAL_KINDS = { swarm: 'Essaim', armor: 'Colonne blindée', assault: 'Assaut', mixed: 'Mixte', convoy: 'Convoi', boss: 'Char lourd', breather: 'Respiration' };
 const survivalCache = new Map();
 
 function survivalWave(n) {
@@ -571,9 +576,63 @@ const MAP_DEFS = [
     water: [[1, 3], [2, 3], [3, 3]],
     hpMult: 1.15,
   },
+  // Cartes 4 et 5 : grille de 18 × 11, vagues propres (waves) avec le camion de troupes
+  {
+    id: 'delta', name: 'Le Delta', the: 'le Delta', place: 'Marais d\'automne', theme: 'autumn', meta: 'une route à deux bras · marais',
+    brief: "La route se divise autour d'une île, puis ses deux bras se rejoignent avant la base. Les ennemis prennent un bras chacun leur tour.",
+    cols: 18, rows: 11,
+    paths: [
+      [[-1, 1], [1, 1], [1, 5], [3, 5], [3, 2], [14, 2], [14, 5], [17, 5]],
+      [[-1, 1], [1, 1], [1, 5], [3, 5], [3, 8], [14, 8], [14, 5], [17, 5]],
+    ],
+    base: { c: 17, r: 5 },
+    hills: [[9, 5], [6, 0], [16, 8]],
+    forests: [[0, 9], [0, 10], [1, 10], [2, 10], [11, 0], [12, 0], [16, 0], [17, 0], [17, 10], [16, 10], [5, 10]],
+    water: [[8, 0], [8, 1], [8, 2], [9, 8], [9, 9], [9, 10], [5, 4], [5, 5], [5, 6], [6, 5], [12, 4], [12, 5], [12, 6], [11, 5], [0, 7], [0, 8], [1, 8]],
+    hpMult: 1.0,
+    waves: [
+      [['infantry', 8, 1.6]],                                                  // 1 : deux bras à couvrir
+      [['jeep', 12, .7], ['infantry', 4, 1]],                                  // 2
+      [['infantry', 4, 1], ['truck', 3, 4]],                                   // 3 : découvrir le camion
+      [['infantry', 8, 1], ['tank', 2, 3]],                                    // 4
+      [['truck', 4, 3], ['jeep', 12, .5]],                                     // 5
+      [['infantry', 10, .9]],                                                  // 6 : respiration
+      [['jeep', 24, .35], ['truck', 3, 2.5]],                                  // 7 : essaim et convoi
+      [['truck', 5, 2.5], ['tank', 4, 2.5], ['infantry', 10, .8]],             // 8
+      [['jeep', 15, .4], ['truck', 6, 2], ['tank', 6, 1.8]],                   // 9
+      [['truck', 4, 2], ['boss', 1, 0], ['tank', 3, 2], ['truck', 4, 2]],      // 10 : examen final
+    ],
+  },
+  {
+    id: 'oasis', name: "L'Oasis", the: "l'Oasis", place: 'Désert', theme: 'desert', meta: 'deux routes · base au centre',
+    brief: "La base tient l'oasis, au centre de la carte. Deux colonnes arrivent par l'ouest et par l'est : il faut se battre des deux côtés.",
+    cols: 18, rows: 11,
+    paths: [
+      [[-1, 9], [2, 9], [2, 1], [5, 1], [5, 8], [7, 8], [7, 5], [9, 5]],
+      [[18, 1], [16, 1], [16, 9], [13, 9], [13, 2], [11, 2], [11, 5], [9, 5]],
+    ],
+    base: { c: 9, r: 5 },
+    hills: [[9, 1], [9, 9], [3, 4], [15, 6]],
+    // Bois : palmiers au bord de l'eau, rochers ailleurs
+    forests: [[8, 3], [10, 3], [8, 7], [10, 7], [0, 0], [1, 0], [0, 1], [17, 10], [16, 10], [17, 9], [12, 10], [6, 0]],
+    water: [[8, 4], [9, 4], [10, 4], [8, 6], [9, 6], [10, 6]],
+    hpMult: 0.95,
+    waves: [
+      [['infantry', 8, 1.6]],                                                  // 1 : deux fronts
+      [['jeep', 14, .6]],                                                      // 2
+      [['infantry', 6, 1], ['truck', 2, 4]],                                   // 3 : un camion de chaque côté
+      [['infantry', 8, 1], ['tank', 2, 2.5]],                                  // 4
+      [['tank', 2, 3], ['truck', 2, 3], ['jeep', 10, .5]],                     // 5
+      [['infantry', 10, .9]],                                                  // 6 : respiration
+      [['jeep', 26, .35], ['truck', 4, 2]],                                    // 7
+      [['truck', 4, 2.2], ['tank', 4, 2.5], ['infantry', 12, .7]],             // 8
+      [['jeep', 16, .4], ['truck', 6, 1.8], ['tank', 6, 1.8]],                 // 9
+      [['truck', 4, 2], ['boss', 2, 4], ['tank', 4, 2], ['truck', 4, 2]],      // 10 : un char lourd par route
+    ],
+  },
 ];
 
-// Ambiance de chaque carte : trois lieux différents, même lecture du terrain.
+// Ambiance de chaque carte : des lieux différents, même lecture du terrain.
 // ink : couleur des tracés d'interface (portée, survol), sombre sur la neige, claire ailleurs.
 const THEMES = {
   summer: {
@@ -605,11 +664,32 @@ const THEMES = {
     bridge: 'wood', trees: ['#2c4231', '#334a38'], treeLight: 'rgba(255,255,255,.85)', snowCap: true,
     grid: 'rgba(60,80,100,.16)', ink: '34,42,52',
   },
+  // Marais d'automne : herbe sèche ocre, eau trouble bordée de roseaux, arbres roux
+  autumn: {
+    ground: '#6f6136', spots: ['rgba(60,40,15,.16)', 'rgba(205,140,60,.12)'], grain: '0,0,0', grainAlpha: .08,
+    water: '#4a5646', ripple: 'rgba(190,200,170,.3)', bank: null, reeds: 'rgba(150,128,62,.9)',
+    hillFill: 'rgba(200,150,80,.18)', hillLine: 'rgba(110,70,30,.6)',
+    craterFill: 'rgba(34,26,12,.45)', craterRim: 'rgba(180,140,90,.35)',
+    roadEdge: '#5f4a2e', road: '#8b7250', ruts: 'rgba(60,44,24,.45)', specks: ['rgba(60,45,25,.25)', 'rgba(210,180,130,.2)'], centerLine: null,
+    bridge: 'wood', trees: ['#9a4b22', '#b5762c'], treeLight: 'rgba(240,200,110,.28)', snowCap: false,
+    grid: 'rgba(30,20,8,.2)', ink: '236,231,207',
+  },
+  // Désert : sable, piste claire, oasis turquoise bordée de verdure, rochers et palmiers
+  desert: {
+    ground: '#c8a86a', spots: ['rgba(150,110,60,.14)', 'rgba(255,235,190,.2)'], grain: '90,60,30', grainAlpha: .07,
+    water: '#3f8088', ripple: 'rgba(220,245,240,.45)', bank: 'rgba(104,128,58,.9)',
+    hillFill: 'rgba(240,215,160,.4)', hillLine: 'rgba(150,108,58,.55)',
+    craterFill: 'rgba(90,65,35,.4)', craterRim: 'rgba(245,225,180,.45)',
+    roadEdge: '#9c7f4c', road: '#e0cb98', ruts: 'rgba(130,98,55,.35)', specks: ['rgba(120,90,50,.25)', 'rgba(255,245,215,.3)'], centerLine: null,
+    bridge: 'wood', trees: ['#8a7a66', '#9c8b74'], treeLight: 'rgba(255,245,225,.3)', snowCap: false, rocks: true,
+    grid: 'rgba(90,60,20,.16)', ink: '40,32,20',
+  },
 };
 
 // Pré-calcule pour chaque carte : segments et longueur de chaque route, cases de route, terrain
 function prepareMap(def) {
   const key = (c, r) => c + ',' + r;
+  const cols = def.cols || 16, rows = def.rows || 10;
   const road = new Set();
   const paths = def.paths.map(wps => {
     const segments = [];
@@ -621,7 +701,7 @@ function prepareMap(def) {
       length += len;
       for (let s = 0; s <= len; s++) {
         const c = x1 + Math.sign(x2 - x1) * s, r = y1 + Math.sign(y2 - y1) * s;
-        if (c >= 0 && c < COLS) road.add(key(c, r));
+        if (c >= 0 && c < cols) road.add(key(c, r));
       }
     }
     return { waypoints: wps, segments, length };
@@ -629,7 +709,7 @@ function prepareMap(def) {
   const set = list => new Set(list.map(([c, r]) => key(c, r)));
   const water = set(def.water);
   return {
-    ...def, paths, road, T: THEMES[def.theme] || THEMES.summer,
+    ...def, cols, rows, paths, road, T: THEMES[def.theme] || THEMES.summer,
     hill: set(def.hills), forest: set(def.forests), water,
     bridges: [...road].filter(k => water.has(k)),
   };
@@ -670,8 +750,9 @@ function rng(seed) {
 function setMap(id) {
   MAP = MAPS[id] || MAPS.col;
   state.mapId = MAP.id;
+  COLS = MAP.cols; ROWS = MAP.rows;
   document.getElementById('board').style.background = MAP.T.ground;
-  if (terrain) terrain = renderTerrain(MAP, CELL, DPR);   // le premier rendu se fait au premier redimensionnement
+  if (terrain) resize();   // la grille peut changer de taille ; le premier rendu se fait au premier redimensionnement
 }
 
 // ===== Canvas =====
@@ -697,6 +778,7 @@ function resize() {
 // Le décor d'une carte est dessiné une fois dans un canvas hors écran, puis recopié à chaque image.
 // cell = taille d'une case en pixels : sert aussi aux petits aperçus du briefing.
 function renderTerrain(map, cell, dpr) {
+  const COLS = map.cols, ROWS = map.rows;   // la carte dessinée, pas forcément celle en jeu (aperçus)
   const out = document.createElement('canvas');
   out.width = Math.round(cell * COLS * dpr); out.height = Math.round(cell * ROWS * dpr);
   const g = out.getContext('2d');
@@ -842,9 +924,28 @@ function renderTerrain(map, cell, dpr) {
     g.restore();
   }
 
-  // Bois : quelques houppiers par case
+  // Marais : touffes de roseaux au bord de l'eau
+  if (T.reeds) {
+    g.strokeStyle = T.reeds; g.lineWidth = .03; g.lineCap = 'round';
+    for (const k of map.water) {
+      const [c, r] = k.split(',').map(Number);
+      if (has(map.road, c, r)) continue;
+      for (let i = 0; i < 3; i++) {
+        const x = c + .12 + rnd() * .76, y = r + .2 + rnd() * .65;
+        for (const dx of [-.05, 0, .05]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + dx * 1.6, y - .16 - rnd() * .08); g.stroke(); }
+      }
+    }
+    g.lineCap = 'butt';
+  }
+
+  // Bois : quelques houppiers par case ; au désert, palmiers au bord de l'eau et rochers ailleurs
   for (const k of map.forest) {
     const [c, r] = k.split(',').map(Number);
+    if (T.rocks) {
+      const wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dc, dr]) => has(map.water, c + dc, r + dr));
+      wet ? drawPalm(g, c + .5, r + .5, rnd) : drawRocks(g, c, r, T, rnd);
+      continue;
+    }
     for (let i = 0; i < 5; i++) {
       const x = c + .2 + rnd() * .6, y = r + .2 + rnd() * .6, rad = .14 + rnd() * .1;
       g.fillStyle = T.snowCap ? 'rgba(60,80,100,.25)' : 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(x + .04, y + .05, rad, 0, Math.PI * 2); g.fill();
@@ -861,6 +962,34 @@ function renderTerrain(map, cell, dpr) {
 
   drawBase(g, map);
   return out;
+}
+
+// Désert : deux ou trois blocs de roche, ombre portée et arête éclairée
+function drawRocks(g, c, r, T, rnd) {
+  for (let i = 0; i < 3; i++) {
+    const x = c + .22 + rnd() * .56, y = r + .25 + rnd() * .5, rad = .12 + rnd() * .12;
+    const pts = Array.from({ length: 7 }, (_, j) => {
+      const a = j / 7 * Math.PI * 2, rr = rad * (.75 + rnd() * .35);
+      return [x + Math.cos(a) * rr, y + Math.sin(a) * rr * .8];
+    });
+    const shape = (dx, dy) => { g.beginPath(); pts.forEach(([px, py], j) => j ? g.lineTo(px + dx, py + dy) : g.moveTo(px + dx, py + dy)); g.closePath(); };
+    g.fillStyle = 'rgba(70,45,20,.3)'; shape(.05, .05); g.fill();
+    g.fillStyle = rnd() < .5 ? T.trees[0] : T.trees[1]; shape(0, 0); g.fill();
+    g.fillStyle = T.treeLight; g.beginPath(); g.arc(x - rad * .3, y - rad * .3, rad * .4, 0, Math.PI * 2); g.fill();
+  }
+}
+// Palmier vu de dessus : ombre, palmes en étoile, cœur
+function drawPalm(g, x, y, rnd) {
+  const turn = rnd() * Math.PI;
+  g.fillStyle = 'rgba(60,40,15,.28)'; g.beginPath(); g.arc(x + .07, y + .08, .34, 0, Math.PI * 2); g.fill();
+  for (let i = 0; i < 7; i++) {
+    const a = turn + i / 7 * Math.PI * 2, ex = x + Math.cos(a) * .4, ey = y + Math.sin(a) * .4;
+    const nx = -Math.sin(a) * .09, ny = Math.cos(a) * .09;
+    g.fillStyle = i % 2 ? '#4f6b2a' : '#5d7d31';
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo((x + ex) / 2 + nx, (y + ey) / 2 + ny, ex, ey);
+    g.quadraticCurveTo((x + ex) / 2 - nx, (y + ey) / 2 - ny, x, y); g.fill();
+  }
+  g.fillStyle = '#6b5232'; g.beginPath(); g.arc(x, y, .07, 0, Math.PI * 2); g.fill();
 }
 
 // Base : bunker en béton entouré de sacs de sable, drapeau
@@ -1070,6 +1199,7 @@ const TIPS = {
   jeep: 'Jeeps en approche : rapides et fragiles. La mitrailleuse et le brouilleur les arrêtent.',
   tank: 'Blindé repéré : son armure réduit chaque impact. Les obus du mortier passent mieux que les balles.',
   boss: 'Char lourd en approche : blindage épais, et le brouilleur ne le ralentit qu\'à moitié.',
+  truck: 'Camion de troupes repéré : détruit, il libère 4 fantassins. Abattez-le loin de la base ; le mortier cueille ceux qui débarquent.',
 };
 const $dispatch = document.getElementById('dispatch');
 let dispatchTimer = 0;
@@ -1093,11 +1223,20 @@ function flashStat(id, cls) {
 function spawnEnemy(type, wave, opts = {}) {
   if (TIPS[type] && !state.seen[type]) { state.seen[type] = true; showDispatch(TIPS[type]); }
   if (type === 'boss') { shake(.12, 1.4); sfx.play('rumble'); }
+  // Avec plusieurs routes, les ennemis les empruntent à tour de rôle
+  state.enemies.push(makeEnemy(type, wave, opts, state.spawnCount++ % MAP.paths.length, -.6));
+}
+function makeEnemy(type, wave, opts, path, d) {
   const t = ENEMY_TYPES[type];
   const hp = Math.round(t.hp * hpFactor(wave) * MAP.hpMult * diff().hp * (opts.hp || 1));
-  // Avec plusieurs routes, les ennemis les empruntent à tour de rôle
-  const path = state.spawnCount++ % MAP.paths.length;
-  state.enemies.push({ type, t, hp, maxHp: hp, path, d: -.6, slowUntil: 0, slowFactor: 0, angle: 0, x: -1, y: 0, arm: opts.arm || 0, spd: opts.spd || 1 });
+  const p = posAt(d, path);
+  // wave et opts servent aux fantassins qu'un camion libère : mêmes PV et mêmes bonus de survie que lui
+  return { type, t, hp, maxHp: hp, path, d, slowUntil: 0, slowFactor: 0, angle: 0, x: p.x, y: p.y, wave, opts, arm: opts.arm || 0, spd: opts.spd || 1 };
+}
+// Fantassins débarqués d'un camion : ajoutés en fin d'image, pour que l'obus qui a détruit le camion ne les touche pas
+let dismounted = [];
+function dismount(e) {
+  for (let i = 0; i < e.t.troops; i++) dismounted.push(makeEnemy('infantry', e.wave || state.wave, e.opts || {}, e.path || 0, e.d - .22 * i));
 }
 
 function updateEnemies(dt, now) {
@@ -1152,7 +1291,8 @@ function towerStats(tw, level = tw.level) {
 }
 // Niveau 2 : 60 % du prix de la tour ; niveau 3 : 100 %
 const upgradeCost = tw => Math.round(TOWER_TYPES[tw.type].cost * (tw.level === 1 ? .6 : 1));
-const sellValue = tw => Math.floor(tw.invested * .7);
+// Revente : 70 % de l'investi, mais ce qui a été dépensé depuis le début de la préparation est rendu en entier
+const sellValue = tw => (tw.fresh || 0) + Math.floor((tw.invested - (tw.fresh || 0)) * .7);
 
 // L'armure retire des dégâts à chaque impact, avec un minimum de 1
 function hurt(e, raw) {
@@ -1171,6 +1311,7 @@ function hurt(e, raw) {
     sfx.play('kill');
     state.effects.push({ kind: 'puff', x: e.x, y: e.y, r: e.t.size + .15, t: clock, dur: .4 });
     if (e.type !== 'infantry') state.wrecks.push({ x: e.x, y: e.y, a: e.angle, s: e.t.size, t: clock });
+    if (e.t.troops) dismount(e);
     if (e.type === 'boss') { shake(.25, .8); sfx.play('blast'); }
     state.effects.push({ kind: 'float', x: e.x, y: e.y - .2, text: '+' + e.t.reward, t: clock, dur: .9 });
     flashStat('gold', 'bump');
@@ -1441,6 +1582,16 @@ function drawEnemySprite(g, type, s, t, seed) {
     g.fillStyle = ENEMY_BODY; g.fillRect(-s, -.13, s * 2, .26);
     g.fillStyle = '#7d8790'; g.fillRect(.04, -.11, .06, .22);
     g.fillStyle = ENEMY_MARK; g.fillRect(-s, -.03, .12, .06);
+  } else if (type === 'truck') {
+    // Camion bâché : six roues, plateau couvert d'une bâche à arceaux, cabine à l'avant
+    g.fillStyle = ENEMY_DARK;
+    for (const wx of [-.2, -.07, .17]) for (const wy of [-.15, .15]) g.fillRect(wx - .05, wy - .03, .1, .06);
+    g.fillStyle = '#66654f'; g.fillRect(-s, -.15, s + .08, .3);
+    g.strokeStyle = ENEMY_DARK; g.lineWidth = .02;
+    for (let x = -s + .07; x < .06; x += .09) { g.beginPath(); g.moveTo(x, -.15); g.lineTo(x, .15); g.stroke(); }
+    g.fillStyle = ENEMY_BODY; g.fillRect(.1, -.13, s - .1, .26);
+    g.fillStyle = '#7d8790'; g.fillRect(.19, -.11, .05, .22);
+    g.fillStyle = ENEMY_MARK; g.fillRect(-.16, -.05, .1, .1);
   } else {
     const big = type === 'boss';
     g.fillStyle = ENEMY_DARK; g.fillRect(-s, -s * .78, s * 2, s * 1.56);
@@ -1584,7 +1735,7 @@ let lastSave = 0;
 // le bombardement frappe après un court délai. Une frappe par manche : la réserve se remplit quand le
 // terrain est dégagé (pas quand on appelle une vague en avance). Trois améliorations payantes, de 2 niveaux
 // chacune : rayon, dégâts, et frappes en plus par manche. gap : délai entre deux frappes d'une même manche.
-const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, radius: [1.2, 1.6, 2], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
+const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, radius: [1.5, 2, 2.5], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
 const strikeRadius = (lvl = state.strike.r) => STRIKE.radius[lvl];
 const strikeDamage = (lvl = state.strike.d) => STRIKE.damage[lvl];
 const strikeUnlocked = () => state.wave > STRIKE.unlockWave || (state.wave === STRIKE.unlockWave && state.phase !== 'wave');
@@ -1629,6 +1780,7 @@ function update(dt, now) {
   updateStrikes(now);
   updateBattlefield(dt, now);
   state.enemies = state.enemies.filter(e => !e.dead);
+  if (dismounted.length) { state.enemies.push(...dismounted); dismounted = []; }
   checkWaveEnd();
 }
 
@@ -1677,12 +1829,21 @@ function drawPauseBanner() {
 function drawEntry(t) {
   ctx.strokeStyle = `rgba(224,83,58,${.45 + .35 * Math.sin(t * 4)})`;
   ctx.lineWidth = .08; ctx.lineJoin = 'miter';
+  // Une entrée par bord de carte (deux routes peuvent partager la même), chevrons tournés vers l'intérieur
+  const done = new Set();
   for (const path of MAP.paths) {
-    const y = path.waypoints[0][1] + .5;
+    const [[x0, y0], [x1, y1]] = path.waypoints;
+    if (done.has(x0 + ',' + y0)) continue;
+    done.add(x0 + ',' + y0);
+    const dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0);
+    ctx.save();
+    ctx.translate(x0 + (dx ? (dx > 0 ? 1 : 0) : .5), y0 + (dy ? (dy > 0 ? 1 : 0) : .5));
+    ctx.rotate(Math.atan2(dy, dx));
     for (let i = 0; i < 2; i++) {
       const x = .15 + i * .22;
-      ctx.beginPath(); ctx.moveTo(x, y - .2); ctx.lineTo(x + .15, y); ctx.lineTo(x, y + .2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, -.2); ctx.lineTo(x + .15, 0); ctx.lineTo(x, .2); ctx.stroke();
     }
+    ctx.restore();
   }
 }
 
@@ -1757,7 +1918,7 @@ function updateReadout() {
   let text = '', kind = '';
   if (e) {
     kind = 'enemy';
-    text = `${e.t.name} · ${Math.max(0, Math.ceil(e.hp))}/${e.maxHp} PV · armure ${e.t.armor + (e.arm || 0)} · ${fmt(e.t.speed * (e.spd || 1), 1)} case/s${isSlowed(e, clock) ? ' · ralenti' : ''}`;
+    text = `${e.t.name} · ${Math.max(0, Math.ceil(e.hp))}/${e.maxHp} PV · armure ${e.t.armor + (e.arm || 0)} · ${fmt(e.t.speed * (e.spd || 1), 1)} case/s${e.t.troops ? ` · ${e.t.troops} fantassins à bord` : ''}${isSlowed(e, clock) ? ' · ralenti' : ''}`;
   } else if (p && state.hover) {
     const h = state.hover, road = isRoad(h.c, h.r), base = isBase(h.c, h.r), tw = towerAt(h.c, h.r);
     kind = road || base || tw ? 'road' : 'free';
@@ -1814,7 +1975,8 @@ cv.addEventListener('click', e => {
     return;
   }
   state.gold -= t.cost;
-  state.towers.push({ type: state.placing, c: h.c, r: h.r, x: h.c + .5, y: h.r + .5, level: 1, cooldown: 0, angle: -Math.PI / 2, invested: t.cost });
+  state.towers.push({ type: state.placing, c: h.c, r: h.r, x: h.c + .5, y: h.r + .5, level: 1, cooldown: 0, angle: -Math.PI / 2, invested: t.cost,
+    fresh: state.phase === 'prep' ? t.cost : 0 });
   sfx.play('build');
   // La sélection reste active pour enchaîner les poses
   renderHud();
@@ -1893,7 +2055,8 @@ function renderPanel() {
     $pUp.textContent = `Améliorer (${upgradeCost(tw)})`;
     $pUp.disabled = state.gold < upgradeCost(tw) || state.phase === 'over';
   }
-  $pSell.textContent = `Vendre (+${sellValue(tw)})`;
+  // Avant le lancement de la vague, une tour posée pendant la préparation est rendue au prix d'achat
+  $pSell.textContent = `${tw.fresh >= tw.invested ? 'Rembourser' : 'Vendre'} (+${sellValue(tw)})`;
   $pSell.disabled = state.phase === 'over';
   // Le brouilleur touche tout ce qui est à portée : pas de cible à choisir
   $target.hidden = tw.type === 'jammer';
@@ -1918,6 +2081,7 @@ $pUp.addEventListener('click', () => {
   const cost = upgradeCost(tw);
   state.gold -= cost;
   tw.invested += cost;
+  if (state.phase === 'prep') tw.fresh = (tw.fresh || 0) + cost;
   tw.level++;
   sfx.play('upgrade');
   renderHud();
@@ -2095,6 +2259,7 @@ function launchWave() {
   const early = state.phase === 'wave';
   // Une « manche » part d'une pause et court jusqu'au terrain dégagé (appels anticipés compris)
   if (!early) state.run = { from: state.wave + 1, lives: state.lives };
+  for (const tw of state.towers) tw.fresh = 0;   // la vague est lancée : la revente repasse à 70 %
   state.wave++;
   const n = state.wave;
   let first = true;
@@ -2396,7 +2561,7 @@ function renderMaps() {
     return `<button class="map-card" data-map="${id}"${open ? '' : ' disabled'}>
       <img src="${mapPreview(id)}" alt="" width="192" height="120">
       <span class="mc-name">${m.name}</span>
-      <span class="mc-meta">${m.place} · ${m.paths.length > 1 ? 'deux routes' : 'une route'}${m.water.size ? ' · rivière' : ''}</span>
+      <span class="mc-meta">${m.place} · ${m.meta || (m.paths.length > 1 ? 'deux routes' : 'une route') + (m.water.size ? ' · rivière' : '')}</span>
       <span class="${open ? 'mc-brief' : 'mc-lock'}">${open ? m.brief : `Verrouillée : terminez d'abord ${prevMap(id).the}.`}</span>${saves.length ? `<span class="mc-save">Partie en cours : ${listFr(saves)}</span>` : ''}
     </button>`;
   }).join('');
