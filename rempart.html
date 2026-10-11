@@ -203,7 +203,6 @@
   .primary { background: var(--brass); border-color: var(--brass); color: var(--bg); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
   .primary:hover:not(:disabled) { filter: brightness(1.08); }
 
-  .msg { min-height: 1.4em; margin: 0; font-size: 15px; color: var(--muted); }
 
   @media (max-width: 560px) {
     .tower-btn { grid-template-columns: minmax(0, 1fr); padding: 6px 8px; }
@@ -297,7 +296,6 @@
   <div class="arsenal">
     <div class="towers" id="towers"></div>
   </div>
-  <p class="msg" id="msg">Survolez la carte : la route est interdite à la construction.</p>
 </div>
 
 <!-- Menu : écran titre au démarrage (opaque, rien derrière), menu de pause en jeu -->
@@ -1047,7 +1045,6 @@ const state = {
 const $lives = document.getElementById('lives');
 const $gold = document.getElementById('gold');
 const $wave = document.getElementById('wave');
-const $msg = document.getElementById('msg');
 function renderHud() {
   $lives.textContent = state.lives;
   $gold.textContent = state.gold;
@@ -1804,29 +1801,22 @@ cv.addEventListener('click', e => {
   const armed = state.armed && state.armed.c === h.c && state.armed.r === h.r;
   if (pointerType === 'touch' && settings.touchConfirm && canBuild(h.c, h.r) && !armed) {
     state.armed = h;
-    $msg.textContent = `${t.name} en ${cellName(h.c, h.r)} : touchez à nouveau la case pour confirmer.`;
     return;
   }
   state.armed = null;
   if (!canBuild(h.c, h.r)) {
     sfx.play('deny');
-    const why = isForest(h.c, h.r) ? 'les bois' : isWater(h.c, h.r) ? "l'eau" : towerAt(h.c, h.r) ? 'une tour déjà en place' : 'la route';
-    $msg.textContent = `Secteur ${cellName(h.c, h.r)} indisponible : on ne construit pas sur ${why}.`;
     return;
   }
   // Sans les crédits, rien n'est posé mais la sélection reste : le clic suivant posera dès que le compte y est
   if (state.gold < t.cost) {
     sfx.play('deny');
-    $msg.textContent = `${t.name} : il manque ${t.cost - state.gold} crédits. La sélection reste active en attendant.`;
     return;
   }
   state.gold -= t.cost;
   state.towers.push({ type: state.placing, c: h.c, r: h.r, x: h.c + .5, y: h.r + .5, level: 1, cooldown: 0, angle: -Math.PI / 2, invested: t.cost });
   sfx.play('build');
   // La sélection reste active pour enchaîner les poses
-  $msg.textContent = state.gold >= t.cost
-    ? `${t.name} installé${t.fem ? 'e' : ''} en ${cellName(h.c, h.r)}. Cliquez sur une autre case pour en poser un${t.fem ? 'e' : ''} autre, Échap pour arrêter.`
-    : `${t.name} installé${t.fem ? 'e' : ''} en ${cellName(h.c, h.r)}. Il manque ${t.cost - state.gold} crédits pour l'unité suivante.`;
   renderHud();
 });
 cv.addEventListener('contextmenu', e => { if (state.placing || state.aiming) { e.preventDefault(); setPlacing(null); } });
@@ -1859,7 +1849,6 @@ document.addEventListener('keydown', e => {
     const modes = Object.keys(TARGET_MODES), tw = state.selected;
     tw.target = modes[(modes.indexOf(tw.target || 'first') + 1) % modes.length];
     renderPanel();
-    $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} : cible « ${TARGET_MODES[tw.target].label} ».`;
   }
 });
 
@@ -1931,7 +1920,6 @@ $pUp.addEventListener('click', () => {
   tw.invested += cost;
   tw.level++;
   sfx.play('upgrade');
-  $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} promu${TOWER_TYPES[tw.type].fem ? 'e' : ''} au niveau ${tw.level}.`;
   renderHud();
 });
 $pSell.addEventListener('click', () => {
@@ -1941,7 +1929,6 @@ $pSell.addEventListener('click', () => {
   state.gold += value;
   state.towers = state.towers.filter(x => x !== tw);
   sfx.play('sell');
-  $msg.textContent = `${TOWER_TYPES[tw.type].name} ${cellName(tw.c, tw.r)} démonté${TOWER_TYPES[tw.type].fem ? 'e' : ''} : +${value} crédits.`;
   select(null);
   renderHud();
 });
@@ -1987,12 +1974,6 @@ function setPlacing(type) {
   state.placing = type;
   state.armed = null;
   document.querySelectorAll('.tower-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === type)));
-  if (!type) return;
-  const missing = TOWER_TYPES[type].cost - state.gold;
-  const hint = type === 'mortar'
-    ? 'Mortier : il ne peut pas tirer à moins de 1,5 case, placez-le en retrait de la route.'
-    : `${TOWER_TYPES[type].name} : choisissez une case libre.`;
-  $msg.textContent = `${hint}${missing > 0 ? ` Il manque ${missing} crédits.` : ''} Échap ou clic droit pour annuler.`;
 }
 
 const towersEl = document.getElementById('towers');
@@ -2036,11 +2017,6 @@ function setAiming(on) {
   state.strikeAim = null;
   $strikeBtn.setAttribute('aria-pressed', String(on));
   renderStrikePanel();
-  if (on) {
-    $msg.textContent = state.strike.ready > 0
-      ? 'Frappe aérienne : cliquez sur la zone à bombarder. Échap ou clic droit pour annuler.'
-      : "Plus de frappe pour cette manche : la réserve se remplit quand le terrain est dégagé. Vous pouvez l'améliorer en attendant.";
-  }
 }
 
 // État du bouton (verrouillé, frappes restantes, délai), mis à jour chaque image mais réécrit seulement s'il change
@@ -2085,9 +2061,6 @@ function upgradeStrike(track) {
   state.strike[track]++;
   if (track === 'n') state.strike.ready++;   // la frappe achetée sert dès cette manche
   sfx.play('upgrade');
-  $msg.textContent = track === 'r' ? `Frappe aérienne : rayon porté à ${fmt(strikeRadius(), 1)} case${strikeRadius() >= 2 ? 's' : ''}.`
-    : track === 'd' ? `Frappe aérienne : dégâts portés à ${strikeDamage()}.`
-    : `Frappe aérienne : ${strikeMax()} frappes par manche.`;
   renderHud();
 }
 $spRadius.addEventListener('click', () => upgradeStrike('r'));
@@ -2099,23 +2072,18 @@ document.getElementById('sp-close').addEventListener('click', () => setAiming(fa
 function aimStrike(p) {
   if (!strikeReady()) {
     sfx.play('deny');
-    $msg.textContent = state.strike.ready > 0
-      ? `Prochaine frappe dans ${Math.ceil(strikeWait())} s.`
-      : 'Plus de frappe pour cette manche : la réserve se remplit quand le terrain est dégagé.';
     return;
   }
   if (pointerType === 'touch' && settings.touchConfirm) {
     const a = state.strikeAim;
     if (!a || Math.hypot(a.x - p.x, a.y - p.y) > strikeRadius()) {
       state.strikeAim = p;
-      $msg.textContent = 'Frappe aérienne : touchez à nouveau dans le cercle pour confirmer.';
       return;
     }
     p = a;
   }
   launchStrike(p.x, p.y);
   setAiming(false);
-  $msg.textContent = `Frappe aérienne en approche sur ${cellName(Math.min(COLS - 1, Math.floor(p.x)), Math.min(ROWS - 1, Math.floor(p.y)))}.`;
 }
 
 // ===== Vagues =====
@@ -2139,12 +2107,7 @@ function launchWave() {
   state.pendingBonus += waveBonus(n);
   sfx.play('radio');
   sfx.play('wave');
-  if (early) {
-    state.gold += earlyBonus(n);
-    $msg.textContent = `Vague ${n} appelée en avance : +${earlyBonus(n)} crédits.`;
-  } else {
-    $msg.textContent = '';   // composition déjà affichée en haut
-  }
+  if (early) state.gold += earlyBonus(n);
   state.phase = 'wave';
   renderHud();
   updateWaveButton();
@@ -2209,8 +2172,6 @@ function checkWaveEnd() {
     sfx.play('radio');
     showDispatch('Appui aérien disponible : bouton Frappe aérienne ou touche 4. Une frappe par manche, rechargée quand le terrain est dégagé.');
   }
-  // Pas de bilan : le bandeau du haut montre déjà crédits, vies et prochaine vague
-  $msg.textContent = '';
   renderHud();
   updateWaveButton();
 }
@@ -2257,7 +2218,6 @@ function restoreCheckpoint(n) {
   setPlacing(null);
   renderHud();
   updateWaveButton();
-  $msg.textContent = `Retour avant la vague ${n} : tours, crédits et vies sont revenus à leur état d'alors.`;
 }
 
 // Enregistre le résultat de la manche qui vient de se terminer
@@ -2319,7 +2279,7 @@ const pristine = () => state.phase !== 'over' && state.wave === 0 && !state.towe
 function showView(view) {
   if (view === 'home') view = menuMode;
   // La sélection et le tableau des scores s'ouvrent sur la difficulté et la carte de la dernière partie
-  if (view === 'maps' && menuView !== 'diffs') briefDiff = state.difficulty;
+  if (view === 'diffs' && menuView === 'maps') briefDiff = null;
   if (view === 'scores' && menuView !== 'scores') { scMap = state.mapId; scDiff = state.difficulty; scMode = state.survival ? 'survival' : 'campaign'; }
   menuView = view;
   $menuBox.classList.toggle('briefing', view === 'maps');
@@ -2404,7 +2364,7 @@ $site.addEventListener('click', () => { saveGame(); location.href = '/'; });
 // ===== Nouvelle opération : la carte, puis la difficulté =====
 const $mapCards = document.getElementById('map-cards');
 const $difficulty = document.getElementById('difficulty');
-let briefMap = 'col', briefDiff = 'veteran';
+let briefMap = 'col', briefDiff = null;   // difficulté choisie à l'étape 2 ; aucune au départ
 // Meilleures étoiles par carte et difficulté, gardées dans le navigateur ; elles débloquent les cartes
 let stars = {};
 try { stars = JSON.parse(localStorage.getItem('rempart-stars') || '{}'); } catch (e) {}
@@ -2449,7 +2409,7 @@ $mapCards.addEventListener('click', e => {
 });
 
 function renderDiffs() {
-  if (!unlocked(briefMap, briefDiff)) briefDiff = Object.keys(DIFFICULTIES).find(d => unlocked(briefMap, d));
+  if (briefDiff && !unlocked(briefMap, briefDiff)) briefDiff = null;
   document.getElementById('diffs-title').textContent = `${MAPS[briefMap].name} : choisissez la difficulté`;
   $difficulty.innerHTML = Object.entries(DIFFICULTIES).map(([id, d]) => {
     const open = unlocked(briefMap, id), best = stars[starKey(briefMap, id)] || 0;
@@ -2463,11 +2423,12 @@ function renderDiffs() {
 }
 // Une partie existe à ce niveau : on propose de la reprendre, ou d'en commencer une nouvelle
 function renderDiffActions() {
-  const slot = slotGame(briefMap, briefDiff);
+  const slot = briefDiff && slotGame(briefMap, briefDiff);
   const $resume = document.getElementById('brief-resume'), $go = document.getElementById('brief-go');
   $resume.hidden = !slot;
   $go.textContent = slot ? 'Nouvelle partie' : "Lancer l'opération";
   $go.classList.toggle('primary', !slot);
+  $go.disabled = !briefDiff;   // tant qu'aucune difficulté n'est choisie
 }
 $difficulty.addEventListener('click', e => {
   const b = e.target.closest('button[data-diff]');
@@ -2479,6 +2440,7 @@ $difficulty.addEventListener('click', e => {
 document.getElementById('brief-resume').addEventListener('click', () => resumeOperation(briefMap, briefDiff));
 // Une nouvelle partie efface celle de la même carte et difficulté : on demande confirmation
 document.getElementById('brief-go').addEventListener('click', () => {
+  if (!briefDiff) return;
   if (slotGame(briefMap, briefDiff)) showView('replace');
   else startOperation(briefMap, briefDiff);
 });
@@ -2671,7 +2633,6 @@ function newGame(mapId = state.mapId, difficulty = state.difficulty, started = t
   saveCheckpoint();
   renderHud();
   updateWaveButton();
-  $msg.textContent = `${MAP.name}, niveau ${diff().name} : installez vos défenses, puis lancez la vague 1.`;
   saveGame();
 }
 // Partie terminée : rien à perdre, on recommence sans confirmation
@@ -2812,8 +2773,6 @@ function applySave(data) {
   state.paused = false;
   renderHud();
   updateWaveButton();
-  // Pas de message de reprise : le bandeau du haut dit déjà où en est la partie
-  $msg.textContent = '';
   if (state.phase === 'over') endGame(state.result === 'win', true);
   return true;
 }
