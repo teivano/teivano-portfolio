@@ -81,6 +81,8 @@
   .targeting button[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); background: var(--panel-hi); }
   .panel-actions { display: flex; gap: 6px; }
   .panel-actions button { flex: 1 1 0; padding: 6px 8px; }
+  #strike-panel .panel-actions { flex-wrap: wrap; }
+  #strike-panel .panel-actions button { flex: 1 1 40%; }
 
   /* Menu, briefing et rapport couvrent toute la fenêtre : sur téléphone, la carte seule serait trop petite */
   .overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 12px; background: var(--scrim); }
@@ -266,6 +268,7 @@
       <div class="panel-actions">
         <button class="primary" id="sp-radius"></button>
         <button class="primary" id="sp-damage"></button>
+        <button class="primary" id="sp-extra"></button>
       </div>
     </div>
     <div class="overlay" id="overlay" hidden>
@@ -1032,7 +1035,9 @@ const state = {
   nextRumble: 0,
   spawnCount: 0,    // nombre d'ennemis apparus : répartit les ennemis entre les routes
   started: false,   // partie lancée par le joueur (et non partie vierge derrière l'écran titre)
-  strike: { r: 0, d: 0, readyAt: 0 },   // frappe aérienne : niveaux de rayon et de dégâts, prête à partir de readyAt
+  // Frappe aérienne : niveaux de rayon (r), de dégâts (d) et de frappes en plus (n) ; frappes restantes
+  // dans la manche (ready) ; heure de la dernière frappe (lastAt), pour le délai entre deux frappes
+  strike: { r: 0, d: 0, n: 0, ready: 1, lastAt: -99 },
   strikes: [],      // frappes en approche
   survival: null,   // mode survie, après la victoire : { seed } du générateur de vagues
   aiming: false,    // le joueur vise une zone pour la frappe
@@ -1322,7 +1327,7 @@ function drawStrikeAim(t) {
   if (!state.aiming) return;
   const p = pointerType === 'touch' && settings.touchConfirm ? state.strikeAim : state.pointer;
   if (!p) return;
-  const ready = !strikeLeft(), r = strikeRadius();
+  const ready = strikeReady(), r = strikeRadius();
   ctx.fillStyle = ready ? 'rgba(224,83,58,.16)' : 'rgba(120,120,120,.14)';
   ctx.strokeStyle = ready ? 'rgba(224,83,58,.9)' : 'rgba(150,150,150,.7)';
   ctx.lineWidth = .04; ctx.setLineDash([.14, .09]);
@@ -1579,16 +1584,21 @@ let lastSave = 0;
 
 // ===== Frappe aérienne =====
 // Capacité du commandant, débloquée une fois la vague 5 repoussée : on vise une zone, un avion passe et
-// le bombardement frappe après un court délai. Recharge en temps de jeu. Deux améliorations payantes,
-// rayon et dégâts, de 2 niveaux chacune.
-const STRIKE = { unlockWave: 5, cooldown: 60, delay: 1.2, radius: [1.2, 1.6, 2], damage: [250, 375, 560], cost: [70, 120] };
+// le bombardement frappe après un court délai. Une frappe par manche : la réserve se remplit quand le
+// terrain est dégagé (pas quand on appelle une vague en avance). Trois améliorations payantes, de 2 niveaux
+// chacune : rayon, dégâts, et frappes en plus par manche. gap : délai entre deux frappes d'une même manche.
+const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, radius: [1.2, 1.6, 2], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
 const strikeRadius = (lvl = state.strike.r) => STRIKE.radius[lvl];
 const strikeDamage = (lvl = state.strike.d) => STRIKE.damage[lvl];
 const strikeUnlocked = () => state.wave > STRIKE.unlockWave || (state.wave === STRIKE.unlockWave && state.phase !== 'wave');
-const strikeLeft = () => Math.max(0, state.strike.readyAt - clock);
+const strikeMax = () => 1 + state.strike.n;
+const strikeWait = () => Math.max(0, state.strike.lastAt + STRIKE.gap - clock);
+// Frappe disponible tout de suite : il en reste dans la manche, et le délai depuis la précédente est écoulé
+const strikeReady = () => state.strike.ready > 0 && !strikeWait();
 
 function launchStrike(x, y) {
-  state.strike.readyAt = clock + STRIKE.cooldown;
+  state.strike.ready--;
+  state.strike.lastAt = clock;
   state.strikes.push({ x: r2(x), y: r2(y), at: clock + STRIKE.delay, radius: strikeRadius(), damage: strikeDamage() });
   // L'avion arrive de l'ouest et passe au-dessus de la cible au moment de l'impact
   state.effects.push({ kind: 'plane', x: x, y: y, t: clock, dur: STRIKE.delay + 1.4, at: clock + STRIKE.delay });
@@ -2018,7 +2028,7 @@ $strikeBtn.addEventListener('click', () => setAiming(!state.aiming));
 towersEl.appendChild($strikeBtn);
 
 const $strikePanel = document.getElementById('strike-panel');
-const $spRadius = document.getElementById('sp-radius'), $spDamage = document.getElementById('sp-damage');
+const $spRadius = document.getElementById('sp-radius'), $spDamage = document.getElementById('sp-damage'), $spExtra = document.getElementById('sp-extra');
 function setAiming(on) {
   if (on && (!strikeUnlocked() || state.phase === 'over')) return;
   if (on) { setPlacing(null); select(null); }
@@ -2027,67 +2037,71 @@ function setAiming(on) {
   $strikeBtn.setAttribute('aria-pressed', String(on));
   renderStrikePanel();
   if (on) {
-    $msg.textContent = strikeLeft() > 0
-      ? `Frappe aérienne en recharge : encore ${Math.ceil(strikeLeft())} s. Vous pouvez l'améliorer en attendant.`
-      : 'Frappe aérienne : cliquez sur la zone à bombarder. Échap ou clic droit pour annuler.';
+    $msg.textContent = state.strike.ready > 0
+      ? 'Frappe aérienne : cliquez sur la zone à bombarder. Échap ou clic droit pour annuler.'
+      : "Plus de frappe pour cette manche : la réserve se remplit quand le terrain est dégagé. Vous pouvez l'améliorer en attendant.";
   }
 }
 
-// État du bouton (verrouillé, prêt, en recharge), mis à jour chaque image mais réécrit seulement s'il change
+// État du bouton (verrouillé, frappes restantes, délai), mis à jour chaque image mais réécrit seulement s'il change
 let strikeBtnSig = '';
 function renderStrike() {
-  const locked = !strikeUnlocked(), left = Math.ceil(strikeLeft());
-  const sig = `${locked}|${left}|${state.phase}`;
+  const locked = !strikeUnlocked(), wait = Math.ceil(strikeWait()), { ready } = state.strike, max = strikeMax();
+  const sig = `${locked}|${ready}|${max}|${wait}|${state.phase}`;
   if (state.aiming) $strikePanel.classList.toggle('left', !!state.pointer && state.pointer.x >= COLS / 2);
   if (sig === strikeBtnSig) return;
   strikeBtnSig = sig;
   $strikeBtn.disabled = locked || state.phase === 'over';
-  $strikeBtn.classList.toggle('ready', !locked && !left);
-  $strikeBtn.querySelector('.role').textContent = locked ? `Après la vague ${STRIKE.unlockWave}` : left ? 'En recharge' : 'Prête';
-  $strikeBtn.querySelector('.cost').textContent = locked ? `V${STRIKE.unlockWave}` : left ? `${left} s` : '✓';
-  document.getElementById('sp-state').textContent = left ? `Recharge ${left} s` : 'Prête';
+  $strikeBtn.classList.toggle('ready', !locked && ready > 0 && !wait);
+  $strikeBtn.querySelector('.role').textContent = locked ? `Après la vague ${STRIKE.unlockWave}` : !ready ? 'Plus de frappe cette manche' : wait ? `Prochaine dans ${wait} s` : 'Prête';
+  $strikeBtn.querySelector('.cost').textContent = locked ? `V${STRIKE.unlockWave}` : `${ready}/${max}`;
+  document.getElementById('sp-state').textContent = `${ready}/${max} cette manche`;
   if (locked && state.aiming) setAiming(false);
 }
 
 function renderStrikePanel() {
   $strikePanel.hidden = !state.aiming;
   if (!state.aiming) return;
-  const { r, d } = state.strike, max = STRIKE.cost.length;
-  const next = (cur, lvl, f) => lvl < max ? ` <span class="next">→ ${f(lvl + 1)}</span>` : '';
+  const { r, d, n } = state.strike, max = STRIKE.cost.length;
+  const next = (lvl, f) => lvl < max ? ` <span class="next">→ ${f(lvl + 1)}</span>` : '';
   const rows = [
-    ['Dégâts', strikeDamage() + next(strikeDamage(), d, l => strikeDamage(l))],
-    ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next(strikeRadius(), r, l => fmt(strikeRadius(l), 1))],
-    ['Recharge', `${STRIKE.cooldown} s`],
+    ['Dégâts', strikeDamage() + next(d, l => strikeDamage(l))],
+    ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next(r, l => fmt(strikeRadius(l), 1))],
+    ['Frappes', `${strikeMax()} par manche` + next(n, l => 1 + l)],
     ['Délai', `${fmt(STRIKE.delay, 1)} s après le clic`],
   ];
   document.getElementById('sp-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
-  for (const [$b, track, label] of [[$spRadius, 'r', 'Rayon'], [$spDamage, 'd', 'Dégâts']]) {
-    const lvl = state.strike[track];
-    $b.textContent = lvl >= max ? `${label} max` : `${label} + (${STRIKE.cost[lvl]})`;
-    $b.disabled = lvl >= max || state.gold < STRIKE.cost[lvl];
+  for (const [$b, track, label] of [[$spRadius, 'r', 'Rayon'], [$spDamage, 'd', 'Dégâts'], [$spExtra, 'n', '+1 frappe']]) {
+    const lvl = state.strike[track], costs = track === 'n' ? STRIKE.extraCost : STRIKE.cost;
+    $b.textContent = lvl >= max ? (track === 'n' ? 'Frappes max' : `${label} max`) : `${label} (${costs[lvl]})`;
+    $b.disabled = lvl >= max || state.gold < costs[lvl];
   }
 }
 
 function upgradeStrike(track) {
-  const lvl = state.strike[track];
-  if (lvl >= STRIKE.cost.length || state.gold < STRIKE.cost[lvl]) return;
-  state.gold -= STRIKE.cost[lvl];
+  const lvl = state.strike[track], costs = track === 'n' ? STRIKE.extraCost : STRIKE.cost;
+  if (lvl >= costs.length || state.gold < costs[lvl]) return;
+  state.gold -= costs[lvl];
   state.strike[track]++;
+  if (track === 'n') state.strike.ready++;   // la frappe achetée sert dès cette manche
   sfx.play('upgrade');
-  $msg.textContent = track === 'r'
-    ? `Frappe aérienne : rayon porté à ${fmt(strikeRadius(), 1)} case${strikeRadius() >= 2 ? 's' : ''}.`
-    : `Frappe aérienne : dégâts portés à ${strikeDamage()}.`;
+  $msg.textContent = track === 'r' ? `Frappe aérienne : rayon porté à ${fmt(strikeRadius(), 1)} case${strikeRadius() >= 2 ? 's' : ''}.`
+    : track === 'd' ? `Frappe aérienne : dégâts portés à ${strikeDamage()}.`
+    : `Frappe aérienne : ${strikeMax()} frappes par manche.`;
   renderHud();
 }
 $spRadius.addEventListener('click', () => upgradeStrike('r'));
 $spDamage.addEventListener('click', () => upgradeStrike('d'));
+$spExtra.addEventListener('click', () => upgradeStrike('n'));
 document.getElementById('sp-close').addEventListener('click', () => setAiming(false));
 
 // Clic sur la carte en visée : au doigt, un premier toucher montre la zone, un second dans le cercle confirme
 function aimStrike(p) {
-  if (strikeLeft() > 0) {
+  if (!strikeReady()) {
     sfx.play('deny');
-    $msg.textContent = `Frappe aérienne en recharge : encore ${Math.ceil(strikeLeft())} s.`;
+    $msg.textContent = state.strike.ready > 0
+      ? `Prochaine frappe dans ${Math.ceil(strikeWait())} s.`
+      : 'Plus de frappe pour cette manche : la réserve se remplit quand le terrain est dégagé.';
     return;
   }
   if (pointerType === 'touch' && settings.touchConfirm) {
@@ -2189,10 +2203,11 @@ function checkWaveEnd() {
   recordRun();
   if (state.wave >= lastWave()) { renderHud(); endGame(true); return; }
   state.phase = 'prep';
+  state.strike.ready = strikeMax();   // terrain dégagé : la réserve de frappes se remplit
   saveCheckpoint();
   if (state.wave === STRIKE.unlockWave) {
     sfx.play('radio');
-    showDispatch(`Appui aérien disponible : bouton Frappe aérienne ou touche 4. Une frappe toutes les ${STRIKE.cooldown} s de jeu.`);
+    showDispatch('Appui aérien disponible : bouton Frappe aérienne ou touche 4. Une frappe par manche, rechargée quand le terrain est dégagé.');
   }
   // Pas de bilan : le bandeau du haut montre déjà crédits, vies et prochaine vague
   $msg.textContent = '';
@@ -2216,7 +2231,7 @@ function saveCheckpoint() {
     lives: state.lives, gold: state.gold, score: state.score,
     towers: state.towers.map(tw => ({ ...tw })),
     // Les améliorations de la frappe ont coûté des crédits : elles reviennent avec eux, recharge comprise
-    strike: { r: state.strike.r, d: state.strike.d, left: strikeLeft() },
+    strike: { r: state.strike.r, d: state.strike.d, n: state.strike.n },
     survival: state.survival && { ...state.survival },   // revenir avant la vague 11 ramène en campagne
     seen: { ...state.seen },
   };
@@ -2232,7 +2247,7 @@ function restoreCheckpoint(n) {
     enemies: [], spawnQueue: [], spawnTimer: 0, shells: [], effects: [],
     placing: null, selected: null, phase: 'prep', pendingBonus: 0,
     run: null, lastRun: null, paused: false, baseHitAt: -9,
-    strike: { r: (cp.strike || {}).r || 0, d: (cp.strike || {}).d || 0, readyAt: clock + ((cp.strike || {}).left || 0) },
+    strike: { r: (cp.strike || {}).r || 0, d: (cp.strike || {}).d || 0, n: (cp.strike || {}).n || 0, ready: 1 + ((cp.strike || {}).n || 0), lastAt: -99 },
     strikes: [], survival: cp.survival || null,
   });
   queueWasEmpty = true;
@@ -2645,7 +2660,7 @@ function newGame(mapId = state.mapId, difficulty = state.difficulty, started = t
     seen: {}, baseHitAt: -9,
     checkpoints: {}, run: null, lastRun: null, result: null, spawnCount: 0,
     decals: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, started,
-    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [], survival: null,
+    strike: { r: 0, d: 0, n: 0, ready: 1, lastAt: -99 }, strikes: [], survival: null,
   });
   resetDecalCanvas();
   $dispatch.hidden = true;
@@ -2779,11 +2794,12 @@ function applySave(data) {
   Object.assign(state, {
     effects: [], wrecks: [], shakeUntil: 0, shakeMag: 0, nextRumble: 0, baseHitAt: -9,
     placing: null, selected: null, armed: null, hoverEnemy: null,
-    strike: { r: 0, d: 0, readyAt: 0 }, strikes: [], survival: null,
+    strike: { r: 0, d: 0, n: 0, ready: 1, lastAt: -99 }, strikes: [], survival: null,
   });
   for (const k of SAVED_FIELDS) if (k in data) state[k] = data[k];
   setMap(data.mapId || 'col');
   state.started = data.started !== false;   // les sauvegardes d'avant l'écran titre sont des parties lancées
+  if (typeof state.strike.ready !== 'number') state.strike = { r: state.strike.r || 0, d: state.strike.d || 0, n: 0, ready: 1, lastAt: -99 };
   state.decals = Array.isArray(data.decals) ? data.decals : [];
   resetDecalCanvas();
   state.enemies = state.enemies.filter(e => ENEMY_TYPES[e.type]).map(e => ({ ...e, t: ENEMY_TYPES[e.type] }));
