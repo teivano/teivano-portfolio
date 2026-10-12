@@ -474,7 +474,11 @@ function waveCounts(n) {
 }
 function describeWave(n) {
   const list = Object.entries(waveCounts(n)).map(([type, k]) => k + ' ' + (k > 1 ? ENEMY_TYPES[type].plural : ENEMY_TYPES[type].name.toLowerCase())).join(', ');
-  return n > WAVES.length ? `${SURVIVAL_KINDS[survivalWave(n).kind]} : ${list}` : list;
+  if (n <= WAVES.length) return list;
+  // Survie : le modèle, et le trait que lui donne le surplus (plus rapide, ou plus de PV)
+  const w = survivalWave(n), o = w.groups[0][3] || {};
+  const trait = o.spd > 1.005 ? `, rapide ×${fmt(o.spd, 1)}` : o.hp > 1.005 ? `, PV ×${fmt(o.hp, 1)}` : '';
+  return `${SURVIVAL_KINDS[w.kind]}${trait} : ${list}`;
 }
 
 // ===== Survie : vagues sans fin après la vague 10 =====
@@ -485,8 +489,11 @@ function describeWave(n) {
 const SURVIVAL = {
   threat: { infantry: 1, jeep: .8, tank: 4, boss: 25, truck: 5 },   // camion : lui et ses 4 fantassins
   budget: 50, growth: 1.1,   // menace de la vague 11 (la vague 10 en vaut 49), puis ×1,1 par vague
-  maxUnits: 60,              // au-delà, le surplus de budget rend les ennemis plus résistants au lieu de les multiplier
+  maxUnits: 60,              // au-delà, le surplus de budget devient un trait de la vague au lieu de multiplier les ennemis
+  maxSpeed: 1.6,             // vitesse maximale d'une vague rapide
 };
+// Modèles dont le surplus rend la vague plus rapide ; les autres la rendent plus résistante. Jamais les deux.
+const FAST_KINDS = ['swarm', 'convoy'];
 // Modèles : [type, part du budget, secondes entre deux unités]
 const SURVIVAL_MIXES = {
   swarm:   [['jeep', .85, .3], ['infantry', .15, .6]],
@@ -505,7 +512,7 @@ function survivalWave(n) {
   const rnd = rng(state.survival.seed + n * 7919);
   const k = n - WAVES.length;                      // 1 pour la vague 11
   const budget = SURVIVAL.budget * SURVIVAL.growth ** (k - 1);
-  // Toutes les 10 vagues, un cran de plus pour tous : +1 d'armure, +10 % de vitesse (à partir de la vague 21)
+  // Toutes les 10 vagues, un cran de plus pour tous : +1 d'armure (à partir de la vague 21)
   const tier = Math.max(0, Math.floor((n - 1) / 10) - 1);
   const gapMul = Math.max(.5, 1 - k * .02);
   let kind;
@@ -527,11 +534,14 @@ function survivalWave(n) {
   } else {
     groups = spend(SURVIVAL_MIXES[kind], budget);
   }
-  // Trop d'unités : on en retire et on renforce les autres d'autant
+  // Trop d'unités : on en retire, et le surplus (surplus) devient un seul trait. Essaim et convoi : plus
+  // rapides, PV normaux. Autres modèles : plus de PV, vitesse normale. La prime de chaque ennemi est
+  // multipliée d'autant (pay) : PV ×3, prime ×3 ; vitesse ×1,5 (moins de temps sous le feu), prime ×1,5.
   const units = groups.reduce((sum, g) => sum + g[1], 0);
-  const hp = units > SURVIVAL.maxUnits ? units / SURVIVAL.maxUnits : 1;
-  const opts = { hp, arm: tier, spd: 1 + tier * .1 };
-  groups = groups.map(([type, count, gap]) => [type, Math.max(1, Math.round(count / hp)), +(gap * gapMul).toFixed(2), opts]);
+  const surplus = Math.max(1, units / SURVIVAL.maxUnits), fast = FAST_KINDS.includes(kind);
+  const spd = fast ? Math.min(SURVIVAL.maxSpeed, surplus ** .25) : 1, hp = fast ? 1 : surplus;
+  const opts = { hp, arm: tier, spd, pay: fast ? spd : hp };
+  groups = groups.map(([type, count, gap]) => [type, Math.max(1, Math.round(count / surplus)), +(gap * gapMul).toFixed(2), opts]);
   const wave = { kind, groups, bonus: kind === 'breather' ? 2 : 1 };
   survivalCache.set(key, wave);
   return wave;
@@ -1283,14 +1293,17 @@ const isBase = (c, r) => c === MAP.base.c && r === MAP.base.r;
 const canBuild = (c, r) => !isRoad(c, r) && !isBase(c, r) && !isForest(c, r) && !isWater(c, r) && !towerAt(c, r);
 
 // Chaque niveau : +40 % de dégâts, +10 % de portée
-const MAX_LEVEL = 3;
+// Niveau 3 au plus en campagne. En survie, jusqu'au niveau 8 : +25 % de dégâts par niveau au-delà du 3
+// (et +5 % de portée pour le brouilleur, dont le ralentissement ne grandit pas)
+const MAX_LEVEL = 3, SURVIVAL_MAX_LEVEL = 8;
+const maxLevel = () => state.survival ? SURVIVAL_MAX_LEVEL : MAX_LEVEL;
 function towerStats(tw, level = tw.level) {
-  const t = TOWER_TYPES[tw.type], k = level - 1;
+  const t = TOWER_TYPES[tw.type], k = Math.min(level, MAX_LEVEL) - 1, extra = Math.max(0, level - MAX_LEVEL);
   const hill = isHill(tw.c, tw.r) ? HILL_BONUS : 0;   // une colline ajoute de la portée, pas d'angle mort
-  return { ...t, damage: t.damage * 1.4 ** k, range: t.range * 1.1 ** k + hill, hill };
+  return { ...t, damage: t.damage * 1.4 ** k * 1.25 ** extra, range: t.range * 1.1 ** k * (t.slow ? 1.05 ** extra : 1) + hill, hill };
 }
-// Niveau 2 : 60 % du prix de la tour ; niveau 3 : 100 %
-const upgradeCost = tw => Math.round(TOWER_TYPES[tw.type].cost * (tw.level === 1 ? .6 : 1));
+// Niveau 2 : 60 % du prix de la tour ; niveau 3 : 100 % ; en survie, niveau 4 : 2 fois le prix, puis 3, 4…
+const upgradeCost = tw => Math.round(TOWER_TYPES[tw.type].cost * (tw.level === 1 ? .6 : tw.level === 2 ? 1 : tw.level - 1));
 // Revente : 70 % de l'investi, mais ce qui a été dépensé depuis le début de la préparation est rendu en entier
 const sellValue = tw => (tw.fresh || 0) + Math.floor((tw.invested - (tw.fresh || 0)) * .7);
 
@@ -1306,14 +1319,15 @@ function hurt(e, raw) {
   }
   if (e.hp <= 0) {
     e.dead = true;
-    state.gold += e.t.reward;
-    state.score += e.t.reward * KILL_POINTS;
+    const reward = Math.round(e.t.reward * ((e.opts && e.opts.pay) || 1));   // en survie, la prime suit le trait de la vague
+    state.gold += reward;
+    state.score += reward * KILL_POINTS;
     sfx.play('kill');
     state.effects.push({ kind: 'puff', x: e.x, y: e.y, r: e.t.size + .15, t: clock, dur: .4 });
     if (e.type !== 'infantry') state.wrecks.push({ x: e.x, y: e.y, a: e.angle, s: e.t.size, t: clock });
     if (e.t.troops) dismount(e);
     if (e.type === 'boss') { shake(.25, .8); sfx.play('blast'); }
-    state.effects.push({ kind: 'float', x: e.x, y: e.y - .2, text: '+' + e.t.reward, t: clock, dur: .9 });
+    state.effects.push({ kind: 'float', x: e.x, y: e.y - .2, text: '+' + reward, t: clock, dur: .9 });
     flashStat('gold', 'bump');
     renderHud();
   }
@@ -1394,9 +1408,14 @@ function updateShells(now) {
 // Galons de grade sous la tour : un chevron par amélioration
 function drawChevrons(g, x, y, level) {
   g.strokeStyle = '#e2a62e'; g.lineWidth = .05; g.lineJoin = 'miter';
-  for (let i = 0; i < level - 1; i++) {
+  for (let i = 0; i < Math.min(level, MAX_LEVEL) - 1; i++) {
     const cy = y + .3 + i * .1;
     g.beginPath(); g.moveTo(x - .14, cy - .06); g.lineTo(x, cy + .02); g.lineTo(x + .14, cy - .06); g.stroke();
+  }
+  // Niveaux de survie : un point doré par niveau au-delà du 3, au-dessus de la tour
+  g.fillStyle = '#e2a62e';
+  for (let i = 0, extra = level - MAX_LEVEL; i < extra; i++) {
+    g.beginPath(); g.arc(x + (i - (extra - 1) / 2) * .09, y - .4, .032, 0, Math.PI * 2); g.fill();
   }
 }
 
@@ -2092,10 +2111,11 @@ function renderPanel() {
   $panel.hidden = !tw;
   if (!tw) return;
   const t = TOWER_TYPES[tw.type], s = towerStats(tw);
-  const maxed = tw.level >= MAX_LEVEL, n = maxed ? null : towerStats(tw, tw.level + 1);
-  const next = (a, b, d = 0) => n ? ` <span class="next">→ ${fmt(b, d)}</span>` : '';
+  const maxed = tw.level >= maxLevel(), n = maxed ? null : towerStats(tw, tw.level + 1);
+  // Valeur au niveau suivant, seulement si elle change (en survie, la portée ne grandit plus après le niveau 3)
+  const next = (a, b, d = 0) => n && fmt(a, d) !== fmt(b, d) ? ` <span class="next">→ ${fmt(b, d)}</span>` : '';
   document.getElementById('p-name').textContent = t.name;
-  document.getElementById('p-grade').textContent = `Niveau ${tw.level}/${MAX_LEVEL} · ${cellName(tw.c, tw.r)}`;
+  document.getElementById('p-grade').textContent = `Niveau ${tw.level}/${maxLevel()} · ${cellName(tw.c, tw.r)}`;
   const rows = [
     ['Dégâts', fmt(s.damage) + next(s.damage, n && n.damage)],
     ['Portée', fmt(s.range, 1) + ' cases' + next(s.range, n && n.range, 1)],
@@ -2136,7 +2156,7 @@ $target.addEventListener('click', e => {
 
 $pUp.addEventListener('click', () => {
   const tw = state.selected;
-  if (!tw || tw.level >= MAX_LEVEL || state.gold < upgradeCost(tw)) return;
+  if (!tw || tw.level >= maxLevel() || state.gold < upgradeCost(tw)) return;
   const cost = upgradeCost(tw);
   state.gold -= cost;
   tw.invested += cost;
