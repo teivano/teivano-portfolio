@@ -664,15 +664,15 @@ const THEMES = {
     bridge: 'wood', trees: ['#2c4231', '#334a38'], treeLight: 'rgba(255,255,255,.85)', snowCap: true,
     grid: 'rgba(60,80,100,.16)', ink: '34,42,52',
   },
-  // Marais d'automne : herbe sèche ocre, eau trouble bordée de roseaux, arbres roux
+  // Marais d'automne : herbe olive tachée d'or, eau froide bordée de roseaux paille, piste claire, arbres roux vifs
   autumn: {
-    ground: '#6f6136', spots: ['rgba(60,40,15,.16)', 'rgba(205,140,60,.12)'], grain: '0,0,0', grainAlpha: .08,
-    water: '#4a5646', ripple: 'rgba(190,200,170,.3)', bank: null, reeds: 'rgba(150,128,62,.9)',
-    hillFill: 'rgba(200,150,80,.18)', hillLine: 'rgba(110,70,30,.6)',
-    craterFill: 'rgba(34,26,12,.45)', craterRim: 'rgba(180,140,90,.35)',
-    roadEdge: '#5f4a2e', road: '#8b7250', ruts: 'rgba(60,44,24,.45)', specks: ['rgba(60,45,25,.25)', 'rgba(210,180,130,.2)'], centerLine: null,
-    bridge: 'wood', trees: ['#9a4b22', '#b5762c'], treeLight: 'rgba(240,200,110,.28)', snowCap: false,
-    grid: 'rgba(30,20,8,.2)', ink: '236,231,207',
+    ground: '#59603a', spots: ['rgba(30,34,14,.18)', 'rgba(222,165,60,.16)'], grain: '0,0,0', grainAlpha: .08,
+    water: '#33505b', ripple: 'rgba(200,225,230,.35)', bank: null, reeds: 'rgba(205,178,98,.95)',
+    hillFill: 'rgba(214,170,90,.2)', hillLine: 'rgba(60,44,18,.6)',
+    craterFill: 'rgba(30,26,12,.45)', craterRim: 'rgba(190,160,100,.35)',
+    roadEdge: '#4b3a24', road: '#a68b60', ruts: 'rgba(70,52,28,.45)', specks: ['rgba(60,45,25,.25)', 'rgba(225,200,150,.22)'], centerLine: null,
+    bridge: 'wood', trees: ['#b5441e', '#d98a2b'], treeLight: 'rgba(255,215,120,.35)', snowCap: false,
+    grid: 'rgba(20,24,8,.2)', ink: '236,231,207',
   },
   // Désert : sable, piste claire, oasis turquoise bordée de verdure, rochers et palmiers
   desert: {
@@ -1799,6 +1799,7 @@ function draw(t) {
   drawBaseHit(t);
   drawHover();
   const sel = state.selected;
+  drawJamMap();
   if (sel) drawRange(sel.x, sel.y, towerStats(sel).range, true, towerStats(sel).minRange);
   for (const tw of state.towers) drawTower(ctx, tw.type, tw.x, tw.y, tw.angle, t, tw.level);
   for (const e of state.enemies) drawEnemy(e, t);
@@ -1863,6 +1864,60 @@ function drawHover() {
 }
 
 // En placement : case verte ou rouge, portée et tour fantôme
+// ===== Carte de brouillage =====
+// Affichée pendant la pose d'un brouilleur ou quand un brouilleur est sélectionné : les zones de tous les
+// brouilleurs, d'une seule teinte (l'effet ne se cumule pas), et en bleu vif les tronçons de route où les
+// ennemis sont ralentis. Pendant la pose, en pointillés : la route que le nouveau brouilleur ajouterait.
+const JAM_STEP = .1, JAM_BLUE = '#4fa8d8';
+const jamSamples = {};
+function routeSamples() {
+  if (!jamSamples[MAP.id]) jamSamples[MAP.id] = MAP.paths.map((p, pi) => {
+    const list = [];
+    for (let d = 0; d <= p.length; d += JAM_STEP) list.push(posAt(d, pi));
+    return list;
+  });
+  return jamSamples[MAP.id];
+}
+const jammerZones = () => state.towers.filter(tw => tw.type === 'jammer').map(tw => ({ x: tw.x, y: tw.y, r: towerStats(tw).range }));
+const inZones = (q, zones) => zones.some(z => Math.hypot(q.x - z.x, q.y - z.y) <= z.r);
+// Zone d'un brouilleur posé sur la case survolée, s'il peut l'être
+function jamCandidate() {
+  const h = state.hover;
+  if (state.placing !== 'jammer' || !h || !canBuild(h.c, h.r)) return null;
+  return { x: h.c + .5, y: h.r + .5, r: TOWER_TYPES.jammer.range + (isHill(h.c, h.r) ? HILL_BONUS : 0) };
+}
+// Part de la route brouillée, en moyenne sur les routes (les ennemis s'y répartissent)
+function jamShare(zones = jammerZones()) {
+  const all = routeSamples();
+  return all.reduce((sum, list) => sum + list.filter(q => inZones(q, zones)).length / list.length, 0) / all.length;
+}
+function strokeRuns(list, test) {
+  ctx.beginPath();
+  let open = false;
+  for (const q of list) {
+    if (test(q)) { open ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); open = true; }
+    else open = false;
+  }
+  ctx.stroke();
+}
+function drawJamMap() {
+  if (state.placing !== 'jammer' && !(state.selected && state.selected.type === 'jammer')) return;
+  const zones = jammerZones(), extra = jamCandidate();
+  if (zones.length) {
+    ctx.fillStyle = 'rgba(90,170,215,.2)';
+    ctx.beginPath();
+    for (const z of zones) { ctx.moveTo(z.x + z.r, z.y); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); }
+    ctx.fill();   // un seul remplissage : là où les zones se recouvrent, la teinte ne fonce pas
+  }
+  ctx.strokeStyle = JAM_BLUE; ctx.lineWidth = .16; ctx.lineCap = 'round';
+  for (const list of routeSamples()) {
+    ctx.setLineDash([]);
+    strokeRuns(list, q => inZones(q, zones));
+    if (extra) { ctx.setLineDash([.14, .12]); strokeRuns(list, q => !inZones(q, zones) && inZones(q, [extra])); }
+  }
+  ctx.setLineDash([]); ctx.lineCap = 'butt';
+}
+
 function drawPlacement(t) {
   const h = state.hover;
   if (!h || !state.placing) return;
@@ -1928,6 +1983,9 @@ function updateReadout() {
       : isHill(h.c, h.r) ? `colline, +${HILL_BONUS} de portée` : 'constructible';
     if (isForest(h.c, h.r) || isWater(h.c, h.r)) kind = 'road';
     text = `Secteur ${cellName(h.c, h.r)} · ${what}`;
+    // Pose d'un brouilleur : la part de route brouillée, avant et après
+    const extra = jamCandidate();
+    if (extra) text += ` · route brouillée ${Math.round(jamShare() * 100)} → ${Math.round(jamShare([...jammerZones(), extra]) * 100)} %`;
   }
   if (text === readoutText) return;
   readoutText = text;
@@ -2047,6 +2105,7 @@ function renderPanel() {
   if (t.minRange) rows.push(['Angle mort', `moins de ${fmt(t.minRange, 1)} case`]);
   if (t.splash) rows.push(['Zone', `rayon ${fmt(t.splash)} case`]);
   if (t.slow) rows.push(['Effet', `ralentit de ${t.slow * 100} % pendant ${t.slowTime} s`]);
+  if (tw.type === 'jammer') rows.push(['Brouillage', `${Math.round(jamShare() * 100)} % de la route, tous brouilleurs`]);
   document.getElementById('p-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   if (maxed) {
     $pUp.textContent = 'Niveau max';
