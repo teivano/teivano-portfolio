@@ -640,6 +640,36 @@ const MAP_DEFS = [
       [['truck', 4, 2], ['boss', 2, 4], ['tank', 4, 2], ['truck', 4, 2]],      // 10 : un char lourd par route
     ],
   },
+  // Carte 6 : trois débarquements. beach : largeur de la plage (en cases depuis le bord ouest)
+  {
+    id: 'plage', name: 'La Plage', the: 'la Plage', place: 'Côte normande', theme: 'coast', meta: 'trois débarquements · falaise',
+    brief: "Trois péniches accostent sur la plage. Leurs colonnes remontent les dunes, se rejoignent au pied de la falaise et montent vers la base. Tenez la jonction.",
+    cols: 18, rows: 11, beach: 4,
+    paths: [
+      [[-1, 1], [5, 1], [5, 3], [8, 3], [8, 8], [12, 8], [12, 2], [15, 2], [15, 5], [17, 5]],
+      [[-1, 5], [8, 5], [8, 8], [12, 8], [12, 2], [15, 2], [15, 5], [17, 5]],
+      [[-1, 9], [5, 9], [5, 7], [8, 7], [8, 8], [12, 8], [12, 2], [15, 2], [15, 5], [17, 5]],
+    ],
+    base: { c: 17, r: 5 },
+    hills: [[10, 5], [14, 4], [3, 7], [16, 8]],
+    // Bois : hérissons tchèques sur la plage, pins maritimes en haut de la falaise
+    forests: [[2, 3], [2, 7], [3, 0], [3, 10], [10, 0], [11, 0], [16, 0], [17, 0], [17, 1], [13, 10], [14, 10], [17, 10], [17, 9]],
+    water: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [0, 2], [1, 2], [0, 3], [1, 3], [0, 4], [1, 4], [0, 5], [1, 5], [0, 6], [1, 6],
+      [0, 7], [1, 7], [0, 8], [1, 8], [0, 9], [1, 9], [0, 10], [1, 10], [2, 10]],
+    hpMult: 1.3,
+    waves: [
+      [['infantry', 9, 1.4]],                                                  // 1 : trois péniches
+      [['jeep', 12, .7], ['infantry', 6, 1]],                                  // 2
+      [['infantry', 6, 1], ['truck', 3, 4]],                                   // 3 : un camion par péniche
+      [['infantry', 9, 1], ['tank', 2, 3]],                                    // 4
+      [['truck', 3, 3], ['tank', 3, 3], ['jeep', 12, .5]],                     // 5
+      [['infantry', 12, .8]],                                                  // 6 : respiration
+      [['jeep', 27, .35], ['truck', 3, 2.5]],                                  // 7 : essaim
+      [['truck', 6, 2.2], ['tank', 3, 2.5], ['infantry', 12, .7]],             // 8
+      [['jeep', 15, .4], ['truck', 6, 1.8], ['tank', 6, 1.8]],                 // 9
+      [['truck', 3, 2], ['boss', 1, 0], ['tank', 3, 2], ['truck', 3, 2], ['infantry', 6, .8]],   // 10 : examen final
+    ],
+  },
 ];
 
 // Ambiance de chaque carte : des lieux différents, même lecture du terrain.
@@ -693,6 +723,16 @@ const THEMES = {
     roadEdge: '#9c7f4c', road: '#e0cb98', ruts: 'rgba(130,98,55,.35)', specks: ['rgba(120,90,50,.25)', 'rgba(255,245,215,.3)'], centerLine: null,
     bridge: 'wood', trees: ['#8a7a66', '#9c8b74'], treeLight: 'rgba(255,245,225,.3)', snowCap: false, rocks: true,
     grid: 'rgba(90,60,20,.16)', ink: '40,32,20',
+  },
+  // Côte : herbe des dunes gris-vert, plage de sable et écume, mer sombre, falaises, pins maritimes
+  coast: {
+    ground: '#6f7650', spots: ['rgba(36,44,20,.16)', 'rgba(215,200,150,.14)'], grain: '0,0,0', grainAlpha: .07,
+    water: '#2c4d5c', ripple: 'rgba(215,235,240,.4)', bank: null, beach: '#d6c18e', foam: 'rgba(240,246,244,.8)',
+    hillFill: 'rgba(205,195,160,.22)', hillLine: 'rgba(58,56,36,.6)',
+    craterFill: 'rgba(36,32,18,.45)', craterRim: 'rgba(225,210,165,.4)',
+    roadEdge: '#55492f', road: '#ae9767', ruts: 'rgba(80,64,36,.42)', specks: ['rgba(70,55,30,.25)', 'rgba(235,220,180,.22)'], centerLine: null,
+    bridge: 'wood', trees: ['#2c4a30', '#36573a'], treeLight: 'rgba(160,195,150,.25)', snowCap: false, hedgehogs: true,
+    grid: 'rgba(16,22,10,.2)', ink: '236,231,207',
   },
 };
 
@@ -820,6 +860,18 @@ function renderTerrain(map, cell, dpr) {
     }
   }
 
+  // Côte : une bande de sable au bord ouest, au bord ondulé, semée de grains plus clairs
+  if (T.beach && map.beach) {
+    g.fillStyle = T.beach;
+    g.beginPath(); g.moveTo(0, 0);
+    for (let y = 0; y <= ROWS; y += .25) g.lineTo(map.beach + .25 * Math.sin(y * 1.7) + .12 * Math.sin(y * 4.1), y);
+    g.lineTo(0, ROWS); g.closePath(); g.fill();
+    for (let i = 0; i < 260; i++) {
+      g.fillStyle = rnd() < .5 ? 'rgba(150,125,80,.3)' : 'rgba(255,248,225,.45)';
+      g.fillRect(rnd() * map.beach, rnd() * ROWS, .035, .035);
+    }
+  }
+
   // Eau : rivière ou étang, avec rides (et berges enneigées en hiver)
   for (const k of map.water) {
     const [c, r] = k.split(',').map(Number);
@@ -843,6 +895,22 @@ function renderTerrain(map, cell, dpr) {
       const x = c + .15 + rnd() * .4, y = r + .25 + rnd() * .5;
       g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + .12, y - .06, x + .25, y); g.stroke();
     }
+  }
+  // Côte : l'écume des vagues sur le sable, le long de chaque bord sec
+  if (T.foam) {
+    g.strokeStyle = T.foam; g.lineWidth = .05; g.lineCap = 'round';
+    for (const k of map.water) {
+      const [c, r] = k.split(',').map(Number);
+      const dry = (dc, dr) => !has(map.water, c + dc, r + dr) && c + dc >= 0 && c + dc < COLS && r + dr >= 0 && r + dr < ROWS;
+      if (dry(1, 0)) {
+        g.beginPath(); g.moveTo(c + .94, r);
+        for (let y = .25; y <= 1; y += .25) g.lineTo(c + .94 - .06 * Math.sin((r + y) * 6), r + y);
+        g.stroke();
+      }
+      if (dry(0, -1)) { g.beginPath(); g.moveTo(c, r + .05); g.lineTo(c + 1, r + .05); g.stroke(); }
+      if (dry(0, 1)) { g.beginPath(); g.moveTo(c, r + .95); g.lineTo(c + 1, r + .95); g.stroke(); }
+    }
+    g.lineCap = 'butt';
   }
 
   // Collines : courbes de niveau, comme sur une carte d'état-major
@@ -956,6 +1024,7 @@ function renderTerrain(map, cell, dpr) {
       wet ? drawPalm(g, c + .5, r + .5, rnd) : drawRocks(g, c, r, T, rnd);
       continue;
     }
+    if (T.hedgehogs && c < (map.beach || 0)) { drawHedgehogs(g, c, r, rnd); continue; }
     for (let i = 0; i < 5; i++) {
       const x = c + .2 + rnd() * .6, y = r + .2 + rnd() * .6, rad = .14 + rnd() * .1;
       g.fillStyle = T.snowCap ? 'rgba(60,80,100,.25)' : 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(x + .04, y + .05, rad, 0, Math.PI * 2); g.fill();
@@ -975,6 +1044,24 @@ function renderTerrain(map, cell, dpr) {
 }
 
 // Désert : deux ou trois blocs de roche, ombre portée et arête éclairée
+// Hérissons tchèques : trois poutrelles d'acier croisées, deux ou trois par case
+function drawHedgehogs(g, c, r, rnd) {
+  const n = 2 + Math.floor(rnd() * 2);
+  for (let i = 0; i < n; i++) {
+    const x = c + .25 + rnd() * .5, y = r + .25 + rnd() * .5, s = .13 + rnd() * .04, a0 = rnd() * Math.PI;
+    g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(x + .04, y + .05, s * 1.1, s * .8, 0, 0, Math.PI * 2); g.fill();
+    g.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      const a = a0 + k * Math.PI / 3;
+      g.strokeStyle = '#2c2d2a'; g.lineWidth = .06;
+      g.beginPath(); g.moveTo(x - Math.cos(a) * s, y - Math.sin(a) * s); g.lineTo(x + Math.cos(a) * s, y + Math.sin(a) * s); g.stroke();
+      g.strokeStyle = 'rgba(160,150,130,.5)'; g.lineWidth = .02;
+      g.beginPath(); g.moveTo(x - Math.cos(a) * s, y - Math.sin(a) * s - .015); g.lineTo(x + Math.cos(a) * s, y + Math.sin(a) * s - .015); g.stroke();
+    }
+    g.lineCap = 'butt';
+  }
+}
+
 function drawRocks(g, c, r, T, rnd) {
   for (let i = 0; i < 3; i++) {
     const x = c + .22 + rnd() * .56, y = r + .25 + rnd() * .5, rad = .12 + rnd() * .12;
@@ -1261,7 +1348,7 @@ function updateEnemies(dt, now) {
   for (const e of state.enemies) {
     if (e.dead) continue;
     const slow = now < e.slowUntil ? e.slowFactor * (1 - e.t.slowResist) : 0;
-    e.d += e.t.speed * (e.spd || 1) * (1 - slow) * dt;
+    if (!isStunned(e, now)) e.d += e.t.speed * (e.spd || 1) * (1 - slow) * dt;
     const pi = e.path || 0;
     const p = posAt(e.d, pi), q = posAt(e.d + .05, pi);
     e.x = p.x; e.y = p.y;
@@ -1286,6 +1373,7 @@ function updateEnemies(dt, now) {
 
 // Ralenti : teinte bleue sur l'ennemi
 const isSlowed = (e, now) => now < e.slowUntil;
+const isStunned = (e, now) => now < (e.stunUntil || 0);   // sonné par la frappe aérienne : immobile
 
 // ===== Tours =====
 const towerAt = (c, r) => state.towers.find(tw => tw.c === c && tw.r === r);
@@ -1405,28 +1493,45 @@ function updateShells(now) {
   state.effects = state.effects.filter(fx => now < fx.t + fx.dur);
 }
 
-// Galons de grade sous la tour : un chevron par amélioration
-function drawChevrons(g, x, y, level) {
-  g.strokeStyle = '#e2a62e'; g.lineWidth = .05; g.lineJoin = 'miter';
-  for (let i = 0; i < Math.min(level, MAX_LEVEL) - 1; i++) {
-    const cy = y + .3 + i * .1;
-    g.beginPath(); g.moveTo(x - .14, cy - .06); g.lineTo(x, cy + .02); g.lineTo(x + .14, cy - .06); g.stroke();
+// Étoile à cinq branches de rayon r
+function drawStar(g, x, y, r) {
+  g.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? r * .45 : r;
+    g.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d);
   }
-  // Niveaux de survie : un point doré par niveau au-delà du 3, au-dessus de la tour
-  g.fillStyle = '#e2a62e';
-  for (let i = 0, extra = level - MAX_LEVEL; i < extra; i++) {
-    g.beginPath(); g.arc(x + (i - (extra - 1) / 2) * .09, y - .4, .032, 0, Math.PI * 2); g.fill();
-  }
+  g.closePath(); g.fill();
+}
+
+// Grade de la tour : un écusson chiffré en bas à droite, coloré par palier (ivoire jusqu'au 3, puis bronze, argent, or).
+// Le socle prend la couleur du palier en survie, et la tour elle-même grossit au niveau 2 et se double au niveau 3.
+const RANK_TIERS = [[8, '#f0c040', '#e3b53a'], [6, '#d5dade', '#c3c8cc'], [4, '#c98a4b', '#b9824e'], [1, '#ece4c4', '#b8a678']];
+const rankTier = level => RANK_TIERS.find(([from]) => level >= from);
+function drawRank(g, x, y, level) {
+  const [, color] = rankTier(level), bx = x + .3, by = y + .3, w = .34, h = .38;
+  g.fillStyle = color; g.strokeStyle = '#1f1d14'; g.lineWidth = .035; g.lineJoin = 'round';
+  g.beginPath();
+  g.moveTo(bx - w / 2, by - h / 2); g.lineTo(bx + w / 2, by - h / 2); g.lineTo(bx + w / 2, by + h * .1);
+  g.quadraticCurveTo(bx + w / 2, by + h * .4, bx, by + h / 2); g.quadraticCurveTo(bx - w / 2, by + h * .4, bx - w / 2, by + h * .1);
+  g.closePath(); g.fill(); g.stroke();
+  // Le chiffre s'écrit en pixels, quelle que soit l'échelle du dessin (carte ou icône)
+  const m = g.getTransform();
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#1f1d14'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = `700 ${Math.max(6, Math.round(m.a * .3))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  g.fillText(level, m.a * bx + m.e, m.d * (by - .015) + m.f);
+  g.restore();
 }
 
 // Tour vue du dessus, dans un emplacement en sacs de sable ; g peut être la carte ou une icône
 function drawTower(g, type, x, y, angle, t, level = 1) {
-  drawTowerBody(g, type, x, y, angle, t);
-  if (level > 1) drawChevrons(g, x, y, level);
+  drawTowerBody(g, type, x, y, angle, t, level);
+  if (level > 1) drawRank(g, x, y, level);
 }
 
-function drawTowerBody(g, type, x, y, angle, t) {
-  g.fillStyle = '#b8a678';
+function drawTowerBody(g, type, x, y, angle, t, level = 1) {
+  g.fillStyle = rankTier(level)[2];
   g.strokeStyle = 'rgba(60,50,30,.55)'; g.lineWidth = .02;
   for (let i = 0; i < 10; i++) {
     const a = i / 10 * Math.PI * 2;
@@ -1437,19 +1542,28 @@ function drawTowerBody(g, type, x, y, angle, t) {
   g.translate(x, y);
   g.rotate(angle);
   if (type === 'mg') {
-    g.fillStyle = '#23261a'; g.fillRect(0, -.035, .44, .07);
+    // Canon plus long au niveau 2, jumelé au niveau 3
+    g.fillStyle = '#23261a';
+    if (level >= 3) { g.fillRect(0, -.075, .5, .055); g.fillRect(0, .02, .5, .055); }
+    else g.fillRect(0, -.035, level >= 2 ? .5 : .44, .07);
     g.fillStyle = '#cfc8a2'; g.fillRect(-.1, -.1, .2, .2);
     g.fillStyle = '#6b7046'; g.beginPath(); g.arc(-.15, 0, .09, 0, Math.PI * 2); g.fill();
   } else if (type === 'mortar') {
+    // Tube plus large au niveau 2, deux tubes au niveau 3
     g.fillStyle = '#7a5530'; g.beginPath(); g.arc(0, 0, .21, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#1e2016'; g.beginPath(); g.arc(.07, 0, .11, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = '#d99a55'; g.lineWidth = .035; g.stroke();
+    const tubes = level >= 3 ? [[.07, -.085, .085], [.07, .085, .085]] : [[.07, 0, level >= 2 ? .135 : .11]];
+    g.strokeStyle = '#d99a55'; g.lineWidth = .035;
+    for (const [tx, ty, tr] of tubes) {
+      g.fillStyle = '#1e2016'; g.beginPath(); g.arc(tx, ty, tr, 0, Math.PI * 2); g.fill(); g.stroke();
+    }
   } else {
+    // Antenne plus grande au niveau 2, double au niveau 3
     g.rotate(t * 1.6 - angle);
     g.fillStyle = '#3a4950'; g.fillRect(-.15, -.15, .3, .3);
     g.strokeStyle = '#7cc0e0'; g.lineWidth = .045;
-    g.beginPath(); g.arc(0, 0, .2, -.9, .9); g.stroke();
-    g.beginPath(); g.moveTo(0, 0); g.lineTo(.2, 0); g.stroke();
+    const arcs = level >= 3 ? [.17, .26] : [level >= 2 ? .24 : .2];
+    for (const r of arcs) { g.beginPath(); g.arc(0, 0, r, -.9, .9); g.stroke(); }
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(arcs[arcs.length - 1], 0); g.stroke();
     g.fillStyle = `rgba(124,192,224,${.55 + .45 * Math.sin(t * 6)})`;
     g.beginPath(); g.arc(0, 0, .06, 0, Math.PI * 2); g.fill();
   }
@@ -1638,6 +1752,14 @@ function drawEnemy(e, t) {
     ctx.fillStyle = 'rgba(124,192,224,.35)';
     ctx.beginPath(); ctx.arc(e.x, e.y, s + .06, 0, Math.PI * 2); ctx.fill();
   }
+  // Sonné : trois étoiles tournent au-dessus de lui
+  if (isStunned(e, t)) {
+    ctx.fillStyle = '#f0c040';
+    for (let i = 0; i < 3; i++) {
+      const a = t * 5 + i * Math.PI * 2 / 3;
+      drawStar(ctx, e.x + Math.cos(a) * (s * .8 + .06), e.y - s - .08 + Math.sin(a) * .07, .07);
+    }
+  }
 
   // Barre de vie, masquée tant que l'ennemi est intact
   if (e.hp < e.maxHp) {
@@ -1754,7 +1876,8 @@ let lastSave = 0;
 // le bombardement frappe après un court délai. Une frappe par manche : la réserve se remplit quand le
 // terrain est dégagé (pas quand on appelle une vague en avance). Trois améliorations payantes, de 2 niveaux
 // chacune : rayon, dégâts, et frappes en plus par manche. gap : délai entre deux frappes d'une même manche.
-const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, radius: [1.5, 2, 2.5], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
+// stun : les ennemis touchés restent sonnés sur place (moins longtemps s'ils résistent aux ralentissements).
+const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, stun: 1.5, radius: [1.5, 2, 2.5], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
 const strikeRadius = (lvl = state.strike.r) => STRIKE.radius[lvl];
 const strikeDamage = (lvl = state.strike.d) => STRIKE.damage[lvl];
 const strikeUnlocked = () => state.wave > STRIKE.unlockWave || (state.wave === STRIKE.unlockWave && state.phase !== 'wave');
@@ -1777,7 +1900,9 @@ function updateStrikes(now) {
     if (now < sk.at) continue;
     sk.done = true;
     for (const e of state.enemies) {
-      if (!e.dead && Math.hypot(e.x - sk.x, e.y - sk.y) <= sk.radius + e.t.size) hurt(e, sk.damage);
+      if (e.dead || Math.hypot(e.x - sk.x, e.y - sk.y) > sk.radius + e.t.size) continue;
+      hurt(e, sk.damage);
+      e.stunUntil = Math.max(e.stunUntil || 0, now + STRIKE.stun * (1 - e.t.slowResist));
     }
     // Un chapelet d'explosions couvre la zone, et laisse ses cratères
     for (let i = 0; i < 5; i++) {
@@ -2288,6 +2413,7 @@ function renderStrikePanel() {
     ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next(r, l => fmt(strikeRadius(l), 1))],
     ['Frappes', `${strikeMax()} par manche` + next(n, l => 1 + l)],
     ['Délai', `${fmt(STRIKE.delay, 1)} s après le clic`],
+    ['Effet', `ennemis sonnés ${fmt(STRIKE.stun, 1)} s, sur place`],
   ];
   document.getElementById('sp-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   for (const [$b, track, label] of [[$spRadius, 'r', 'Rayon'], [$spDamage, 'd', 'Dégâts'], [$spExtra, 'n', '+1 frappe']]) {
@@ -2390,12 +2516,19 @@ function updateWaveButton() {
     $btnWave.disabled = false; $btnWave.textContent = `Vague ${next} en avance (+${earlyBonus(next)})`;
   }
   renderNextWave();
-  // Entre deux vagues : rejouer la manche qui vient de se terminer
-  const replay = state.phase === 'prep' && state.lastRun && state.checkpoints[state.lastRun] ? state.lastRun : 0;
+  // Entre deux vagues : rejouer la manche qui vient de se terminer.
+  // Pendant une vague : la recommencer tout de suite (depuis la première vague de la manche si on en a appelé en avance).
+  const during = state.phase === 'wave';
+  const replay = replayTarget();
   $btnReplay.hidden = !replay;
-  $btnReplay.title = `Rejouer la vague ${replay} : tours, crédits et vies reviennent à leur état d'avant`;
+  $btnReplay.title = `${during ? 'Recommencer' : 'Rejouer'} la vague ${replay} : tours, crédits et vies reviennent à leur état d'avant`;
+  $btnReplay.querySelector('.rl').textContent = during ? 'Recommencer la vague' : 'Rejouer la vague';
   document.getElementById('replay-n').textContent = replay;
 }
+const replayTarget = () => {
+  const n = state.phase === 'prep' ? state.lastRun : state.phase === 'wave' && state.run ? state.run.from : 0;
+  return n && state.checkpoints[n] ? n : 0;
+};
 
 let queueWasEmpty = true;
 function checkWaveEnd() {
@@ -2421,7 +2554,7 @@ function checkWaveEnd() {
 }
 
 $btnWave.addEventListener('click', launchWave);
-$btnReplay.addEventListener('click', () => restoreCheckpoint(state.lastRun));
+$btnReplay.addEventListener('click', () => restoreCheckpoint(replayTarget()));
 
 // ===== Points de reprise et records =====
 // Un point de reprise par vague, pris au début de la pause qui la précède, avant tout achat.
