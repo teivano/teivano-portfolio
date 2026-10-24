@@ -219,7 +219,7 @@
 
   /* ===== Mode mobile : classe .mobile sur <html>, posée par le script sur un téléphone seulement =====
      Un ordinateur ne reçoit jamais cette classe : rien de ce qui suit ne le concerne. */
-  .sheet, .rotate-hint { display: none; }
+  .sheet, .info-msg { display: none; }
   html:not(.mobile) .mobile-only { display: none !important; }
   /* Confort tactile : pas de grossissement du texte en paysage, pas de zoom au double toucher, pas de rechargement
      en tirant la page, pas de loupe ni de sélection sur un appui long ; l'encoche et la barre d'accueil restent libres */
@@ -227,8 +227,64 @@
   html.mobile body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
   html.mobile .wrap { height: 100dvh; padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   html.mobile .overlay { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  /* Portrait : la carte pivotée d'un quart de tour (l'ouest en haut, la base en bas) entre trois zones fixes, et rien ne
+     la recouvre. En haut, la ligne d'état (vies, crédits, vague, Recommencer, Menu) puis la ligne d'information (la
+     prochaine vague, ou un message). En bas, les quatre boutons et Lancer la vague, ou à leur place la fiche de la tour
+     ou de la frappe, à hauteur égale : la carte ne bouge jamais. */
   @media (orientation: portrait) {
-    html.mobile .rotate-hint { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--brass); }
+    html.mobile .wrap {
+      max-width: none; display: grid; gap: 4px;
+      padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      grid-template-columns: auto auto auto minmax(0, 1fr) auto auto;
+      grid-template-rows: 30px 42px minmax(0, 1fr) 66px 44px;
+      grid-template-areas: "lives gold wave speed replay menu" "info info info info info info" "map map map map map map"
+        "arsenal arsenal arsenal arsenal arsenal arsenal" "go go go go go go";
+    }
+    html.mobile header, html.mobile .command, html.mobile .hud { display: contents; }
+    html.mobile header h1, html.mobile .stat:has(#score) { display: none; }
+    html.mobile .stat { padding: 2px 7px; gap: 5px; align-items: center; }
+    html.mobile .stat span { font-size: 10px; letter-spacing: .08em; }
+    html.mobile .stat b { font-size: 16px; }
+    html.mobile .stat:has(#lives) { grid-area: lives; }
+    html.mobile .stat:has(#gold) { grid-area: gold; }
+    html.mobile .stat:has(#wave) { grid-area: wave; }
+    html.mobile #speed-chip { grid-area: speed; justify-self: start; }
+    html.mobile #btn-replay { grid-area: replay; padding: 0 8px; gap: 3px; }
+    html.mobile #btn-replay .rl, html.mobile #btn-replay .rs { display: none; }
+    html.mobile #btn-menu { grid-area: menu; padding: 0 10px; }
+    html.mobile #next-wave { grid-area: info; }
+    html.mobile .stage { grid-area: map; min-height: 0; align-items: center; }
+    html.mobile .board .dispatch, html.mobile .board .readout { display: none !important; }
+    html.mobile .arsenal { grid-area: arsenal; min-height: 0; }
+    html.mobile .towers { height: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+    html.mobile .tower-btn { grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; row-gap: 0; padding: 3px; text-align: center; overflow: hidden; }
+    html.mobile .tower-btn .icon { display: block; grid-row: auto; width: 26px; height: 26px; }
+    html.mobile .tower-btn .name { font-size: 13px; line-height: 1.1; }
+    html.mobile .tower-btn .cost { grid-row: auto; grid-column: auto; font-size: 14px; line-height: 1.1; }
+    html.mobile #btn-wave { grid-area: go; font-size: 15px; padding: 6px; }
+    /* Ligne d'information : un message, la pose ou la visée en cours (avec × pour annuler), l'ennemi touché, la pause */
+    html.mobile .info-msg:not([hidden]) { grid-area: info; z-index: 1; display: flex; align-items: center; gap: 4px; padding: 2px 2px 2px 8px; background: var(--panel); border: 1px solid var(--brass); }
+    html.mobile .info-msg .it { flex: 1 1 auto; min-width: 0; font-size: 12.5px; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    html.mobile .info-msg.long .it { font-size: 11px; line-height: 1.12; -webkit-line-clamp: 3; }
+    html.mobile .info-msg .it b { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); margin-right: 4px; }
+    html.mobile .info-msg .close { align-self: stretch; padding: 0 10px; font-size: 22px; }
+    /* Fiche de la tour ou de la frappe : à la place des boutons, sur trois colonnes (caractéristiques, cible, actions) */
+    html.mobile .sheet { grid-row: arsenal-start / go-end; grid-column: 1 / -1; min-height: 0; z-index: 2; }
+    html.mobile .sheet:has(> .tower-panel:not([hidden])) { display: flex; }
+    html.mobile .sheet .tower-panel { position: static; flex: 1 1 auto; width: auto; min-height: 0; overflow-y: auto; box-sizing: border-box;
+      display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, .85fr); align-content: start; gap: 2px 8px; padding: 2px 8px 4px; font-size: 11.5px; line-height: 1.15; }
+    html.mobile .sheet .panel-head { grid-column: 1 / -1; align-items: center; gap: 6px; }
+    html.mobile .sheet .panel-head b { font-size: 14px; }
+    html.mobile .sheet .grade { font-size: 10px; }
+    html.mobile .sheet .close { align-self: center; padding: 0 8px; font-size: 22px; line-height: 1; }
+    html.mobile .sheet .panel-stats { gap: 0 6px; }
+    html.mobile .sheet .targeting { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px; align-content: start; }
+    html.mobile .sheet .target-label { font-size: 9px; }
+    html.mobile .sheet .targeting button { padding: 3px 1px; font-size: 11px; }
+    html.mobile .sheet .panel-actions { flex-direction: column; gap: 3px; }
+    html.mobile .sheet .panel-actions button { flex: 1 1 0; padding: 2px 3px; font-size: 12px; letter-spacing: .02em; }
+    html.mobile .sheet #panel:has(> .targeting[hidden]) .panel-stats, html.mobile .sheet #strike-panel .panel-stats { grid-column: 1 / 3; }
+    html.mobile .sheet #strike-panel .panel-actions { flex-wrap: nowrap; }
   }
   /* Paysage : la carte prend toute la hauteur ; à côté, une colonne de commande (à droite, ou à gauche pour les gauchers) :
      Menu et Recommencer, les compteurs, les quatre boutons, puis Lancer la vague sous le pouce. La fiche d'une tour ou de
@@ -397,8 +453,10 @@
   <div class="arsenal">
     <div class="towers" id="towers"></div>
   </div>
-  <!-- Paysage sur téléphone : la fiche d'une tour ou de la frappe vient ici, dans la colonne de commande -->
+  <!-- Téléphone : la fiche d'une tour ou de la frappe vient ici (colonne de commande en paysage, zone du bas en portrait) -->
   <div class="sheet" id="sheet"></div>
+  <!-- Téléphone en portrait : ligne d'information, sous la ligne d'état ; les messages y passent au lieu de couvrir la carte -->
+  <div class="info-msg" id="info-msg" hidden><span class="it" id="info-text"></span><button class="close" id="info-x" aria-label="Annuler" hidden>×</button></div>
 </div>
 
 <!-- Menu : écran titre au démarrage (opaque, rien derrière), menu de pause en jeu -->
@@ -408,7 +466,6 @@
       <p class="eyebrow">Poste de commandement</p>
       <h2 class="title-logo" id="menu-title">Opération Rempart</h2>
       <p class="menu-note">Tenez la route, protégez la base.</p>
-      <p class="menu-note rotate-hint"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tournez votre téléphone pour une carte plus grande.</p>
       <div class="menu-list">
         <button id="t-continue">Continuer<small id="t-continue-sub"></small></button>
         <button id="t-new" data-goto="maps">Nouvelle opération<small>Choisir la carte, puis la difficulté</small></button>
@@ -933,16 +990,21 @@ function setMap(id) {
 const cv = document.getElementById('map');
 const ctx = cv.getContext('2d');
 let CELL = 40, DPR = 1, terrain = null;
+// Téléphone en portrait : la carte est dessinée tournée d'un quart de tour, l'ouest en haut et l'est (la base) en bas.
+// Seul l'affichage pivote : positions, routes et portées restent celles de la carte.
+let ROT = false;
+// Dessine fn à l'endroit, autour du point (x, y) de la carte : barres de vie, écussons, étoiles restent lisibles
+function upright(g, x, y, fn) {
+  g.save(); g.translate(x, y); g.rotate(-Math.PI / 2); fn(); g.restore();
+}
 
-// Téléphone couché : les fiches (tour, frappe) passent dans la colonne de commande ; elles reviennent sur la carte en portrait
+// Téléphone : les fiches (tour, frappe) quittent la carte pour #sheet (colonne de commande en paysage, zone du bas en portrait)
 function placeSheets() {
   if (!MOBILE) return;
-  const side = window.matchMedia('(orientation: landscape)').matches;
-  const sheet = document.getElementById('sheet'), board = document.getElementById('board'), overlay = document.getElementById('overlay');
+  const sheet = document.getElementById('sheet');
   for (const id of ['panel', 'strike-panel']) {
     const p = document.getElementById(id);
-    if (side && p.parentElement !== sheet) sheet.appendChild(p);
-    else if (!side && p.parentElement !== board) board.insertBefore(p, overlay);
+    if (p.parentElement !== sheet) sheet.appendChild(p);
   }
 }
 
@@ -973,15 +1035,18 @@ const stage = document.getElementById('stage');
 function resize() {
   placeSheets();
   fitColumn();
+  ROT = MOBILE && !window.matchMedia('(orientation: landscape)').matches;
   const border = 4;
   const w = stage.clientWidth - border, h = stage.clientHeight - border;
   // Sur téléphone, 2× suffit à l'œil : un écran 3× demanderait 2,25 fois plus de dessin pour rien
   DPR = Math.min(window.devicePixelRatio || 1, MOBILE ? 2 : Infinity);
-  CELL = Math.max(10, Math.min(w / COLS, h / ROWS));
-  cv.width = Math.round(CELL * COLS * DPR);
-  cv.height = Math.round(CELL * ROWS * DPR);
-  cv.style.width = CELL * COLS + 'px';
-  cv.style.height = CELL * ROWS + 'px';
+  // Carte pivotée : ses rangées deviennent les colonnes de l'écran
+  const gc = ROT ? ROWS : COLS, gr = ROT ? COLS : ROWS;
+  CELL = Math.max(10, Math.min(w / gc, h / gr));
+  cv.width = Math.round(CELL * gc * DPR);
+  cv.height = Math.round(CELL * gr * DPR);
+  cv.style.width = CELL * gc + 'px';
+  cv.style.height = CELL * gr + 'px';
   terrain = renderTerrain(MAP, CELL, DPR);
   resetDecalCanvas();
 }
@@ -1464,7 +1529,9 @@ const TIPS = {
 };
 const $dispatch = document.getElementById('dispatch');
 let dispatchTimer = 0;
+let dispatchText = '', dispatchUntil = 0;   // repris par la ligne d'information du téléphone en portrait
 function showDispatch(text) {
+  dispatchText = text; dispatchUntil = performance.now() + 6000;
   document.getElementById('dispatch-text').textContent = text;
   $dispatch.hidden = false;
   clearTimeout(dispatchTimer);
@@ -1683,15 +1750,21 @@ function drawRank(g, x, y, level) {
   g.save();
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = '#1f1d14'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = `700 ${Math.max(6, Math.round(m.a * .3))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
-  g.fillText(level, m.a * bx + m.e, m.d * (by - .015) + m.f);
+  // Matrice complète : sur la carte pivotée, le repère redressé garde des termes croisés infimes
+  const scale = m.b || m.c ? Math.hypot(m.a, m.b) : m.a;
+  g.font = `700 ${Math.max(6, Math.round(scale * .3))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  if (m.b || m.c) g.fillText(level, m.a * bx + m.c * (by - .015) + m.e, m.b * bx + m.d * (by - .015) + m.f);
+  else g.fillText(level, m.a * bx + m.e, m.d * (by - .015) + m.f);
   g.restore();
 }
 
 // Tour vue du dessus, dans un emplacement en sacs de sable ; g peut être la carte ou une icône
 function drawTower(g, type, x, y, angle, t, level = 1) {
   drawTowerBody(g, type, x, y, angle, t, level);
-  if (level > 1) drawRank(g, x, y, level);
+  if (level > 1) {
+    if (ROT && g === ctx) upright(g, x, y, () => drawRank(g, 0, 0, level));
+    else drawRank(g, x, y, level);
+  }
 }
 
 function drawTowerBody(g, type, x, y, angle, t, level = 1) {
@@ -1822,9 +1895,10 @@ function drawEffects(now) {
       ctx.font = `700 ${Math.max(12, Math.round(CELL * .38))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(18,21,13,.8)';
-      ctx.strokeText(fx.text, fx.x * CELL, (fx.y - p * .6) * CELL);
+      const tx = ROT ? (ROWS - fx.y) * CELL : fx.x * CELL, ty = ROT ? fx.x * CELL - p * .6 * CELL : (fx.y - p * .6) * CELL;
+      ctx.strokeText(fx.text, tx, ty);
       ctx.fillStyle = '#e2a62e';
-      ctx.fillText(fx.text, fx.x * CELL, (fx.y - p * .6) * CELL);
+      ctx.fillText(fx.text, tx, ty);
       ctx.restore();
     }
   }
@@ -1916,22 +1990,27 @@ function drawEnemy(e, t) {
     ctx.fillStyle = 'rgba(124,192,224,.35)';
     ctx.beginPath(); ctx.arc(e.x, e.y, s + .06, 0, Math.PI * 2); ctx.fill();
   }
+  // Étoiles et barre de vie au-dessus de l'ennemi, à l'endroit même sur la carte pivotée
+  if (ROT) upright(ctx, e.x, e.y, () => drawEnemyMarks(e, t, s, 0, 0));
+  else drawEnemyMarks(e, t, s, e.x, e.y);
+}
+function drawEnemyMarks(e, t, s, cx, cy) {
   // Sonné : trois étoiles tournent au-dessus de lui
   if (isStunned(e, t)) {
     ctx.fillStyle = '#f0c040';
     for (let i = 0; i < 3; i++) {
       const a = t * 5 + i * Math.PI * 2 / 3;
-      drawStar(ctx, e.x + Math.cos(a) * (s * .8 + .06), e.y - s - .08 + Math.sin(a) * .07, .07);
+      drawStar(ctx, cx + Math.cos(a) * (s * .8 + .06), cy - s - .08 + Math.sin(a) * .07, .07);
     }
   }
 
   // Barre de vie, masquée tant que l'ennemi est intact
   if (e.hp < e.maxHp) {
     const w = Math.max(.5, s * 2.2), ratio = e.hp / e.maxHp;
-    const y = e.y - s - .16;
-    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(e.x - w / 2 - .02, y - .02, w + .04, .1);
+    const y = cy - s - .16;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(cx - w / 2 - .02, y - .02, w + .04, .1);
     ctx.fillStyle = ratio > .5 ? '#8fbb52' : ratio > .25 ? '#e2a62e' : '#e0533a';
-    ctx.fillRect(e.x - w / 2, y, w * ratio, .06);
+    ctx.fillRect(cx - w / 2, y, w * ratio, .06);
   }
 }
 
@@ -1969,7 +2048,7 @@ function decalContext() {
 }
 function resetDecalCanvas() {
   decalCanvas = document.createElement('canvas');
-  decalCanvas.width = cv.width; decalCanvas.height = cv.height;
+  decalCanvas.width = terrain.width; decalCanvas.height = terrain.height;   // dans le sens de la carte, même pivotée
   const g = decalContext();
   for (const d of state.decals) paintDecal(g, d);
 }
@@ -2029,6 +2108,7 @@ function frame(now) {
   }
   draw(clock);
   updateReadout();
+  if (MOBILE) renderInfo();
   renderStrike();
   if (now - lastSave > 3000) { lastSave = now; saveGame(); }
   requestAnimationFrame(frame);
@@ -2098,10 +2178,14 @@ function draw(t) {
   const ox = (Math.random() - .5) * mag, oy = (Math.random() - .5) * mag;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#5f6440'; ctx.fillRect(0, 0, cv.width, cv.height);
-  ctx.setTransform(1, 0, 0, 1, ox, oy);
+  const k = DPR * CELL;
+  // Carte pivotée : l'est de la carte descend, le sud part vers la gauche
+  if (ROT) ctx.setTransform(0, 1, -1, 0, k * ROWS + ox, oy);
+  else ctx.setTransform(1, 0, 0, 1, ox, oy);
   ctx.drawImage(terrain, 0, 0);
   if (decalCanvas) ctx.drawImage(decalCanvas, 0, 0);
-  ctx.setTransform(DPR * CELL, 0, 0, DPR * CELL, ox, oy);
+  if (ROT) ctx.setTransform(0, k, -k, 0, k * ROWS + ox, oy);
+  else ctx.setTransform(DPR * CELL, 0, 0, DPR * CELL, ox, oy);
   drawWrecks(t);
   drawEntry(t);
   drawBaseHit(t);
@@ -2127,6 +2211,7 @@ function draw(t) {
 function drawPauseBanner() {
   ctx.fillStyle = 'rgba(18,21,13,.55)';
   ctx.fillRect(0, 0, COLS, ROWS);
+  if (ROT) return;   // téléphone en portrait : « Pause » s'écrit dans la ligne d'information, pas sur la carte
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.fillStyle = '#ece7cf';
   ctx.font = `${Math.round(CELL * .9)}px "Black Ops One", Impact, sans-serif`;
@@ -2254,7 +2339,9 @@ const readout = document.getElementById('readout');
 // Position du pointeur en cases (avec décimales) ; null hors de la carte
 function pointFromEvent(e) {
   const rect = cv.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / rect.width * COLS, y = (e.clientY - rect.top) / rect.height * ROWS;
+  let x = (e.clientX - rect.left) / rect.width * COLS, y = (e.clientY - rect.top) / rect.height * ROWS;
+  // Carte pivotée : la largeur de l'écran porte les rangées, la hauteur les colonnes
+  if (ROT) { const sx = (e.clientX - rect.left) / rect.width * ROWS, sy = (e.clientY - rect.top) / rect.height * COLS; x = sy; y = ROWS - sx; }
   return x >= 0 && x < COLS && y >= 0 && y < ROWS ? { x, y } : null;
 }
 function cellFromEvent(e) {
@@ -2302,6 +2389,36 @@ function updateReadout() {
   readout.dataset.kind = kind;
 }
 
+// Téléphone en portrait : la ligne d'information, sous la ligne d'état. Par ordre de priorité : un message de
+// renseignement, la pose ou la visée en cours (× pour annuler), l'ennemi touché, la pause ; sinon la prochaine vague.
+const $info = document.getElementById('info-msg'), $infoText = document.getElementById('info-text'), $infoX = document.getElementById('info-x');
+let infoSig = '';
+function renderInfo() {
+  let label = '', text = '', cancel = false;
+  if (!ROT) { label = ''; }
+  else if (dispatchText && performance.now() < dispatchUntil) { label = 'Renseignement'; text = dispatchText; }
+  else if (state.placing) {
+    const t = TOWER_TYPES[state.placing];
+    label = 'Pose'; cancel = true;
+    text = state.armed ? `${readoutText || t.name} · touchez encore pour poser` : `${t.name}, ${t.cost} crédits : touchez une case libre`;
+  } else if (state.aiming) {
+    label = 'Frappe'; cancel = true;
+    text = state.strikeAim ? 'touchez dans le cercle pour confirmer' : 'touchez la zone à bombarder';
+  } else if (state.hoverEnemy) { label = 'Ennemi'; text = readoutText; }
+  else if (state.paused && state.phase !== 'over') { label = 'Pause'; text = 'le jeu est arrêté'; }
+  const sig = `${label}|${text}|${cancel}`;
+  if (sig === infoSig) return;
+  infoSig = sig;
+  $info.hidden = !label;
+  if (!label) return;
+  $infoText.innerHTML = '';
+  const b = document.createElement('b'); b.textContent = label;
+  $infoText.append(b, text);
+  $info.classList.toggle('long', label.length + text.length > 100);
+  $infoX.hidden = !cancel;
+}
+$infoX.addEventListener('click', () => { if (state.aiming) setAiming(false); else setPlacing(null); });
+
 // Au doigt, il n'y a pas de survol : l'aperçu suit les touchers, pas les glissés
 let pointerType = 'mouse';
 cv.addEventListener('pointerdown', e => { pointerType = e.pointerType; });
@@ -2322,7 +2439,11 @@ cv.addEventListener('click', e => {
   state.hover = h;
   state.pointer = pointFromEvent(e);
   if (state.aiming) { aimStrike(state.pointer); return; }
-  if (!state.placing) { select(towerAt(h.c, h.r) || null); return; }
+  if (!state.placing) {
+    const tw = towerAt(h.c, h.r) || null;
+    select(MOBILE && tw && tw === state.selected ? null : tw);   // au téléphone, toucher la tour sélectionnée referme sa fiche
+    return;
+  }
   const t = TOWER_TYPES[state.placing];
   // Au doigt : un premier toucher montre l'aperçu, un second sur la même case confirme
   const armed = state.armed && state.armed.c === h.c && state.armed.r === h.r;
