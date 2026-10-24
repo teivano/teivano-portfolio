@@ -21,7 +21,7 @@ var MEMORY_MS = 60 * 1000;     // durée pendant laquelle une lecture reste vala
 var mem = null;                // { data, etag, at }
 var reads = { day: '', n: 0 };
 
-function credentials() {
+function credentials(req) {
   // La clé de l'espace rempart-scores, quel que soit le nom exact donné par Vercel au préfixe REMPART
   var names = Object.keys(process.env);
   for (var i = 0; i < names.length; i++) {
@@ -31,8 +31,19 @@ function credentials() {
       if (storeId) return { token: v, storeId: storeId };
     }
   }
+  // Sans clé : l'identifiant de l'espace et le jeton d'identité que Vercel donne à la fonction (OIDC).
+  // Les deux sont passés explicitement, pour que la bibliothèque ne retombe jamais sur la clé du budget.
+  var id = process.env.REMPART_STORE_ID;
+  var oidc = (req && req.headers && req.headers['x-vercel-oidc-token']) || process.env.VERCEL_OIDC_TOKEN;
+  if (id && oidc) return { oidcToken: oidc, storeId: id };
   return null;
 }
+// Options d'accès à l'espace, ajoutées à chaque appel de la bibliothèque
+var access = function (c, opts) {
+  opts.storeId = c.storeId;
+  if (c.token) opts.token = c.token; else opts.oidcToken = c.oidcToken;
+  return opts;
+};
 
 var today = function () { return new Date().toISOString().slice(0, 10); };
 var empty = function () { return { v: 1, day: today(), writes: 0, boards: {} }; };
@@ -42,7 +53,7 @@ async function load(c) {
   if (reads.day !== today()) reads = { day: today(), n: 0 };
   if (reads.n >= READS_PER_DAY) { var e = new Error('quota'); e.code = 'quota'; throw e; }
   reads.n++;
-  var r = await blob.get(PATH, { access: 'private', token: c.token, storeId: c.storeId, useCache: false });
+  var r = await blob.get(PATH, access(c, { access: 'private', useCache: false }));
   if (!r || r.statusCode !== 200) return { data: empty(), etag: null };
   var data = JSON.parse(await new Response(r.stream).text());
   if (!data || typeof data.boards !== 'object') data = empty();
@@ -105,8 +116,7 @@ function apply(data, b, k, name) {
 }
 
 async function save(c, state) {
-  var opts = { access: 'private', token: c.token, storeId: c.storeId, contentType: 'application/json',
-    addRandomSuffix: false, cacheControlMaxAge: 60 };
+  var opts = access(c, { access: 'private', contentType: 'application/json', addRandomSuffix: false, cacheControlMaxAge: 60 });
   if (state.etag) { opts.allowOverwrite = true; opts.ifMatch = state.etag; }
   var r = await blob.put(PATH, JSON.stringify(state.data), opts);
   mem = { data: state.data, etag: r.etag, at: Date.now() };
@@ -114,7 +124,7 @@ async function save(c, state) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('X-Robots-Tag', 'noindex');
-  var c = credentials();
+  var c = credentials(req);
   if (!c) return res.status(503).json({ error: 'classement non configuré' });
 
   try {
