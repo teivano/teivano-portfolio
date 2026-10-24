@@ -1848,22 +1848,74 @@ function drawStrikeAim(t) {
   const p = pointerType === 'touch' && settings.touchConfirm ? state.strikeAim : state.pointer;
   if (!p) return;
   const ready = strikeReady(), r = strikeRadius();
-  ctx.fillStyle = ready ? 'rgba(224,83,58,.16)' : 'rgba(120,120,120,.14)';
-  ctx.strokeStyle = ready ? 'rgba(224,83,58,.9)' : 'rgba(150,150,150,.7)';
-  ctx.lineWidth = .04; ctx.setLineDash([.14, .09]);
+  ctx.fillStyle = ready ? 'rgba(224,83,58,.2)' : 'rgba(120,120,120,.14)';
+  ctx.strokeStyle = ready ? 'rgba(240,96,64,.95)' : 'rgba(150,150,150,.7)';
+  ctx.lineWidth = .06;
   ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(p.x - .25, p.y); ctx.lineTo(p.x + .25, p.y); ctx.moveTo(p.x, p.y - .25); ctx.lineTo(p.x, p.y + .25); ctx.stroke();
+  drawStrikeCross(p.x, p.y);
+  // Les ennemis que la frappe toucherait ici sont entourés, et leur nombre s'affiche au bord du cercle
+  if (!ready) return;
+  const hit = strikeVictims(p.x, p.y, r);
+  markVictims(hit, .95);
+  if (!hit.length) return;
+  // En haut à droite du cercle, ou du côté opposé s'il sortirait de la carte
+  const cx = p.x + r * .75 > COLS - .4 ? p.x - r * .75 : p.x + r * .75, cy = p.y - r * .75 < .4 ? p.y + r * .75 : p.y - r * .75;
+  mapText('×' + hit.length, cx, cy, '#ff8a6a');
+}
+function drawStrikeCross(x, y) {
+  ctx.lineWidth = .045;
+  ctx.beginPath();
+  ctx.moveTo(x - .32, y); ctx.lineTo(x - .1, y); ctx.moveTo(x + .1, y); ctx.lineTo(x + .32, y);
+  ctx.moveTo(x, y - .32); ctx.lineTo(x, y - .1); ctx.moveTo(x, y + .1); ctx.lineTo(x, y + .32);
+  ctx.stroke();
+}
+// Ennemis dont le corps est dans le cercle : ceux que la frappe touche
+const strikeVictims = (x, y, r) => state.enemies.filter(e => !e.dead && Math.hypot(e.x - x, e.y - y) <= r + e.t.size);
+function markVictims(list, alpha) {
+  ctx.strokeStyle = `rgba(255,96,64,${alpha})`; ctx.lineWidth = .05;
+  for (const e of list) { ctx.beginPath(); ctx.arc(e.x, e.y, e.t.size + .1, 0, Math.PI * 2); ctx.stroke(); }
 }
 
-// Frappes en approche : la zone visée clignote jusqu'à l'impact
+// Frappes en approche : la zone est marquée, et un anneau se referme comme un compte à rebours jusqu'à l'impact
 function drawStrikeTargets(t) {
   for (const sk of state.strikes) {
-    ctx.strokeStyle = `rgba(224,83,58,${.65 + .3 * Math.sin(t * 14)})`; ctx.lineWidth = .05;
-    ctx.setLineDash([.14, .09]);
-    ctx.beginPath(); ctx.arc(sk.x, sk.y, sk.radius, 0, Math.PI * 2); ctx.stroke();
-    ctx.setLineDash([]);
+    const left = Math.max(0, Math.min(1, (sk.at - t) / STRIKE.delay));
+    ctx.fillStyle = 'rgba(224,83,58,.14)'; ctx.strokeStyle = 'rgba(240,96,64,.5)'; ctx.lineWidth = .03;
+    ctx.beginPath(); ctx.arc(sk.x, sk.y, sk.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,110,70,.95)'; ctx.lineWidth = .11;
+    ctx.beginPath(); ctx.arc(sk.x, sk.y, sk.radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * left); ctx.stroke();
+    drawStrikeCross(sk.x, sk.y);
+    markVictims(strikeVictims(sk.x, sk.y, sk.radius), .8);
   }
+}
+// Sol brûlé par une frappe, sous les tours et les ennemis : la zone exacte touchée reste visible quelques secondes
+function drawScorches(t) {
+  for (const fx of state.effects) {
+    if (fx.kind !== 'scorch') continue;
+    const p = (t - fx.t) / fx.dur;
+    if (p < 0 || p > 1) continue;
+    const a = p < .6 ? 1 : (1 - p) / .4;
+    const g = ctx.createRadialGradient(fx.x, fx.y, 0, fx.x, fx.y, fx.r);
+    g.addColorStop(0, `rgba(26,18,10,${.55 * a})`); g.addColorStop(.8, `rgba(38,25,13,${.4 * a})`); g.addColorStop(1, 'rgba(38,25,13,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = `rgba(240,96,64,${.5 * a})`; ctx.lineWidth = .03;
+    ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+// Texte à l'endroit sur la carte, même pivotée : écrit en pixels ; x, y en cases, dy en pixels
+function mapText(text, x, y, color, alpha = 1, dy = 0, size = .38) {
+  ctx.save();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalAlpha = alpha;
+  ctx.font = `700 ${Math.max(11, Math.round(CELL * size))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(18,21,13,.8)';
+  const tx = ROT ? (ROWS - y) * CELL : x * CELL, ty = (ROT ? x * CELL : y * CELL) + dy;
+  ctx.strokeText(text, tx, ty);
+  ctx.fillStyle = color;
+  ctx.fillText(text, tx, ty);
+  ctx.restore();
 }
 
 function drawEffects(now) {
@@ -1900,6 +1952,14 @@ function drawEffects(now) {
     } else if (fx.kind === 'puff') {
       ctx.fillStyle = `rgba(70,66,56,${.55 * (1 - p)})`;
       ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (.6 + .6 * p), 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'strikeflash') {
+      // Éclair qui remplit exactement la zone de la frappe, puis onde de choc jusqu'à son bord
+      ctx.fillStyle = `rgba(255,214,150,${.55 * (1 - p) ** 2})`;
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = `rgba(255,190,110,${.9 * (1 - p)})`; ctx.lineWidth = .02 + .1 * (1 - p);
+      ctx.beginPath(); ctx.arc(fx.x, fx.y, fx.r * (.25 + .75 * Math.min(1, p * 1.6)), 0, Math.PI * 2); ctx.stroke();
+    } else if (fx.kind === 'dmg') {
+      mapText(fx.text, fx.x, fx.y, '#ff8a6a', 1 - p * p, -p * .4 * CELL, .32);
     } else if (fx.kind === 'float') {
       ctx.save();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -2148,7 +2208,14 @@ let lastSave = 0;
 // terrain est dégagé (pas quand on appelle une vague en avance). Trois améliorations payantes, de 2 niveaux
 // chacune : rayon, dégâts, et frappes en plus par manche. gap : délai entre deux frappes d'une même manche.
 // stun : les ennemis touchés restent sonnés sur place (moins longtemps s'ils résistent aux ralentissements).
-const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, stun: 1.5, radius: [1.5, 2, 2.5], damage: [250, 375, 560], cost: [70, 120], extraCost: [150, 250] };
+const STRIKE = { unlockWave: 5, delay: 1.2, gap: 3, stun: 1.5, radius: [1.5, 2, 2.5, 3], damage: [250, 375, 560, 750, 950],
+  // Survie : chaque ennemi touché perd au moins cette part de ses PV (moitié pour le char lourd, qui résiste), pour que
+  // la frappe suive la montée des PV au lieu d'être rattrapée
+  share: [.2, .3, .4, .5, .6],
+  // Prix des niveaux de chaque voie : rayon, dégâts, frappe en plus. La campagne s'arrête aux 2 premiers, la survie va plus loin
+  costs: { r: [70, 120, 450], d: [70, 120, 400, 700], n: [150, 250, 600] } };
+const strikeCosts = track => state.survival ? STRIKE.costs[track] : STRIKE.costs[track].slice(0, 2);
+const strikeShare = (lvl = state.strike.d) => state.survival ? STRIKE.share[lvl] : 0;
 const strikeRadius = (lvl = state.strike.r) => STRIKE.radius[lvl];
 const strikeDamage = (lvl = state.strike.d) => STRIKE.damage[lvl];
 const strikeUnlocked = () => state.wave > STRIKE.unlockWave || (state.wave === STRIKE.unlockWave && state.phase !== 'wave');
@@ -2160,7 +2227,7 @@ const strikeReady = () => state.strike.ready > 0 && !strikeWait();
 function launchStrike(x, y) {
   state.strike.ready--;
   state.strike.lastAt = clock;
-  state.strikes.push({ x: r2(x), y: r2(y), at: clock + STRIKE.delay, radius: strikeRadius(), damage: strikeDamage() });
+  state.strikes.push({ x: r2(x), y: r2(y), at: clock + STRIKE.delay, radius: strikeRadius(), damage: strikeDamage(), share: strikeShare() });
   // L'avion arrive de l'ouest et passe au-dessus de la cible au moment de l'impact
   state.effects.push({ kind: 'plane', x: x, y: y, t: clock, dur: STRIKE.delay + 1.4, at: clock + STRIKE.delay });
   sfx.play('jet');
@@ -2170,9 +2237,14 @@ function updateStrikes(now) {
   for (const sk of state.strikes) {
     if (now < sk.at) continue;
     sk.done = true;
+    let hits = 0;
     for (const e of state.enemies) {
       if (e.dead || Math.hypot(e.x - sk.x, e.y - sk.y) > sk.radius + e.t.size) continue;
-      hurt(e, sk.damage);
+      const before = e.hp;
+      hurt(e, Math.max(sk.damage, Math.round((sk.share || 0) * e.maxHp * (1 - e.t.slowResist))));
+      // Les PV retirés s'affichent au-dessus de l'ennemi, sur trois hauteurs pour que des voisins proches ne se
+      // chevauchent pas ; s'il est détruit, sa prime suffit
+      if (!e.dead) state.effects.push({ kind: 'dmg', x: e.x, y: e.y - e.t.size - .2 - (hits++ % 3) * .3, text: '−' + Math.round(before - e.hp).toLocaleString('fr-FR'), t: now, dur: 1.2 });
       e.stunUntil = Math.max(e.stunUntil || 0, now + STRIKE.stun * (1 - e.t.slowResist));
     }
     // Un chapelet d'explosions couvre la zone, et laisse ses cratères
@@ -2182,6 +2254,9 @@ function updateStrikes(now) {
       state.effects.push({ kind: 'blast', x, y, r: sk.radius * .55, t: now, dur: .5 + i * .08 });
       addDecal({ k: 'crater', x: r2(x), y: r2(y), r: r2(.14 + Math.random() * .1) });
     }
+    // Éclair et onde de choc sur la zone exacte, puis sol brûlé quelques secondes
+    state.effects.push({ kind: 'strikeflash', x: sk.x, y: sk.y, r: sk.radius, t: now, dur: .55 });
+    state.effects.push({ kind: 'scorch', x: sk.x, y: sk.y, r: sk.radius, t: now, dur: 3.5 });
     sfx.play('bomb');
     shake(.18, .5);
   }
@@ -2213,6 +2288,7 @@ function draw(t) {
   if (decalCanvas) ctx.drawImage(decalCanvas, 0, 0);
   if (ROT) ctx.setTransform(0, k, -k, 0, k * ROWS + ox, oy);
   else ctx.setTransform(DPR * CELL, 0, 0, DPR * CELL, ox, oy);
+  drawScorches(t);
   drawWrecks(t);
   drawEntry(t);
   drawBaseHit(t);
@@ -2738,25 +2814,27 @@ function renderStrike() {
 function renderStrikePanel() {
   $strikePanel.hidden = !state.aiming;
   if (!state.aiming) return;
-  const { r, d, n } = state.strike, max = STRIKE.cost.length;
-  const next = (lvl, f) => lvl < max ? ` <span class="next">→ ${f(lvl + 1)}</span>` : '';
+  const { r, d, n } = state.strike;
+  const next = (track, lvl, f) => lvl < strikeCosts(track).length ? ` <span class="next">→ ${f(lvl + 1)}</span>` : '';
+  const pct = l => Math.round(STRIKE.share[l] * 100) + ' %';
   const rows = [
-    ['Dégâts', strikeDamage() + next(d, l => strikeDamage(l))],
-    ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next(r, l => fmt(strikeRadius(l), 1))],
-    ['Frappes', `${strikeMax()} par manche` + next(n, l => 1 + l)],
+    // Survie : au moins une part des PV de chaque ennemi touché
+    ['Dégâts', state.survival ? `${strikeDamage()} ou ${pct(d)} des PV` + next('d', d, pct) : strikeDamage() + next('d', d, l => strikeDamage(l))],
+    ['Rayon', fmt(strikeRadius(), 1) + ' case' + (strikeRadius() >= 2 ? 's' : '') + next('r', r, l => fmt(strikeRadius(l), 1))],
+    ['Frappes', `${strikeMax()} par manche` + next('n', n, l => 1 + l)],
     ['Délai', `${fmt(STRIKE.delay, 1)} s après le clic`],
     ['Effet', `ennemis sonnés ${fmt(STRIKE.stun, 1)} s, sur place`],
   ];
   document.getElementById('sp-stats').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
   for (const [$b, track, label] of [[$spRadius, 'r', 'Rayon'], [$spDamage, 'd', 'Dégâts'], [$spExtra, 'n', '+1 frappe']]) {
-    const lvl = state.strike[track], costs = track === 'n' ? STRIKE.extraCost : STRIKE.cost;
+    const lvl = state.strike[track], costs = strikeCosts(track), max = costs.length;
     $b.textContent = lvl >= max ? (track === 'n' ? 'Frappes max' : `${label} max`) : `${label} (${costs[lvl]})`;
     $b.disabled = lvl >= max || state.gold < costs[lvl];
   }
 }
 
 function upgradeStrike(track) {
-  const lvl = state.strike[track], costs = track === 'n' ? STRIKE.extraCost : STRIKE.cost;
+  const lvl = state.strike[track], costs = strikeCosts(track);
   if (lvl >= costs.length || state.gold < costs[lvl]) return;
   state.gold -= costs[lvl];
   state.strike[track]++;
