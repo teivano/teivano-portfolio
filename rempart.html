@@ -112,6 +112,9 @@
   .report .buttons { margin-top: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
   .report.menu { box-sizing: border-box; width: min(540px, 100%); max-width: none; max-height: 100%; overflow-y: auto; align-items: stretch; }
+  /* Croix de fermeture : téléphone seulement, menu de pause seulement ; collée en haut même si la fenêtre défile */
+  .menu-x { display: none; }
+  html.mobile #menu:not(.title) .menu-x { display: block; position: sticky; top: 0; z-index: 2; align-self: flex-end; flex: none; width: 40px; height: 40px; margin: -6px -10px -40px 0; padding: 0; font-size: 26px; line-height: 1; color: var(--muted); }
   .menu-note { font-size: 14px; color: var(--muted); }
   .wave-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
   .wave-row { width: 100%; display: grid; grid-template-columns: 4.6em minmax(0, 1fr) auto; align-items: baseline; gap: 2px 10px; padding: 6px 10px; text-align: left; }
@@ -468,6 +471,7 @@
 <!-- Menu : écran titre au démarrage (opaque, rien derrière), menu de pause en jeu -->
 <div class="overlay" id="menu" hidden>
   <div class="report menu" id="menu-box" role="dialog" aria-labelledby="menu-title">
+    <button class="menu-x" id="menu-x" aria-label="Fermer le menu">×</button>
     <section class="view" data-view="title">
       <p class="eyebrow">Poste de commandement</p>
       <h2 class="title-logo" id="menu-title">Opération Rempart</h2>
@@ -2695,12 +2699,32 @@ function setAiming(on) {
   renderStrikePanel();
 }
 
+// Ordinateur : la fiche de la frappe couvre un coin de la carte. Elle reste en place quand le curseur passe, pour
+// qu'on puisse cliquer ses boutons, et ne change de côté que si le curseur s'arrête une demi-seconde tout près
+// d'elle : on veut alors viser dessous. (Sur la fiche elle-même, la carte ne voit plus le curseur.)
+const STRIKE_PANEL_DWELL = 500;
+let strikePanelNear = 0;
+function placeStrikePanel() {
+  const p = state.pointer;
+  let near = false;
+  if (p) {
+    const c = cv.getBoundingClientRect(), r = $strikePanel.getBoundingClientRect(), m = 1.2;   // marge, en cases
+    const x0 = (r.left - c.left) / c.width * COLS, x1 = (r.right - c.left) / c.width * COLS;
+    const y1 = (r.bottom - c.top) / c.height * ROWS;
+    near = p.x >= x0 - m && p.x <= x1 + m && p.y <= y1 + m;
+  }
+  if (!near) { strikePanelNear = 0; return; }
+  const now = performance.now();
+  if (!strikePanelNear) strikePanelNear = now;
+  else if (now - strikePanelNear >= STRIKE_PANEL_DWELL) { $strikePanel.classList.toggle('left'); strikePanelNear = 0; }
+}
+
 // État du bouton (verrouillé, frappes restantes, délai), mis à jour chaque image mais réécrit seulement s'il change
 let strikeBtnSig = '';
 function renderStrike() {
   const locked = !strikeUnlocked(), wait = Math.ceil(strikeWait()), { ready } = state.strike, max = strikeMax();
   const sig = `${locked}|${ready}|${max}|${wait}|${state.phase}`;
-  if (state.aiming) $strikePanel.classList.toggle('left', !!state.pointer && state.pointer.x >= COLS / 2);
+  if (state.aiming && !MOBILE) placeStrikePanel();
   if (sig === strikeBtnSig) return;
   strikeBtnSig = sig;
   $strikeBtn.disabled = locked || state.phase === 'over';
@@ -3007,6 +3031,15 @@ $menu.addEventListener('click', e => {
   else showView(b.dataset.goto);
 });
 document.getElementById('btn-menu').addEventListener('click', openMenu);
+// En jeu, la croix (téléphone) ou un toucher à côté de la fenêtre ferme le menu entier, comme Échap. Le geste doit
+// commencer et finir à côté, pour qu'un glissement parti de la fenêtre ne ferme rien. L'écran titre ne se ferme pas.
+let menuDownOutside = false;
+$menu.addEventListener('pointerdown', e => { menuDownOutside = e.target === $menu; });
+$menu.addEventListener('click', e => {
+  if (e.target === $menu && menuDownOutside && menuMode === 'pause') closeMenu();
+  menuDownOutside = false;
+});
+document.getElementById('menu-x').addEventListener('click', closeMenu);
 document.getElementById('btn-ov-menu').addEventListener('click', openTitle);
 
 // Écran titre

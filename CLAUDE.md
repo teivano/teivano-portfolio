@@ -59,6 +59,7 @@
 - **APIs** : STAR open data, SNCF, BAN, Esri, NASA, IGN, API-Ninjas, data.economie.gouv.fr
 - **Cache STAR** : localStorage TTL 90s (évite les 429)
 - **Proxies Vercel** : `/api/trains`, `/api/cars`, `/api/motorcycles`
+- **Classement d'Opération Rempart** : `/api/scores` (`api/scores.js`), stocké dans l'espace Blob privé `rempart-scores` (variables préfixées `REMPART`). Il ne doit jamais utiliser `BLOB_READ_WRITE_TOKEN`, qui est la clé du budget. Les quotas Blob gratuits sont communs à tout le site : la route plafonne ses écritures à 30 par jour.
 
 ## Environnement & déploiement
 - **Domaine** : teivano.fr
@@ -80,7 +81,7 @@
 - **Mettre à jour** (depuis la racine du repo, après GO) :
   1. `git pull --rebase`
   2. `{ printf '<!DOCTYPE html>\n<html lang="fr">\n'; cat "../Tower Defense/operation-rempart.html"; } > rempart.html`
-  3. `git add rempart.html && git commit -m "feat(rempart): …" && git push` — ne committer que `rempart.html`.
+  3. `git add rempart.html && git commit -m "feat(rempart): …" && git push` — ne committer que `rempart.html` (et `api/scores.js` quand le classement en ligne change).
 
 ## Ce qu'il ne faut pas casser
 - `gcOf(id)` cherche `.gc` comme ancêtre direct — ne pas imbriquer les `.gc`

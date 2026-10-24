@@ -1,6 +1,7 @@
 // Classement en ligne d'Opération Rempart (rempart.html).
 // GET  /api/scores : tous les classements { boards: { 'col:veteran': [...], 'col:veteran:survie': [...] } }
-// POST /api/scores : { id, name, key, s, st, w } inscrit un score ; { id, name, rename: true } renomme le joueur
+// POST /api/scores : { id, name, key, s, st, w } inscrit un score ; { id, name, rename: true } renomme le joueur ;
+//                    { id, name, remove: key } retire sa propre ligne d'un classement
 //
 // Stockage : un seul fichier JSON dans l'espace Blob privé « rempart-scores », branché sur le projet avec le
 // préfixe REMPART. On n'utilise jamais BLOB_READ_WRITE_TOKEN, qui est la clé du budget.
@@ -82,6 +83,14 @@ function apply(data, b, k, name) {
     data.boards[key].forEach(function (e) { if (e.k === k && e.n !== name) { e.n = name; changed = true; } });
   });
   if (b.rename) return changed;
+  if (b.remove) {
+    var kept = (data.boards[b.remove] || []).filter(function (e) { return e.k !== k; });
+    if (data.boards[b.remove] && kept.length !== data.boards[b.remove].length) {
+      if (kept.length) data.boards[b.remove] = kept; else delete data.boards[b.remove];
+      changed = true;
+    }
+    return changed;
+  }
   var survival = /:survie$/.test(b.key);
   var entry = { k: k, n: name, s: b.s, at: Date.now() };
   if (survival) entry.w = b.w; else entry.st = b.st;
@@ -122,13 +131,14 @@ module.exports = async function handler(req, res) {
     if (typeof b.id !== 'string' || !/^[A-Za-z0-9-]{16,64}$/.test(b.id)) return res.status(400).json({ error: 'joueur inconnu' });
     var name = cleanName(b.name);
     if (!name) return res.status(400).json({ error: 'pseudo manquant' });
-    if (!b.rename) { var bad = validScore(b); if (bad) return res.status(400).json({ error: bad }); }
+    if (b.remove !== undefined && !KEY_RE.test(b.remove)) return res.status(400).json({ error: 'classement inconnu' });
+    if (!b.rename && b.remove === undefined) { var bad = validScore(b); if (bad) return res.status(400).json({ error: bad }); }
     var k = playerKey(b.id);
     res.setHeader('Cache-Control', 'no-store');
 
     // Rien à écrire d'après la dernière lecture : on répond sans toucher au stockage
     if (mem && Date.now() - mem.at < MEMORY_MS && !apply(JSON.parse(JSON.stringify(mem.data)), b, k, name)) {
-      return res.status(200).json({ ok: true, saved: false, k: k, board: b.rename ? null : mem.data.boards[b.key] || [] });
+      return res.status(200).json({ ok: true, saved: false, k: k, board: b.rename || b.remove ? null : mem.data.boards[b.key] || [] });
     }
 
     // Écriture conditionnelle : si un autre joueur a écrit entre-temps, on relit et on recommence
@@ -136,14 +146,14 @@ module.exports = async function handler(req, res) {
       var st = await fresh(c, true);
       var data = JSON.parse(JSON.stringify(st.data));
       if (!apply(data, b, k, name)) {
-        return res.status(200).json({ ok: true, saved: false, k: k, board: b.rename ? null : data.boards[b.key] || [] });
+        return res.status(200).json({ ok: true, saved: false, k: k, board: b.rename || b.remove ? null : data.boards[b.key] || [] });
       }
       if (data.day !== today()) { data.day = today(); data.writes = 0; }
       if (data.writes >= WRITES_PER_DAY) return res.status(429).json({ error: 'plafond du jour atteint', k: k });
       data.writes++;
       try {
         await save(c, { data: data, etag: st.etag });
-        return res.status(200).json({ ok: true, saved: true, k: k, board: b.rename ? null : data.boards[b.key] });
+        return res.status(200).json({ ok: true, saved: true, k: k, board: b.rename || b.remove ? null : data.boards[b.key] });
       } catch (e) {
         // Fichier modifié entre-temps, ou créé au même instant par un autre joueur au tout premier score
         if (!(e instanceof blob.BlobPreconditionFailedError) && st.etag) throw e;
