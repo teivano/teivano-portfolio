@@ -104,6 +104,11 @@
   .lb-score { font-weight: 700; font-variant-numeric: tabular-nums; }
   .lb-list li.lb-empty { display: block; color: var(--muted); }
   .lb-note { font-size: 12px; color: var(--muted); }
+  /* Classement en ligne (teivano.fr) : pseudo du joueur */
+  .lb-name { display: flex; gap: 6px; }
+  .lb-name input, .set-row input[type="text"] { box-sizing: border-box; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); padding: 7px 10px; }
+  .lb-name input { flex: 1 1 auto; }
+  .lb-name input:focus, .set-row input[type="text"]:focus { outline: 1px solid var(--brass); border-color: var(--brass); }
   .report .buttons { margin-top: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
   .report.menu { box-sizing: border-box; width: min(540px, 100%); max-width: none; max-height: 100%; overflow-y: auto; align-items: stretch; }
@@ -437,6 +442,7 @@
         <div class="leaderboard" id="ov-board">
           <p class="lb-title"></p>
           <ol class="lb-list"></ol>
+          <form class="lb-name" hidden><input type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Votre pseudo" aria-label="Votre pseudo pour le classement en ligne"><button type="submit">Inscrire</button></form>
           <p class="lb-note"></p>
         </div>
         <div class="buttons">
@@ -529,6 +535,7 @@
       <div class="wave-recs" id="sc-waves" role="list" aria-label="Records par vague : vies perdues au mieux"></div>
       <div class="leaderboard" id="menu-board">
         <ol class="lb-list"></ol>
+        <form class="lb-name" hidden><input type="text" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Votre pseudo" aria-label="Votre pseudo pour le classement en ligne"><button type="submit">Inscrire</button></form>
         <p class="lb-note"></p>
       </div>
       <div class="buttons"><button data-goto="back">Retour</button></div>
@@ -543,6 +550,7 @@
         <label class="set-row"><span>Ambiance <small>grondements, radio</small></span><input type="range" id="set-amb" min="0" max="100" step="5"></label>
         <label class="set-row check"><input type="checkbox" id="set-shake"><span>Tremblements d'écran <small>arrivée et destruction du char lourd, fuites</small></span></label>
         <label class="set-row check"><input type="checkbox" id="set-touch"><span>Confirmer la pose au doigt <small>un premier toucher montre l'aperçu, un second pose la tour</small></span></label>
+        <label class="set-row" id="set-name-row" hidden><span>Pseudo <small>pour le classement en ligne</small></span><input type="text" id="set-name" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="Choisir un pseudo"></label>
         <label class="set-row check mobile-only"><input type="checkbox" id="set-left"><span>Commandes à gauche <small>téléphone couché : la colonne de commande passe à gauche de la carte</small></span></label>
       </div>
       <div class="buttons"><button data-goto="back">Retour</button></div>
@@ -3149,6 +3157,7 @@ $waveList.addEventListener('click', e => {
 let scMap = 'col', scDiff = 'veteran', scMode = 'campaign';
 const $scMaps = document.getElementById('sc-maps'), $scDiffs = document.getElementById('sc-diffs'), $scModes = document.getElementById('sc-modes');
 function renderScores() {
+  loadOnline();
   $scMaps.innerHTML = MAP_DEFS.map(({ id }) =>
     `<button role="radio" data-map="${id}" aria-checked="${id === scMap}">${MAPS[id].name}</button>`).join('');
   $scDiffs.innerHTML = Object.entries(DIFFICULTIES).map(([id, d]) =>
@@ -3189,6 +3198,8 @@ $scModes.addEventListener('click', e => {
 // ===== Paramètres =====
 const $setFx = document.getElementById('set-fx'), $setAmb = document.getElementById('set-amb');
 const $setShake = document.getElementById('set-shake'), $setTouch = document.getElementById('set-touch'), $setLeft = document.getElementById('set-left');
+const $setName = document.getElementById('set-name'), $setNameRow = document.getElementById('set-name-row');
+$setName.addEventListener('change', () => { setPlayerName($setName.value); $setName.value = player.name; });
 function renderSettings() {
   renderSpeed();
   $setSound.checked = !sfx.muted;
@@ -3197,6 +3208,8 @@ function renderSettings() {
   $setShake.checked = settings.shake;
   $setTouch.checked = settings.touchConfirm;
   $setLeft.checked = !!settings.leftHand;
+  $setNameRow.hidden = !ONLINE;
+  $setName.value = player.name;
 }
 $setFx.addEventListener('input', () => { settings.fx = $setFx.value / 100; sfx.setVolumes(); saveSettings(); });
 $setAmb.addEventListener('input', () => { settings.amb = $setAmb.value / 100; sfx.setVolumes(); saveSettings(); });
@@ -3241,6 +3254,7 @@ function endGame(win, restored = false) {
   }
   document.getElementById('ov-score').textContent = `Score : ${state.score.toLocaleString('fr-FR')}`;
   renderLeaderboard($ovBoard, state.mapId, state.difficulty, survival ? 'survival' : 'campaign');
+  loadOnline();
   // Une victoire peut ouvrir la carte suivante à ce niveau de difficulté
   const next = MAP_DEFS[MAP_DEFS.findIndex(m => m.id === state.mapId) + 1];
   const opens = win && next ? DIFF_ORDER.filter(d => !unlocked(next.id, d) && DIFF_ORDER.indexOf(d) <= DIFF_ORDER.indexOf(state.difficulty)) : [];
@@ -3347,12 +3361,99 @@ const better = (a, b, survival) => survival ? (a.wave || 0) - (b.wave || 0) || a
   }, () => { board.db = null; });
 })();
 
+// Sur teivano.fr, le classement est en ligne : la route /api/scores du site garde les 20 meilleurs de chaque
+// carte, difficulté et mode, pour tous les joueurs (?online=1 l'active ailleurs, pour les tests). Le joueur a un
+// identifiant tiré au hasard, gardé dans ce navigateur ; le site n'en renvoie qu'une empreinte (k), qui sert à
+// reconnaître ses lignes. Un score attend dans rempart-pending tant qu'il n'est pas inscrit (pas de pseudo, réseau).
+const ONLINE = /(^|\.)teivano\.fr$/.test(location.hostname || '') || /[?&]online=1/.test(location.search || '');
+const online = { boards: null, at: 0, loading: null, error: false };
+const player = { id: '', name: '', k: '' };
+let pending = {}, flushing = false;
+const savePlayer = () => { try { localStorage.setItem('rempart-player', JSON.stringify(player)); } catch (e) {} };
+const savePending = () => { try { localStorage.setItem('rempart-pending', JSON.stringify(pending)); } catch (e) {} };
+const cleanName = s => String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+// Une ligne du site ({ n, s, st, w }) dans le format des scores du jeu
+const fromSite = e => ({ score: e.s, stars: e.st, wave: e.w });
+
+function loadOnline(force) {
+  if (!ONLINE) return Promise.resolve();
+  if (online.loading) return online.loading;
+  if (!force && online.boards && Date.now() - online.at < 30000) return Promise.resolve();
+  online.loading = fetch('/api/scores')
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(j => { online.boards = j.boards || {}; online.at = Date.now(); online.error = false; })
+    .catch(() => { online.error = true; })
+    .then(() => { online.loading = null; refreshBoards(); });
+  return online.loading;
+}
+async function postScores(body) {
+  const r = await fetch('/api/scores', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (j.k && j.k !== player.k) { player.k = j.k; savePlayer(); }
+  return { ok: r.ok, status: r.status, j };
+}
+// Envoie les scores en attente, un par classement (le meilleur), dès que le joueur a un pseudo
+async function flushOnline() {
+  if (!ONLINE || flushing || !player.name) return;
+  flushing = true;
+  for (const key of Object.keys(pending)) {
+    const e = pending[key], survival = key.endsWith(':survie');
+    // Inutile d'envoyer un score qui ne bat ni le sien ni le dernier du classement
+    const list = online.boards && online.boards[key];
+    if (list) {
+      const mine = list.find(x => x.k === player.k);
+      if ((mine && better(e, fromSite(mine), survival) <= 0) || (!mine && list.length >= 20 && better(e, fromSite(list[list.length - 1]), survival) <= 0)) {
+        delete pending[key]; savePending(); continue;
+      }
+    }
+    try {
+      const { ok, status, j } = await postScores({ id: player.id, name: player.name, key, s: e.score, st: e.stars || 0, w: e.wave });
+      // Refusé pour de bon (400) : inutile de réessayer ; plafond du jour ou panne : on réessaiera au prochain lancement
+      if (ok || status === 400) { delete pending[key]; savePending(); }
+      if (ok && j.board && online.boards) online.boards[key] = j.board;
+      if (!ok && status !== 400) break;
+    } catch (err) { break; }
+  }
+  flushing = false;
+  refreshBoards();
+}
+async function setPlayerName(value) {
+  const name = cleanName(value);
+  if (!name || name === player.name) return;
+  const known = !!player.k;
+  player.name = name;
+  savePlayer();
+  // Le pseudo change sur toutes ses lignes, ici tout de suite et sur le site
+  if (online.boards) for (const key in online.boards) online.boards[key].forEach(e => { if (e.k === player.k) e.n = name; });
+  refreshBoards();
+  if (known) { try { await postScores({ id: player.id, name, rename: true }); } catch (e) {} }
+  flushOnline();
+}
+if (ONLINE) {
+  try { Object.assign(player, JSON.parse(localStorage.getItem('rempart-player')) || {}); } catch (e) {}
+  try { pending = JSON.parse(localStorage.getItem('rempart-pending')) || {}; } catch (e) {}
+  if (!/^[A-Za-z0-9-]{16,64}$/.test(player.id)) {
+    player.id = window.crypto && crypto.randomUUID ? crypto.randomUUID()
+      : Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    savePlayer();
+  }
+  loadOnline().then(flushOnline);
+}
+document.querySelectorAll('.lb-name').forEach($f => $f.addEventListener('submit', e => {
+  e.preventDefault();
+  setPlayerName($f.querySelector('input').value);
+}));
+
 async function recordScore(score, starCount) {
   const key = scoreKey(), survival = !!state.survival;
   const entry = { score, stars: starCount, at: Date.now(), ...(survival ? { wave: state.wave } : {}) };
   board.lastAt = entry.at;
   board.local[key] = (board.local[key] || []).concat(entry).sort((a, b) => better(b, a, survival)).slice(0, 5);
   try { localStorage.setItem('rempart-scores', JSON.stringify(board.local)); } catch (e) {}
+  if (ONLINE && !board.db) {
+    if (!pending[key] || better(entry, pending[key], survival) > 0) { pending[key] = entry; savePending(); }
+    loadOnline().then(flushOnline);
+  }
   if (board.db) {
     const mine = board.docs.find(d => d.id === board.uid);
     const prev = mine && mine.best[key];
@@ -3383,10 +3484,25 @@ async function renderLeaderboard($box, mapId, difficulty, mode = 'campaign') {
     $note.textContent = board.writeRefused
       ? "Votre score n'a pas pu être inscrit : il faut le rôle Contributeur sur cette page."
       : 'Tableau partagé entre les joueurs de cette page.';
+  } else if (ONLINE && online.boards) {
+    // Les 10 premiers dans le menu, 5 dans le rapport, plus la ligne du joueur s'il est plus loin
+    const limit = $box === $menuBoard ? 10 : 5;
+    const all = (online.boards[key] || []).map((e, i) => ({ rank: i + 1, who: e.n, score: e.s, stars: e.st, wave: e.w, me: !!player.k && e.k === player.k }));
+    rows = all.slice(0, limit);
+    const mine = all.find(r => r.me);
+    if (mine && mine.rank > limit) rows.push(mine);
+    $note.textContent = !player.name
+      ? (pending[key] ? 'Choisissez un pseudo pour inscrire votre score au classement en ligne.' : 'Choisissez un pseudo pour figurer au classement en ligne.')
+      : pending[key] ? 'Classement en ligne · votre score sera inscrit dès que possible.'
+      : 'Classement en ligne des joueurs de teivano.fr.';
   } else {
     rows = (board.local[key] || []).map(r => ({ who: new Date(r.at).toLocaleDateString('fr-FR'), score: r.score, stars: r.stars, wave: r.wave, me: r.at === board.lastAt }));
-    $note.textContent = 'Vos meilleurs scores, gardés dans ce navigateur.';
+    $note.textContent = !ONLINE ? 'Vos meilleurs scores, gardés dans ce navigateur.'
+      : online.error ? 'Classement en ligne indisponible pour le moment : vos meilleurs scores de ce navigateur.'
+      : 'Chargement du classement en ligne…';
   }
+  const $name = $box.querySelector('.lb-name');
+  if ($name) $name.hidden = !(ONLINE && !board.db && online.boards && !player.name);
   $list.replaceChildren();
   if (!rows.length) {
     const li = document.createElement('li');
@@ -3400,7 +3516,7 @@ async function renderLeaderboard($box, mapId, difficulty, mode = 'campaign') {
     if (r.me) li.className = 'me';
     // Survie : la vague atteinte à la place des étoiles
     const badge = survival ? `V${r.wave || '?'}` : '★'.repeat(r.stars || 0);
-    li.innerHTML = `<span class="lb-rank">${i + 1}</span><span class="lb-who"></span><span class="lb-stars">${badge}</span><span class="lb-score">${r.score.toLocaleString('fr-FR')}</span>`;
+    li.innerHTML = `<span class="lb-rank">${r.rank || i + 1}</span><span class="lb-who"></span><span class="lb-stars">${badge}</span><span class="lb-score">${r.score.toLocaleString('fr-FR')}</span>`;
     li.querySelector('.lb-who').textContent = r.who;   // un nom vient d'un autre joueur : jamais en HTML
     $list.appendChild(li);
   });
