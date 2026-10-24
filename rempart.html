@@ -259,10 +259,11 @@
     html.mobile .stat span { font-size: 10px; letter-spacing: .08em; }
     html.mobile .stat b { font-size: 17px; }
     html.mobile .stat:has(#score) { display: none; }
-    html.mobile .stat.next, html.mobile .hud:has(#speed-chip[hidden]) .stat:has(#wave) { grid-column: 1 / -1; }
+    html.mobile .stat.next, html.mobile:not(.col-wide) .hud:has(#speed-chip[hidden]) .stat:has(#wave) { grid-column: 1 / -1; }
+    html.mobile.col-wide .hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     html.mobile .arsenal { grid-area: arsenal; min-height: 0; }
     html.mobile .towers { height: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); gap: 6px; }
-    html.mobile .tower-btn { grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; row-gap: 0; padding: 4px; text-align: center; }
+    html.mobile .tower-btn { grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; row-gap: 0; padding: 4px; text-align: center; overflow: hidden; }
     html.mobile .tower-btn .icon { grid-row: auto; width: 28px; height: 28px; }
     html.mobile .tower-btn .key, html.mobile .tower-btn .role, html.mobile .strike-btn .long { display: none; }
     html.mobile .strike-btn .short { display: inline; }
@@ -280,6 +281,12 @@
     html.mobile .sheet .targeting { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     html.mobile .sheet .panel-actions { flex-wrap: wrap; gap: 4px; }
     html.mobile .sheet .panel-actions button { flex: 1 1 40%; padding: 5px 4px; font-size: 13px; letter-spacing: .02em; }
+    /* Colonne large (écran bas et long) : la fiche se range sur deux colonnes, caractéristiques à gauche, choix à droite */
+    html.mobile.col-wide .sheet .tower-panel { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-content: start; gap: 4px 8px; }
+    html.mobile.col-wide .sheet .panel-head, html.mobile.col-wide .sheet #panel .panel-actions { grid-column: 1 / -1; }
+    html.mobile.col-wide .sheet #panel:has(> .targeting[hidden]) .panel-stats { grid-column: 1 / -1; }   /* brouilleur : pas de cible */
+    html.mobile.col-wide .sheet #strike-panel .panel-actions { grid-column: 2; grid-row: 2; flex-direction: column; }
+    html.mobile.col-wide .sheet #strike-panel .panel-actions button { flex: none; }
     /* Menus : plus larges et moins hauts, pour tenir dans la hauteur d'un téléphone couché */
     html.mobile .report { max-width: 640px; padding: 12px 18px; gap: 4px; }
     html.mobile .report.menu { width: min(760px, 100%); }
@@ -291,6 +298,25 @@
     html.mobile .map-card img { grid-row: 1 / -1; }
     html.mobile .mc-brief { display: none; }
   }
+  /* Téléphone couché sur un écran bas (moins de 330 px, par exemple Chrome sur Android avec sa barre d'adresse) : marges réduites */
+  @media (orientation: landscape) and (max-height: 329px) {
+    html.mobile .wrap { gap: 4px; }
+    html.mobile #btn-menu, html.mobile #btn-replay { padding: 2px 6px; }
+    html.mobile #btn-wave { padding: 5px 6px; font-size: 13px; }
+    html.mobile .hud { gap: 3px; }
+    html.mobile .stat { padding: 1px 6px; }
+    html.mobile .stat b { font-size: 15px; }
+    html.mobile .towers { gap: 4px; }
+  }
+  /* Boutons des tours trop bas pour empiler icône, nom et coût (classe posée par fitColumn) : tout sur une ligne ;
+     dans une colonne étroite, le nom s'efface et il reste l'icône et le coût */
+  html.mobile.btn-flat .tower-btn { grid-template-columns: auto minmax(0, 1fr) auto; justify-items: start; align-items: center; column-gap: 6px; padding: 2px 8px; text-align: left; }
+  html.mobile.btn-flat .tower-btn .icon { width: 24px; height: 24px; }
+  html.mobile.btn-flat .tower-btn .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  html.mobile.btn-flat .tower-btn .cost { justify-self: end; font-size: 14px; }
+  html.mobile.btn-flat.col-narrow .tower-btn { grid-template-columns: auto minmax(0, 1fr); }
+  html.mobile.btn-flat.col-narrow .tower-btn .name { display: none; }
+  html.mobile.col-narrow:not(.btn-flat) .tower-btn .name { font-size: 12px; }
 </style>
 
 <div class="wrap" id="wrap">
@@ -920,10 +946,33 @@ function placeSheets() {
   }
 }
 
+// Téléphone couché : la carte est limitée par la hauteur, la colonne de commande prend toute la largeur restante
+// (entre 150 et 320 px). col-wide : compteurs sur une ligne et fiche sur deux colonnes ; col-narrow : boutons sans nom.
+function fitColumn() {
+  if (!MOBILE) return;
+  const root = document.documentElement;
+  if (!window.matchMedia('(orientation: landscape)').matches) {
+    root.style.removeProperty('--col');
+    root.classList.remove('col-wide', 'col-narrow', 'btn-flat');
+    return;
+  }
+  const wrap = document.getElementById('wrap'), cs = getComputedStyle(wrap);
+  const inner = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const mapW = (stage.clientHeight - 4) / ROWS * COLS + 4;
+  const col = Math.round(Math.max(150, Math.min(320, inner - mapW - 6)));
+  root.style.setProperty('--col', col + 'px');
+  root.classList.toggle('col-wide', col >= 260);
+  root.classList.toggle('col-narrow', col < 210);
+  // La hauteur des boutons ne dépend que de l'écran : on la lit une fois la colonne posée
+  const btn = document.querySelector('.tower-btn');
+  root.classList.toggle('btn-flat', !!btn && btn.clientHeight < 62);
+}
+
 // La case prend la plus grande taille qui fait tenir la carte en largeur ET en hauteur
 const stage = document.getElementById('stage');
 function resize() {
   placeSheets();
+  fitColumn();
   const border = 4;
   const w = stage.clientWidth - border, h = stage.clientHeight - border;
   // Sur téléphone, 2× suffit à l'œil : un écran 3× demanderait 2,25 fois plus de dessin pour rien
