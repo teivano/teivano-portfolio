@@ -1331,6 +1331,9 @@ function drawPalm(g, x, y, rnd) {
 // Base : bunker en béton entouré de sacs de sable, drapeau
 function drawBase(g, map, upright = false) {
   let x = map.base.c + .5, y = map.base.r + .5;
+  // Carte pivotée (téléphone en portrait) : toute la base est dessinée pré-tournée d'un quart de tour, pour rester à
+  // l'endroit à l'écran (bunker à l'horizontale, drapeau debout) ; sinon, le tracé d'origine, au pixel près
+  if (upright) { g.save(); g.translate(x, y); g.rotate(-Math.PI / 2); x = 0; y = 0; }
   g.fillStyle = '#b8a678';
   for (let i = 0; i < 12; i++) {
     const a = i / 12 * Math.PI * 2;
@@ -1340,9 +1343,6 @@ function drawBase(g, map, upright = false) {
   g.fillStyle = '#8b8d80'; g.fillRect(x - .28, y - .28, .56, .56);
   g.fillStyle = '#6c6e62'; g.fillRect(x - .28, y + .1, .56, .18);
   g.fillStyle = '#20231a'; g.fillRect(x - .18, y - .06, .36, .07);
-  // Mât et fanion. Sur la carte pivotée, ils sont dessinés pré-tournés d'un quart de tour pour rester debout à
-  // l'écran ; sinon, le tracé d'origine (le même calcul au pixel près sur ordinateur)
-  if (upright) { g.save(); g.translate(x, y); g.rotate(-Math.PI / 2); x = 0; y = 0; }
   g.strokeStyle = '#2a2a22'; g.lineWidth = .03;
   g.beginPath(); g.moveTo(x + .2, y - .2); g.lineTo(x + .2, y - .72); g.stroke();
   g.fillStyle = '#e2a62e';
