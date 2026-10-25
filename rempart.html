@@ -1059,13 +1059,14 @@ function resize() {
   cv.height = Math.round(CELL * gr * DPR);
   cv.style.width = CELL * gc + 'px';
   cv.style.height = CELL * gr + 'px';
-  terrain = renderTerrain(MAP, CELL, DPR);
+  terrain = renderTerrain(MAP, CELL, DPR, ROT);
   resetDecalCanvas();
 }
 
 // Le décor d'une carte est dessiné une fois dans un canvas hors écran, puis recopié à chaque image.
 // cell = taille d'une case en pixels : sert aussi aux petits aperçus du briefing.
-function renderTerrain(map, cell, dpr) {
+// upright : carte pivotée (téléphone en portrait), le drapeau de la base est dessiné pré-tourné pour rester debout
+function renderTerrain(map, cell, dpr, upright = false) {
   const COLS = map.cols, ROWS = map.rows;   // la carte dessinée, pas forcément celle en jeu (aperçus)
   const out = document.createElement('canvas');
   out.width = Math.round(cell * COLS * dpr); out.height = Math.round(cell * ROWS * dpr);
@@ -1277,7 +1278,7 @@ function renderTerrain(map, cell, dpr) {
   for (let c = 1; c < COLS; c++) { g.beginPath(); g.moveTo(c, 0); g.lineTo(c, ROWS); g.stroke(); }
   for (let r = 1; r < ROWS; r++) { g.beginPath(); g.moveTo(0, r); g.lineTo(COLS, r); g.stroke(); }
 
-  drawBase(g, map);
+  drawBase(g, map, upright);
   return out;
 }
 
@@ -1328,8 +1329,8 @@ function drawPalm(g, x, y, rnd) {
 }
 
 // Base : bunker en béton entouré de sacs de sable, drapeau
-function drawBase(g, map) {
-  const x = map.base.c + .5, y = map.base.r + .5;
+function drawBase(g, map, upright = false) {
+  let x = map.base.c + .5, y = map.base.r + .5;
   g.fillStyle = '#b8a678';
   for (let i = 0; i < 12; i++) {
     const a = i / 12 * Math.PI * 2;
@@ -1339,10 +1340,14 @@ function drawBase(g, map) {
   g.fillStyle = '#8b8d80'; g.fillRect(x - .28, y - .28, .56, .56);
   g.fillStyle = '#6c6e62'; g.fillRect(x - .28, y + .1, .56, .18);
   g.fillStyle = '#20231a'; g.fillRect(x - .18, y - .06, .36, .07);
+  // Mât et fanion. Sur la carte pivotée, ils sont dessinés pré-tournés d'un quart de tour pour rester debout à
+  // l'écran ; sinon, le tracé d'origine (le même calcul au pixel près sur ordinateur)
+  if (upright) { g.save(); g.translate(x, y); g.rotate(-Math.PI / 2); x = 0; y = 0; }
   g.strokeStyle = '#2a2a22'; g.lineWidth = .03;
   g.beginPath(); g.moveTo(x + .2, y - .2); g.lineTo(x + .2, y - .72); g.stroke();
   g.fillStyle = '#e2a62e';
   g.beginPath(); g.moveTo(x + .2, y - .72); g.lineTo(x + .52, y - .62); g.lineTo(x + .2, y - .52); g.fill();
+  if (upright) g.restore();
 }
 
 // ===== Paramètres : préférences du joueur, gardées dans ce navigateur d'une partie à l'autre =====
