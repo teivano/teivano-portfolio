@@ -61,6 +61,7 @@
     { href:'/salaire.html',    url:'/salaire.html',    title:'Brut/net',       desc:'Simulateur de salaire · barème 2026' },
     { href:'/encre.html',      url:'/encre.html',      title:'Encre',          desc:'Endless · glisse pour guider la goutte' },
     { href:'/rempart.html',    url:'/rempart.html',    title:'Rempart',        desc:'Opération Rempart · tower defense' },
+    { href:'/blast.html',      url:'/blast.html',      title:'Blast',          desc:'Casse-briques néon · 24 niveaux' },
     { href:'/meteo.html',      url:'/meteo.html',      title:'Météo',          desc:'Modèle AROME · Météo France · via Open-Meteo' },
     { href:'/axelrepar.html',  url:'/axelrepar.html',  title:'Axelrépar',      desc:'Réparation IT · diagnostic en ligne & devis' },
     { href:'/ocean.html',      url:'/ocean.html',      title:'Océan',          desc:'Mer & ciel WebGL · Three.js · panneau de réglages' },
